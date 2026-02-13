@@ -5,67 +5,75 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>App for LGS</title>
   <style>
-    body { font-family: Arial, sans-serif; margin: 20px; }
-    input { padding: 5px; font-size: 16px; }
-    button { padding: 5px 10px; font-size: 16px; }
-    ul { margin-top: 20px; }
+    body { font-family: Arial, sans-serif; margin: 20px; background:#f2f2f2; }
+    h1 { color: #333; }
+    #ogrenciListesi { margin-top: 10px; padding-left: 20px; }
+    li { margin-bottom: 5px; }
+    input, button { padding: 5px 10px; margin-right:5px; }
   </style>
 </head>
 <body>
 
-  <h1>Öğrenci Listesi</h1>
-  <input type="text" id="ogrenciAd" placeholder="Öğrenci adı girin">
-  <button id="ekleBtn">Ekle</button>
+<h1>Öğrenci Takip</h1>
+<input type="text" id="ogrenciAd" placeholder="Öğrenci adı">
+<button id="ekleBtn">Ekle</button>
 
-  <ul id="ogrenciListesi"></ul>
+<ul id="ogrenciListesi"></ul>
 
-  <!-- Firebase Bağlantısı -->
-  <script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-    import { getFirestore, collection, addDoc, getDocs } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
-    import { getAnalytics } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-analytics.js";
+<!-- SDK scriptleri -->
+<script src="_sdk/data_sdk.js"></script>
+<script src="_sdk/element_sdk.js"></script>
 
-    const firebaseConfig = {
-      apiKey: "AIzaSyD0c_tWvaOD1yk7KtmKAVIbKRqNNxkV5po",
-      authDomain: "appforlgs.firebaseapp.com",
-      projectId: "appforlgs",
-      storageBucket: "appforlgs.firebasestorage.app",
-      messagingSenderId: "450937203696",
-      appId: "1:450937203696:web:20b50a85b975fea8400b35",
-      measurementId: "G-ZVTYPD1XX1"
-    };
+<!-- Firebase Bağlantısı -->
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+  import { getFirestore, collection, addDoc, getDocs } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+  import { getAnalytics } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-analytics.js";
 
-    const app = initializeApp(firebaseConfig);
-    const db = getFirestore(app);
-    const analytics = getAnalytics(app);
+  // 🔹 Firebase config
+  const firebaseConfig = {
+    apiKey: "AIzaSyD0c_tWvaOD1yk7KtmKAVIbKRqNNxkV5po",
+    authDomain: "appforlgs.firebaseapp.com",
+    projectId: "appforlgs",
+    storageBucket: "appforlgs.firebasestorage.app",
+    messagingSenderId: "450937203696",
+    appId: "1:450937203696:web:20b50a85b975fea8400b35",
+    measurementId: "G-ZVTYPD1XX1"
+  };
 
-    console.log("Firebase bağlandı");
+  // 🔹 Firebase başlat
+  const app = initializeApp(firebaseConfig);
+  const db = getFirestore(app);
+  const analytics = getAnalytics(app);
 
-    const ekleBtn = document.getElementById("ekleBtn");
-    const ogrenciAdInput = document.getElementById("ogrenciAd");
-    const ogrenciListesi = document.getElementById("ogrenciListesi");
+  console.log("Firebase bağlandı");
 
-    ekleBtn.addEventListener("click", async () => {
-      const ad = ogrenciAdInput.value.trim();
-      if (!ad) return alert("Öğrenci adı girin!");
-      await addDoc(collection(db, "ogrenciler"), { ad });
-      ogrenciAdInput.value = "";
-      listele();
-    });
+  // Öğrenci ekleme ve listeleme
+  const ekleBtn = document.getElementById("ekleBtn");
+  const ogrenciAdInput = document.getElementById("ogrenciAd");
+  const ogrenciListesi = document.getElementById("ogrenciListesi");
 
-    async function listele() {
-      ogrenciListesi.innerHTML = "";
-      const querySnapshot = await getDocs(collection(db, "ogrenciler"));
-      querySnapshot.forEach((doc) => {
-        const li = document.createElement("li");
-        li.textContent = doc.data().ad;
-        ogrenciListesi.appendChild(li);
-      });
-    }
-
-    // Sayfa açıldığında listeyi getir
+  ekleBtn.addEventListener("click", async () => {
+    const ad = ogrenciAdInput.value.trim();
+    if (!ad) return alert("Öğrenci adı girin!");
+    await addDoc(collection(db, "ogrenciler"), { ad });
+    ogrenciAdInput.value = "";
     listele();
-  </script>
+  });
+
+  async function listele() {
+    ogrenciListesi.innerHTML = "";
+    const querySnapshot = await getDocs(collection(db, "ogrenciler"));
+    querySnapshot.forEach((doc) => {
+      const li = document.createElement("li");
+      li.textContent = doc.data().ad;
+      ogrenciListesi.appendChild(li);
+    });
+  }
+
+  // Sayfa yüklendiğinde listeyi getir
+  listele();
+</script>
 
 </body>
 </html>
