@@ -1,79 +1,2166 @@
-<!DOCTYPE html>
-<html lang="tr">
-<head>
+<!doctype html>
+<html lang="tr" class="h-full">
+ <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>App for LGS</title>
+  <title>Öğrenci Takip Sistemi</title>
+  <script src="https://cdn.tailwindcss.com/3.4.17"></script>
+  <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+  <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+  <script src="https://unpkg.com/recharts@2.10.3/dist/Recharts.js"></script>
+  <script src="/_sdk/element_sdk.js"></script>
+  <script src="/_sdk/data_sdk.js"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&amp;display=swap" rel="stylesheet">
   <style>
-    body { font-family: Arial, sans-serif; margin: 20px; background:#f2f2f2; }
-    h1 { color: #333; }
-    #ogrenciListesi { margin-top: 10px; padding-left: 20px; }
-    li { margin-bottom: 5px; }
-    input, button { padding: 5px 10px; margin-right:5px; }
+    * { font-family: 'Plus Jakarta Sans', sans-serif; }
+    html, body, #root { height: 100%; width: 100%; margin: 0; padding: 0; }
+    .fade-in { animation: fadeIn 0.4s ease-out; }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
+    .card-hover { transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
+    .card-hover:hover { transform: translateY(-4px); box-shadow: 0 20px 40px -12px rgba(59, 130, 246, 0.15); }
+    .nav-link { position: relative; transition: color 0.2s; }
+    .nav-link::after { content: ''; position: absolute; bottom: -2px; left: 0; width: 0; height: 2px; background: #3B82F6; transition: width 0.3s; border-radius: 2px; }
+    .nav-link:hover::after, .nav-link.active::after { width: 100%; }
+    .slide-up { animation: slideUp 0.5s ease-out forwards; opacity: 0; }
+    @keyframes slideUp { to { opacity: 1; transform: translateY(0); } from { opacity: 0; transform: translateY(20px); } }
+    .modal-backdrop { animation: backdropIn 0.2s ease-out; }
+    @keyframes backdropIn { from { opacity: 0; } to { opacity: 1; } }
+    .toast-enter { animation: toastIn 0.3s ease-out; }
+    @keyframes toastIn { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
+    input:focus, select:focus, textarea:focus { outline: none; box-shadow: 0 0 0 3px rgba(59,130,246,0.15); border-color: #3B82F6; }
+    ::-webkit-scrollbar { width: 6px; }
+    ::-webkit-scrollbar-track { background: #f1f5f9; }
+    ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 3px; }
   </style>
-</head>
-<body>
+  <style>body { box-sizing: border-box; }</style>
+ </head>
+ <body class="h-full">
+  <div id="root" class="h-full"></div>
+  <script type="text/babel">
+const { useState, useEffect, useCallback, useMemo } = React;
 
-<h1>Öğrenci Takip</h1>
-<input type="text" id="ogrenciAd" placeholder="Öğrenci adı">
-<button id="ekleBtn">Ekle</button>
+const Icons = {
+  GraduationCap: (p) => <svg xmlns="http://www.w3.org/2000/svg" width={p.size||20} height={p.size||20} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={p.className}><path d="M21.42 10.922a1 1 0 0 0-.019-1.838L12.83 5.18a2 2 0 0 0-1.66 0L2.6 9.08a1 1 0 0 0 0 1.832l8.57 3.908a2 2 0 0 0 1.66 0z"/><path d="M22 10v6"/><path d="M6 12.5V16a6 3 0 0 0 12 0v-3.5"/></svg>,
+  Users: (p) => <svg xmlns="http://www.w3.org/2000/svg" width={p.size||20} height={p.size||20} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={p.className}><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>,
+  BookOpen: (p) => <svg xmlns="http://www.w3.org/2000/svg" width={p.size||20} height={p.size||20} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={p.className}><path d="M12 7v14"/><path d="M3 18a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1h5a4 4 0 0 1 4 4 4 4 0 0 1 4-4h5a1 1 0 0 1 1 1v13a1 1 0 0 1-1 1h-6a3 3 0 0 0-3 3 3 3 0 0 0-3-3z"/></svg>,
+  FileText: (p) => <svg xmlns="http://www.w3.org/2000/svg" width={p.size||20} height={p.size||20} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={p.className}><path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"/><path d="M14 2v4a2 2 0 0 0 2 2h4"/><path d="M10 9H8"/><path d="M16 13H8"/><path d="M16 17H8"/></svg>,
+  BarChart3: (p) => <svg xmlns="http://www.w3.org/2000/svg" width={p.size||20} height={p.size||20} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={p.className}><path d="M3 3v16a2 2 0 0 0 2 2h16"/><path d="M7 16h8"/><path d="M7 11h12"/><path d="M7 6h3"/></svg>,
+  LayoutDashboard: (p) => <svg xmlns="http://www.w3.org/2000/svg" width={p.size||20} height={p.size||20} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={p.className}><rect width="7" height="9" x="3" y="3" rx="1"/><rect width="7" height="5" x="14" y="3" rx="1"/><rect width="7" height="9" x="14" y="12" rx="1"/><rect width="7" height="5" x="3" y="16" rx="1"/></svg>,
+  Plus: (p) => <svg xmlns="http://www.w3.org/2000/svg" width={p.size||20} height={p.size||20} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={p.className}><path d="M5 12h14"/><path d="M12 5v14"/></svg>,
+  Trash2: (p) => <svg xmlns="http://www.w3.org/2000/svg" width={p.size||20} height={p.size||20} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={p.className}><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/><line x1="10" x2="10" y1="11" y2="17"/><line x1="14" x2="14" y1="11" y2="17"/></svg>,
+  X: (p) => <svg xmlns="http://www.w3.org/2000/svg" width={p.size||20} height={p.size||20} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={p.className}><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>,
+  Check: (p) => <svg xmlns="http://www.w3.org/2000/svg" width={p.size||20} height={p.size||20} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={p.className}><path d="M20 6 9 17l-5-5"/></svg>,
+  Edit: (p) => <svg xmlns="http://www.w3.org/2000/svg" width={p.size||20} height={p.size||20} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={p.className}><path d="M21.174 6.812a1 1 0 0 0-3.986-3.987L3.842 16.174a2 2 0 0 0-.5.83l-1.321 4.352a.5.5 0 0 0 .623.622l4.353-1.32a2 2 0 0 0 .83-.497z"/></svg>,
+  Menu: (p) => <svg xmlns="http://www.w3.org/2000/svg" width={p.size||20} height={p.size||20} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={p.className}><line x1="4" x2="20" y1="12" y2="12"/><line x1="4" x2="20" y1="6" y2="6"/><line x1="4" x2="20" y1="18" y2="18"/></svg>,
+};
 
-<ul id="ogrenciListesi"></ul>
+const studentColors = ['#3B82F6', '#10B981', '#F59E0B', '#EF4444', '#8B5CF6', '#EC4899', '#14B8A6', '#F97316'];
 
-<!-- SDK scriptleri -->
-<script src="_sdk/data_sdk.js"></script>
-<script src="_sdk/element_sdk.js"></script>
+const defaultConfig = {
+  app_title: 'Öğrenci Takip Sistemi',
+  welcome_title: 'Hoş Geldiniz 👋',
+  welcome_subtitle: 'Lütfen menüden bir bölüm seçin',
+  background_color: '#F8FAFC',
+  surface_color: '#FFFFFF',
+  text_color: '#1E293B',
+  primary_action_color: '#3B82F6',
+  secondary_action_color: '#64748B',
+  font_family: 'Plus Jakarta Sans',
+  font_size: 16,
+};
 
-<!-- Firebase Bağlantısı -->
-<script type="module">
-  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-  import { getFirestore, collection, addDoc, getDocs } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
-  import { getAnalytics } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-analytics.js";
+let allData = [];
+let dataChangeListeners = [];
+function subscribeData(fn) { dataChangeListeners.push(fn); return () => { dataChangeListeners = dataChangeListeners.filter(f => f !== fn); }; }
+function notifyDataChange(d) { allData = d; dataChangeListeners.forEach(fn => fn(d)); }
 
-  // 🔹 Firebase config
-  const firebaseConfig = {
-    apiKey: "AIzaSyD0c_tWvaOD1yk7KtmKAVIbKRqNNxkV5po",
-    authDomain: "appforlgs.firebaseapp.com",
-    projectId: "appforlgs",
-    storageBucket: "appforlgs.firebasestorage.app",
-    messagingSenderId: "450937203696",
-    appId: "1:450937203696:web:20b50a85b975fea8400b35",
-    measurementId: "G-ZVTYPD1XX1"
+function useAppData() {
+  const [data, setData] = useState(allData);
+  useEffect(() => subscribeData(setData), []);
+  const students = useMemo(() => data.filter(d => d.type === 'student'), [data]);
+  const studies = useMemo(() => data.filter(d => d.type === 'study'), [data]);
+  const exams = useMemo(() => data.filter(d => d.type === 'exam'), [data]);
+  return { students, studies, exams, allData: data };
+}
+
+let appConfig = { ...defaultConfig };
+let configListeners = [];
+function subscribeConfig(fn) { configListeners.push(fn); return () => { configListeners = configListeners.filter(f => f !== fn); }; }
+function notifyConfigChange(c) { appConfig = c; configListeners.forEach(fn => fn({...c})); }
+function useConfig() {
+  const [cfg, setCfg] = useState(appConfig);
+  useEffect(() => subscribeConfig(setCfg), []);
+  return cfg;
+}
+
+function useRouter() {
+  const [route, setRoute] = useState('home');
+  const navigate = useCallback((r) => setRoute(r), []);
+  return { route, navigate };
+}
+
+function Toast({ message, type, onClose }) {
+  useEffect(() => { const t = setTimeout(onClose, 3000); return () => clearTimeout(t); }, [onClose]);
+  const bg = type === 'success' ? 'bg-emerald-500' : type === 'error' ? 'bg-red-500' : 'bg-blue-500';
+  return (
+    <div className={`fixed top-4 right-4 z-50 toast-enter ${bg} text-white px-5 py-3 rounded-xl shadow-lg flex items-center gap-2`}>
+      {type === 'success' ? <Icons.Check size={18}/> : null}
+      <span className="text-sm font-medium">{message}</span>
+      <button onClick={onClose} className="ml-2 hover:opacity-70"><Icons.X size={16}/></button>
+    </div>
+  );
+}
+
+function ConfirmModal({ message, onConfirm, onCancel }) {
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center modal-backdrop" style={{background:'rgba(0,0,0,0.4)'}}>
+      <div className="bg-white rounded-2xl shadow-2xl p-6 max-w-sm w-full mx-4 fade-in">
+        <p className="text-gray-800 font-medium mb-5">{message}</p>
+        <div className="flex gap-3 justify-end">
+          <button onClick={onCancel} className="px-4 py-2 rounded-xl text-gray-600 hover:bg-gray-100 font-medium text-sm transition-colors">İptal</button>
+          <button onClick={onConfirm} className="px-4 py-2 rounded-xl bg-red-500 text-white hover:bg-red-600 font-medium text-sm transition-colors">Sil</button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function Spinner({ size = 'md' }) {
+  const s = size === 'sm' ? 'w-4 h-4' : size === 'lg' ? 'w-8 h-8' : 'w-5 h-5';
+  return <div className={`${s} border-2 border-blue-200 border-t-blue-500 rounded-full animate-spin`}></div>;
+}
+
+function Header({ route, navigate, config, onLogout }) {
+  const [mobileOpen, setMobileOpen] = useState(false);
+  const links = [
+    { id: 'ogrenciler', label: 'Öğrenciler', icon: Icons.Users },
+    { id: 'gunluk-calisma', label: 'Günlük Çalışma', icon: Icons.BookOpen },
+    { id: 'deneme-girisi', label: 'Deneme Girişi', icon: Icons.FileText },
+    { id: 'analiz', label: 'Analiz', icon: Icons.BarChart3 },
+    { id: 'dashboard', label: 'Dashboard', icon: Icons.LayoutDashboard },
+  ];
+  return (
+    <header className="sticky top-0 z-40 border-b" style={{ background: config.surface_color, borderColor: '#E2E8F0' }}>
+      <div className="max-w-7xl mx-auto px-4 sm:px-6">
+        <div className="flex items-center justify-between h-16">
+          <button onClick={() => navigate('home')} className="flex items-center gap-2.5 group">
+            <div className="w-9 h-9 rounded-xl flex items-center justify-center" style={{background: config.primary_action_color}}>
+              <Icons.GraduationCap size={20} className="text-white"/>
+            </div>
+            <span className="font-bold text-base hidden sm:block" style={{color: config.text_color}}>{config.app_title}</span>
+          </button>
+          <nav className="hidden md:flex items-center gap-1">
+            {links.map(l => (
+              <button key={l.id} onClick={() => navigate(l.id)}
+                className={`nav-link px-3 py-2 rounded-lg text-sm font-medium flex items-center gap-1.5 transition-colors ${route === l.id ? 'active text-blue-600 bg-blue-50' : ''}`}
+                style={{ color: route === l.id ? config.primary_action_color : config.secondary_action_color }}>
+                <l.icon size={16}/> {l.label}
+              </button>
+            ))}
+          </nav>
+          <div className="flex items-center gap-2">
+            <button onClick={onLogout} className="hidden sm:flex px-4 py-2 rounded-lg text-sm font-semibold transition-all items-center gap-1.5 hover:bg-red-50" style={{color: config.secondary_action_color}}>
+              🚪 Çıkış
+            </button>
+            <button onClick={() => setMobileOpen(!mobileOpen)} className="md:hidden p-2 rounded-lg hover:bg-gray-100">
+              <Icons.Menu size={22} className="text-gray-600"/>
+            </button>
+          </div>
+        </div>
+      </div>
+      {mobileOpen && (
+        <div className="md:hidden border-t border-gray-100 fade-in" style={{background: config.surface_color}}>
+          <nav className="px-4 py-3 flex flex-col gap-1">
+            {links.map(l => (
+              <button key={l.id} onClick={() => { navigate(l.id); setMobileOpen(false); }}
+                className={`px-3 py-2.5 rounded-lg text-sm font-medium flex items-center gap-2 transition-colors ${route === l.id ? 'bg-blue-50' : 'hover:bg-gray-50'}`}
+                style={{ color: route === l.id ? config.primary_action_color : config.secondary_action_color }}>
+                <l.icon size={16}/> {l.label}
+              </button>
+            ))}
+            <button onClick={() => { onLogout(); setMobileOpen(false); }} className="px-3 py-2.5 rounded-lg text-sm font-medium flex items-center gap-2 transition-colors hover:bg-red-50" style={{color: config.secondary_action_color}}>
+              🚪 Çıkış
+            </button>
+          </nav>
+        </div>
+      )}
+    </header>
+  );
+}
+
+function HomePage({ navigate, config }) {
+  const { students, studies, exams } = useAppData();
+  const examCount = localStorage.getItem('exams') ? JSON.parse(localStorage.getItem('exams')).length : 0;
+  const cards = [
+    { id: 'ogrenciler', title: 'Öğrenciler', desc: 'Öğrenci kayıtlarını yönetin', icon: Icons.Users, count: students.length, color: '#3B82F6', bg: '#EFF6FF' },
+    { id: 'gunluk-calisma', title: 'Günlük Çalışma', desc: 'Çalışma kayıtlarını takip edin', icon: Icons.BookOpen, count: studies.length, color: '#10B981', bg: '#ECFDF5' },
+    { id: 'deneme-girisi', title: 'Deneme Girişi', desc: 'Deneme sonuçlarını kaydedin', icon: Icons.FileText, count: examCount, color: '#F59E0B', bg: '#FFFBEB' },
+    { id: 'analiz', title: 'Analiz', desc: 'Performans analizlerini görün', icon: Icons.BarChart3, count: null, color: '#8B5CF6', bg: '#F5F3FF' },
+    { id: 'dashboard', title: 'Dashboard', desc: 'Genel bakış ve özet', icon: Icons.LayoutDashboard, count: null, color: '#EC4899', bg: '#FDF2F8' },
+  ];
+  return (
+    <div className="max-w-5xl mx-auto px-4 py-10 fade-in">
+      <div className="text-center mb-10">
+        <h1 className="text-3xl sm:text-4xl font-extrabold mb-3" style={{color: config.text_color}}>{config.welcome_title}</h1>
+        <p className="text-base sm:text-lg" style={{color: config.secondary_action_color}}>{config.welcome_subtitle}</p>
+      </div>
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+        {cards.map((c, i) => (
+          <button key={c.id} onClick={() => navigate(c.id)}
+            className="card-hover rounded-2xl p-6 text-left border border-gray-100 slide-up"
+            style={{ background: config.surface_color, animationDelay: `${i * 0.08}s` }}>
+            <div className="flex items-start justify-between mb-4">
+              <div className="w-12 h-12 rounded-xl flex items-center justify-center" style={{background: c.bg}}>
+                <c.icon size={24} style={{color: c.color}}/>
+              </div>
+              {c.count !== null && (
+                <span className="text-xs font-bold px-2.5 py-1 rounded-full" style={{background: c.bg, color: c.color}}>{c.count}</span>
+              )}
+            </div>
+            <h3 className="font-bold text-base mb-1" style={{color: config.text_color}}>{c.title}</h3>
+            <p className="text-sm" style={{color: config.secondary_action_color}}>{c.desc}</p>
+          </button>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function StudentsPage({ config }) {
+  const { students } = useAppData();
+  const [showForm, setShowForm] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [toast, setToast] = useState(null);
+  const [confirmDel, setConfirmDel] = useState(null);
+  const [editingStudent, setEditingStudent] = useState(null);
+  const [form, setForm] = useState({ name: '', surname: '', number: '' });
+
+  const resetForm = () => { setForm({ name: '', surname: '', number: '' }); setEditingStudent(null); };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    if (!form.name.trim() || !form.surname.trim()) return;
+    
+    if (editingStudent) {
+      setLoading(true);
+      const result = await window.dataSdk.update({ 
+        ...editingStudent, 
+        student_name: form.name, 
+        student_surname: form.surname,
+        student_number: form.number 
+      });
+      setLoading(false);
+      if (result.isOk) { setToast({ msg: 'Öğrenci güncellendi!', type: 'success' }); setShowForm(false); resetForm(); }
+      else setToast({ msg: 'Hata oluştu', type: 'error' });
+    } else {
+      if (allData.length >= 999) { setToast({ msg: 'Maksimum kayıt limitine ulaşıldı (999)', type: 'error' }); return; }
+      setLoading(true);
+      const result = await window.dataSdk.create({ 
+        type: 'student', 
+        student_name: form.name, 
+        student_surname: form.surname,
+        student_number: form.number,
+        created_at: new Date().toISOString() 
+      });
+      setLoading(false);
+      if (result.isOk) { setToast({ msg: 'Öğrenci eklendi!', type: 'success' }); setShowForm(false); resetForm(); }
+      else setToast({ msg: 'Hata oluştu', type: 'error' });
+    }
   };
 
-  // 🔹 Firebase başlat
-  const app = initializeApp(firebaseConfig);
-  const db = getFirestore(app);
-  const analytics = getAnalytics(app);
+  const handleDelete = async () => {
+    if (!confirmDel) return;
+    setLoading(true);
+    const result = await window.dataSdk.delete(confirmDel);
+    setLoading(false);
+    setConfirmDel(null);
+    if (result.isOk) setToast({ msg: 'Öğrenci silindi', type: 'success' });
+    else setToast({ msg: 'Silme hatası', type: 'error' });
+  };
 
-  console.log("Firebase bağlandı");
+  const startEdit = (s) => {
+    setForm({ name: s.student_name || '', surname: s.student_surname || '', number: s.student_number || '' });
+    setEditingStudent(s);
+    setShowForm(true);
+  };
 
-  // Öğrenci ekleme ve listeleme
-  const ekleBtn = document.getElementById("ekleBtn");
-  const ogrenciAdInput = document.getElementById("ogrenciAd");
-  const ogrenciListesi = document.getElementById("ogrenciListesi");
+  return (
+    <div className="max-w-5xl mx-auto px-4 py-8 fade-in">
+      {toast && <Toast message={toast.msg} type={toast.type} onClose={() => setToast(null)}/>}
+      {confirmDel && <ConfirmModal message="Bu öğrenciyi silmek istediğinize emin misiniz?" onConfirm={handleDelete} onCancel={() => setConfirmDel(null)}/>}
+      
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-8">
+        <div>
+          <h1 className="text-3xl font-extrabold" style={{color: config.text_color}}>Öğrenci Yönetimi</h1>
+          <p className="text-sm mt-1" style={{color: config.secondary_action_color}}>{students.length} öğrenci kayıtlı</p>
+        </div>
+        <button onClick={() => { resetForm(); setShowForm(true); }}
+          className="flex items-center gap-2 px-5 py-2.5 rounded-xl text-white text-sm font-semibold transition-all hover:shadow-lg"
+          style={{background: config.primary_action_color}}>
+          <Icons.Plus size={18}/> Yeni Öğrenci Ekle
+        </button>
+      </div>
 
-  ekleBtn.addEventListener("click", async () => {
-    const ad = ogrenciAdInput.value.trim();
-    if (!ad) return alert("Öğrenci adı girin!");
-    await addDoc(collection(db, "ogrenciler"), { ad });
-    ogrenciAdInput.value = "";
-    listele();
+      {showForm && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center modal-backdrop" style={{background:'rgba(0,0,0,0.4)'}}>
+          <div className="rounded-2xl shadow-2xl p-8 max-w-md w-full mx-4 fade-in" style={{background: config.surface_color}}>
+            <div className="flex items-center justify-between mb-6">
+              <h2 className="text-xl font-bold" style={{color: config.text_color}}>{editingStudent ? 'Öğrenci Düzenle' : 'Yeni Öğrenci Ekle'}</h2>
+              <button onClick={() => { setShowForm(false); resetForm(); }} className="p-1.5 rounded-lg hover:bg-gray-100"><Icons.X size={20} className="text-gray-500"/></button>
+            </div>
+            <form onSubmit={handleSubmit} className="space-y-4">
+              <div>
+                <label htmlFor="s-name" className="block text-sm font-semibold mb-2" style={{color: config.text_color}}>Ad *</label>
+                <input id="s-name" required value={form.name} onChange={e => setForm({...form, name: e.target.value})} className="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-sm" placeholder="Öğrenci adı" style={{background: config.surface_color}}/>
+              </div>
+              <div>
+                <label htmlFor="s-surname" className="block text-sm font-semibold mb-2" style={{color: config.text_color}}>Soyad *</label>
+                <input id="s-surname" required value={form.surname} onChange={e => setForm({...form, surname: e.target.value})} className="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-sm" placeholder="Öğrenci soyadı" style={{background: config.surface_color}}/>
+              </div>
+              <div>
+                <label htmlFor="s-number" className="block text-sm font-semibold mb-2" style={{color: config.text_color}}>Numara (Opsiyonel)</label>
+                <input id="s-number" value={form.number} onChange={e => setForm({...form, number: e.target.value})} className="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-sm" placeholder="Öğrenci numarası" style={{background: config.surface_color}}/>
+              </div>
+              <div className="flex gap-3 mt-6 pt-4 border-t border-gray-100">
+                <button type="button" onClick={() => { setShowForm(false); resetForm(); }} className="flex-1 px-4 py-2.5 rounded-xl border border-gray-200 text-sm font-semibold hover:bg-gray-50 transition-colors" style={{color: config.secondary_action_color}}>İptal</button>
+                <button type="submit" disabled={loading} className="flex-1 px-4 py-2.5 rounded-xl text-white text-sm font-semibold flex items-center justify-center gap-2 transition-all hover:shadow-lg" style={{background: config.primary_action_color}}>
+                  {loading ? <Spinner size="sm"/> : editingStudent ? 'Güncelle' : 'Kaydet'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {students.length === 0 ? (
+        <div className="flex flex-col items-center justify-center py-16 fade-in">
+          <div className="w-20 h-20 rounded-2xl flex items-center justify-center mb-4" style={{background: '#EFF6FF'}}>
+            <Icons.Users size={40} style={{color: config.primary_action_color}}/>
+          </div>
+          <h3 className="text-xl font-semibold mb-2" style={{color: config.text_color}}>Henüz öğrenci eklenmemiş 📚</h3>
+          <p className="text-sm mb-6" style={{color: config.secondary_action_color}}>İlk öğrencinizi ekleyerek başlayın</p>
+          <button onClick={() => { resetForm(); setShowForm(true); }}
+            className="px-5 py-2.5 rounded-xl text-white text-sm font-semibold transition-all hover:shadow-lg"
+            style={{background: config.primary_action_color}}>
+            İlk Öğrenciyi Ekle
+          </button>
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+          {students.map((s, idx) => (
+            <div key={s.__backendId} className="rounded-2xl border border-gray-100 p-6 card-hover transition-all" style={{background: config.surface_color}}>
+              <div className="flex items-start justify-between mb-4">
+                <div className="w-14 h-14 rounded-full flex items-center justify-center text-white font-bold text-lg" style={{background: studentColors[idx % studentColors.length]}}>
+                  {((s.student_name || '?')[0] + (s.student_surname || '?')[0]).toUpperCase()}
+                </div>
+                <div className="flex gap-2">
+                  <button onClick={() => startEdit(s)} className="p-2 rounded-lg hover:bg-blue-50 transition-colors" title="Düzenle">
+                    <Icons.Edit size={18} style={{color: config.primary_action_color}}/>
+                  </button>
+                  <button onClick={() => setConfirmDel(s)} className="p-2 rounded-lg hover:bg-red-50 transition-colors" title="Sil">
+                    <Icons.Trash2 size={18} className="text-red-400"/>
+                  </button>
+                </div>
+              </div>
+              <h3 className="text-lg font-bold mb-1" style={{color: config.text_color}}>{s.student_name} {s.student_surname}</h3>
+              {s.student_number && (
+                <p className="text-sm" style={{color: config.secondary_action_color}}>Numara: {s.student_number}</p>
+              )}
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function StudyPage({ config }) {
+  const { students, studies } = useAppData();
+  const [selectedStudentId, setSelectedStudentId] = useState('');
+  const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0]);
+  const [subjects, setSubjects] = useState({
+    turkce: { dogru: 0, yanlis: 0, bos: 0 },
+    matematik: { dogru: 0, yanlis: 0, bos: 0 },
+    fen: { dogru: 0, yanlis: 0, bos: 0 },
+    inkilap: { dogru: 0, yanlis: 0, bos: 0 },
+    ingilizce: { dogru: 0, yanlis: 0, bos: 0 },
+    din: { dogru: 0, yanlis: 0, bos: 0 },
+    paragraf: { dogru: 0, yanlis: 0, bos: 0 },
+  });
+  const [toast, setToast] = useState(null);
+  const [loading, setLoading] = useState(false);
+
+  const subjectColors = {
+    turkce: { bg: '#FEE2E2', text: '#DC2626', name: 'Türkçe' },
+    matematik: { bg: '#DBEAFE', text: '#0284C7', name: 'Matematik' },
+    fen: { bg: '#DCFCE7', text: '#16A34A', name: 'Fen' },
+    inkilap: { bg: '#FEF3C7', text: '#D97706', name: 'İnkılap' },
+    ingilizce: { bg: '#F3E8FF', text: '#7C3AED', name: 'İngilizce' },
+    din: { bg: '#FCE7F3', text: '#BE185D', name: 'Din' },
+    paragraf: { bg: '#CCFBF1', text: '#0D9488', name: 'Paragraf' },
+  };
+
+  const calculateNet = (dogru, yanlis) => {
+    return (dogru - (yanlis / 3)).toFixed(2);
+  };
+
+  const getTotalNet = () => {
+    return Object.values(subjects)
+      .reduce((sum, s) => sum + parseFloat(calculateNet(s.dogru, s.yanlis)), 0)
+      .toFixed(2);
+  };
+
+  const handleSubjectChange = (key, field, value) => {
+    const num = Math.max(0, parseInt(value) || 0);
+    setSubjects(prev => ({
+      ...prev,
+      [key]: { ...prev[key], [field]: num }
+    }));
+  };
+
+  const handleSave = async (e) => {
+    e.preventDefault();
+    if (!selectedStudentId) {
+      setToast({ msg: 'Lütfen öğrenci seçin', type: 'error' });
+      return;
+    }
+
+    setLoading(true);
+    const result = await window.dataSdk.create({
+      type: 'study',
+      student_id: selectedStudentId,
+      study_date: selectedDate,
+      study_subjects: JSON.stringify(subjects),
+      study_total_net: getTotalNet(),
+      created_at: new Date().toISOString()
+    });
+    setLoading(false);
+
+    if (result.isOk) {
+      setToast({ msg: 'Günlük çalışma kaydedildi! ✅', type: 'success' });
+      handleReset();
+    } else {
+      setToast({ msg: 'Hata oluştu', type: 'error' });
+    }
+  };
+
+  const handleReset = () => {
+    setSubjects({
+      turkce: { dogru: 0, yanlis: 0, bos: 0 },
+      matematik: { dogru: 0, yanlis: 0, bos: 0 },
+      fen: { dogru: 0, yanlis: 0, bos: 0 },
+      inkilap: { dogru: 0, yanlis: 0, bos: 0 },
+      ingilizce: { dogru: 0, yanlis: 0, bos: 0 },
+      din: { dogru: 0, yanlis: 0, bos: 0 },
+      paragraf: { dogru: 0, yanlis: 0, bos: 0 },
+    });
+    setSelectedDate(new Date().toISOString().split('T')[0]);
+  };
+
+  const recentStudies = studies
+    .filter(s => s.student_id === selectedStudentId)
+    .sort((a, b) => new Date(b.study_date) - new Date(a.study_date))
+    .slice(0, 5);
+
+  return (
+    <div className="max-w-7xl mx-auto px-4 py-8 fade-in">
+      {toast && <Toast message={toast.msg} type={toast.type} onClose={() => setToast(null)} />}
+
+      <div className="mb-8">
+        <h1 className="text-3xl font-extrabold mb-6" style={{ color: config.text_color }}>Günlük Çalışma Girişi</h1>
+        
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+          <div>
+            <label htmlFor="student-select" className="block text-sm font-semibold mb-2" style={{ color: config.text_color }}>Öğrenci Seçin *</label>
+            <select
+              id="student-select"
+              value={selectedStudentId}
+              onChange={(e) => setSelectedStudentId(e.target.value)}
+              className="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-sm font-medium"
+              style={{ background: config.surface_color, color: config.text_color }}
+            >
+              <option value="">-- Öğrenci Seçin --</option>
+              {students.map(s => (
+                <option key={s.__backendId} value={s.__backendId}>
+                  {s.student_name} {s.student_surname}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          <div>
+            <label htmlFor="date-select" className="block text-sm font-semibold mb-2" style={{ color: config.text_color }}>Tarih</label>
+            <input
+              id="date-select"
+              type="date"
+              value={selectedDate}
+              onChange={(e) => setSelectedDate(e.target.value)}
+              className="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-sm font-medium"
+              style={{ background: config.surface_color, color: config.text_color }}
+            />
+          </div>
+        </div>
+      </div>
+
+      {!selectedStudentId ? (
+        <div className="text-center py-12 rounded-2xl border-2 border-dashed border-gray-300">
+          <p className="text-lg font-medium" style={{ color: config.secondary_action_color }}>📌 Lütfen öğrenci seçin</p>
+        </div>
+      ) : (
+        <form onSubmit={handleSave}>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5 mb-8">
+            {Object.entries(subjects).map(([key, data]) => {
+              const color = subjectColors[key];
+              const net = calculateNet(data.dogru, data.yanlis);
+              return (
+                <div key={key} className="rounded-2xl p-5 border border-gray-100 card-hover" style={{ background: config.surface_color }}>
+                  <h3 className="text-lg font-bold mb-4 pb-3 border-b-2" style={{ color: color.text, borderColor: color.bg }}>{color.name}</h3>
+                  <div className="space-y-3 mb-4">
+                    <div>
+                      <label htmlFor={`${key}-dogru`} className="text-xs font-semibold mb-1 block" style={{ color: config.secondary_action_color }}>Doğru</label>
+                      <input id={`${key}-dogru`} type="number" min="0" value={data.dogru} onChange={(e) => handleSubjectChange(key, 'dogru', e.target.value)} className="w-full px-3 py-2 rounded-lg border border-gray-200 text-sm font-semibold text-center" style={{ background: color.bg }} />
+                    </div>
+                    <div>
+                      <label htmlFor={`${key}-yanlis`} className="text-xs font-semibold mb-1 block" style={{ color: config.secondary_action_color }}>Yanlış</label>
+                      <input id={`${key}-yanlis`} type="number" min="0" value={data.yanlis} onChange={(e) => handleSubjectChange(key, 'yanlis', e.target.value)} className="w-full px-3 py-2 rounded-lg border border-gray-200 text-sm font-semibold text-center" style={{ background: color.bg }} />
+                    </div>
+                    <div>
+                      <label htmlFor={`${key}-bos`} className="text-xs font-semibold mb-1 block" style={{ color: config.secondary_action_color }}>Boş</label>
+                      <input id={`${key}-bos`} type="number" min="0" value={data.bos} onChange={(e) => handleSubjectChange(key, 'bos', e.target.value)} className="w-full px-3 py-2 rounded-lg border border-gray-200 text-sm font-semibold text-center" style={{ background: color.bg }} />
+                    </div>
+                  </div>
+                  <div className="text-center py-3 rounded-lg" style={{ background: color.bg }}>
+                    <p className="text-xs font-semibold mb-1" style={{ color: config.secondary_action_color }}>NET</p>
+                    <p className="text-2xl font-extrabold" style={{ color: color.text }}>{net}</p>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+
+          <div className="rounded-2xl p-8 mb-8 text-center border border-gray-100 bg-emerald-50">
+            <p className="text-sm font-semibold mb-2" style={{ color: config.secondary_action_color }}>TOPLAM NET</p>
+            <p className="text-5xl font-extrabold text-emerald-600">{getTotalNet()}</p>
+          </div>
+
+          <div className="flex flex-col sm:flex-row gap-3">
+            <button type="submit" disabled={loading} className="flex-1 px-6 py-3.5 rounded-xl text-white text-base font-semibold transition-all hover:shadow-lg flex items-center justify-center gap-2" style={{ background: config.primary_action_color }}>
+              {loading ? <Spinner size="sm" /> : <Icons.Check size={20} />}
+              {loading ? 'Kaydediliyor...' : 'Tümünü Kaydet'}
+            </button>
+            <button type="button" onClick={handleReset} className="px-6 py-3.5 rounded-xl border border-gray-300 text-sm font-semibold transition-colors hover:bg-gray-50" style={{ color: config.secondary_action_color }}>Formu Temizle</button>
+          </div>
+        </form>
+      )}
+
+      {selectedStudentId && (
+        <div className="mt-12">
+          <h2 className="text-2xl font-bold mb-6" style={{ color: config.text_color }}>Son 5 Kayıt</h2>
+          {recentStudies.length === 0 ? (
+            <div className="text-center py-12 rounded-2xl border-2 border-dashed border-gray-300">
+              <p className="text-base font-medium" style={{ color: config.secondary_action_color }}>Henüz kayıt yok 📋</p>
+            </div>
+          ) : (
+            <div className="overflow-x-auto rounded-2xl border border-gray-200">
+              <table className="w-full text-sm">
+                <thead style={{ background: '#F1F5F9' }}>
+                  <tr>
+                    <th className="px-4 py-3 text-left font-bold" style={{ color: config.text_color }}>Tarih</th>
+                    <th className="px-3 py-3 text-center font-bold" style={{ color: config.text_color }}>Türk.</th>
+                    <th className="px-3 py-3 text-center font-bold" style={{ color: config.text_color }}>Mat.</th>
+                    <th className="px-3 py-3 text-center font-bold" style={{ color: config.text_color }}>Fen</th>
+                    <th className="px-3 py-3 text-center font-bold" style={{ color: config.text_color }}>İnk.</th>
+                    <th className="px-3 py-3 text-center font-bold" style={{ color: config.text_color }}>İng.</th>
+                    <th className="px-3 py-3 text-center font-bold" style={{ color: config.text_color }}>Din</th>
+                    <th className="px-3 py-3 text-center font-bold" style={{ color: config.text_color }}>Par.</th>
+                    <th className="px-4 py-3 text-center font-bold text-emerald-600">Toplam</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {recentStudies.map((study, idx) => {
+                    let subj = {};
+                    try {
+                      subj = JSON.parse(study.study_subjects);
+                    } catch (e) {
+                      subj = {};
+                    }
+                    const displayDate = new Date(study.study_date).toLocaleDateString('tr-TR');
+                    return (
+                      <tr key={study.__backendId} className="border-t border-gray-200 hover:bg-gray-50 transition-colors" style={{ background: idx % 2 === 0 ? config.surface_color : '#F8FAFC' }}>
+                        <td className="px-4 py-3 font-medium" style={{ color: config.text_color }}>{displayDate}</td>
+                        <td className="px-3 py-3 text-center font-semibold text-red-600">{subj.turkce ? calculateNet(subj.turkce.dogru, subj.turkce.yanlis) : '-'}</td>
+                        <td className="px-3 py-3 text-center font-semibold text-blue-600">{subj.matematik ? calculateNet(subj.matematik.dogru, subj.matematik.yanlis) : '-'}</td>
+                        <td className="px-3 py-3 text-center font-semibold text-green-600">{subj.fen ? calculateNet(subj.fen.dogru, subj.fen.yanlis) : '-'}</td>
+                        <td className="px-3 py-3 text-center font-semibold text-amber-600">{subj.inkilap ? calculateNet(subj.inkilap.dogru, subj.inkilap.yanlis) : '-'}</td>
+                        <td className="px-3 py-3 text-center font-semibold text-purple-600">{subj.ingilizce ? calculateNet(subj.ingilizce.dogru, subj.ingilizce.yanlis) : '-'}</td>
+                        <td className="px-3 py-3 text-center font-semibold text-pink-600">{subj.din ? calculateNet(subj.din.dogru, subj.din.yanlis) : '-'}</td>
+                        <td className="px-3 py-3 text-center font-semibold text-teal-600">{subj.paragraf ? calculateNet(subj.paragraf.dogru, subj.paragraf.yanlis) : '-'}</td>
+                        <td className="px-4 py-3 text-center font-bold text-emerald-600">{study.study_total_net}</td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function ExamPage({ config }) {
+  const { students } = useAppData();
+  const [selectedStudentId, setSelectedStudentId] = useState('');
+  const [selectedDefinedExamId, setSelectedDefinedExamId] = useState('');
+  const [examName, setExamName] = useState('');
+  const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0]);
+  const [subjects, setSubjects] = useState({
+    turkce: { dogru: 0, yanlis: 0, bos: 0 },
+    matematik: { dogru: 0, yanlis: 0, bos: 0 },
+    fen: { dogru: 0, yanlis: 0, bos: 0 },
+    inkilap: { dogru: 0, yanlis: 0, bos: 0 },
+    ingilizce: { dogru: 0, yanlis: 0, bos: 0 },
+    din: { dogru: 0, yanlis: 0, bos: 0 },
+  });
+  const [exams, setExams] = useState(() => {
+    const saved = localStorage.getItem('exams');
+    return saved ? JSON.parse(saved) : [];
+  });
+  const [definedExams, setDefinedExams] = useState(() => {
+    const saved = localStorage.getItem('definedExams');
+    return saved ? JSON.parse(saved) : [];
+  });
+  const [newDefineExamName, setNewDefineExamName] = useState('');
+  const [newDefineExamDate, setNewDefineExamDate] = useState(new Date().toISOString().split('T')[0]);
+  const [toast, setToast] = useState(null);
+  const [detailModal, setDetailModal] = useState(null);
+
+  const subjectColors = {
+    turkce: { bg: '#FEE2E2', text: '#DC2626', name: 'Türkçe', emoji: '📘' },
+    matematik: { bg: '#DBEAFE', text: '#0284C7', name: 'Matematik', emoji: '🔢' },
+    fen: { bg: '#DCFCE7', text: '#16A34A', name: 'Fen', emoji: '🧪' },
+    inkilap: { bg: '#FEF3C7', text: '#D97706', name: 'İnkılap', emoji: '📜' },
+    ingilizce: { bg: '#F3E8FF', text: '#7C3AED', name: 'İngilizce', emoji: '🌍' },
+    din: { bg: '#FCE7F3', text: '#BE185D', name: 'Din', emoji: '☪️' },
+  };
+
+  const calculateNet = (dogru, yanlis) => {
+    return (dogru - (yanlis / 3)).toFixed(2);
+  };
+
+  const getTotalNet = () => {
+    return Object.values(subjects)
+      .reduce((sum, s) => sum + parseFloat(calculateNet(s.dogru, s.yanlis)), 0)
+      .toFixed(2);
+  };
+
+  const handleDefineExam = (e) => {
+    e.preventDefault();
+    if (!newDefineExamName.trim()) {
+      setToast({ msg: 'Deneme adı boş olamaz', type: 'error' });
+      return;
+    }
+    
+    const newExam = {
+      id: Date.now().toString(),
+      name: newDefineExamName,
+      date: newDefineExamDate
+    };
+    
+    const updated = [...definedExams, newExam];
+    setDefinedExams(updated);
+    localStorage.setItem('definedExams', JSON.stringify(updated));
+    setToast({ msg: 'Deneme tanımlandı! 🎉', type: 'success' });
+    setNewDefineExamName('');
+    setNewDefineExamDate(new Date().toISOString().split('T')[0]);
+  };
+
+  const handleDeleteDefinedExam = (id) => {
+    const updated = definedExams.filter(e => e.id !== id);
+    setDefinedExams(updated);
+    localStorage.setItem('definedExams', JSON.stringify(updated));
+    setToast({ msg: 'Deneme silindi', type: 'success' });
+  };
+
+  const handleSelectDefinedExam = (examId) => {
+    if (examId === 'new') {
+      setSelectedDefinedExamId('');
+      setExamName('');
+      setSelectedDate(new Date().toISOString().split('T')[0]);
+    } else {
+      const exam = definedExams.find(e => e.id === examId);
+      if (exam) {
+        setSelectedDefinedExamId(examId);
+        setExamName(exam.name);
+        setSelectedDate(exam.date);
+      }
+    }
+  };
+
+  const handleSubjectChange = (key, field, value) => {
+    const num = Math.max(0, parseInt(value) || 0);
+    setSubjects(prev => ({
+      ...prev,
+      [key]: { ...prev[key], [field]: num }
+    }));
+  };
+
+  const handleSave = async (e) => {
+    e.preventDefault();
+    if (!selectedStudentId) {
+      setToast({ msg: 'Lütfen öğrenci seçin', type: 'error' });
+      return;
+    }
+    if (!examName.trim()) {
+      setToast({ msg: 'Lütfen deneme adı girin', type: 'error' });
+      return;
+    }
+
+    const result = await window.dataSdk.create({
+      type: 'exam',
+      student_id: selectedStudentId,
+      exam_name: examName,
+      exam_date: selectedDate,
+      exam_subjects: JSON.stringify(subjects),
+      exam_total_net: getTotalNet(),
+      defined_exam_id: selectedDefinedExamId || null,
+      created_at: new Date().toISOString()
+    });
+
+    if (result.isOk) {
+      const newExam = {
+        id: Date.now().toString(),
+        studentId: selectedStudentId,
+        examName,
+        date: selectedDate,
+        subjects: Object.entries(subjects).reduce((acc, [key, data]) => {
+          acc[key] = {
+            dogru: data.dogru,
+            yanlis: data.yanlis,
+            bos: data.bos,
+            net: calculateNet(data.dogru, data.yanlis)
+          };
+          return acc;
+        }, {}),
+        totalNet: getTotalNet()
+      };
+      const updated = [...exams, newExam];
+      setExams(updated);
+      setToast({ msg: 'Deneme kaydedildi! 🎉', type: 'success' });
+      handleReset();
+    } else {
+      setToast({ msg: 'Hata oluştu', type: 'error' });
+    }
+  };
+
+  const handleReset = () => {
+    setExamName('');
+    setSelectedDefinedExamId('');
+    setSelectedDate(new Date().toISOString().split('T')[0]);
+    setSubjects({
+      turkce: { dogru: 0, yanlis: 0, bos: 0 },
+      matematik: { dogru: 0, yanlis: 0, bos: 0 },
+      fen: { dogru: 0, yanlis: 0, bos: 0 },
+      inkilap: { dogru: 0, yanlis: 0, bos: 0 },
+      ingilizce: { dogru: 0, yanlis: 0, bos: 0 },
+      din: { dogru: 0, yanlis: 0, bos: 0 },
+    });
+  };
+
+  const handleDelete = (id) => {
+    const updated = exams.filter(e => e.id !== id);
+    setExams(updated);
+    localStorage.setItem('exams', JSON.stringify(updated));
+    setToast({ msg: 'Deneme silindi', type: 'success' });
+  };
+
+  const studentExams = exams.filter(e => e.studentId === selectedStudentId);
+
+  return (
+    <div className="max-w-7xl mx-auto px-4 py-8 fade-in">
+      {toast && <Toast message={toast.msg} type={toast.type} onClose={() => setToast(null)} />}
+      {detailModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center modal-backdrop" style={{background:'rgba(0,0,0,0.4)'}}>
+          <div className="rounded-2xl shadow-2xl p-8 max-w-md w-full mx-4 fade-in max-h-96 overflow-y-auto" style={{background: config.surface_color}}>
+            <div className="flex items-center justify-between mb-6">
+              <h2 className="text-xl font-bold" style={{color: config.text_color}}>{detailModal.examName}</h2>
+              <button onClick={() => setDetailModal(null)} className="p-1.5 rounded-lg hover:bg-gray-100"><Icons.X size={20} className="text-gray-500"/></button>
+            </div>
+            <p className="text-sm mb-6" style={{color: config.secondary_action_color}}>📅 {new Date(detailModal.date).toLocaleDateString('tr-TR')}</p>
+            
+            <div className="space-y-3 mb-6">
+              {Object.entries(detailModal.subjects).map(([key, data]) => {
+                const color = subjectColors[key];
+                return (
+                  <div key={key} className="rounded-lg p-4" style={{background: color.bg}}>
+                    <p className="font-semibold mb-2" style={{color: color.text}}>{color.emoji} {color.name}</p>
+                    <div className="text-xs space-y-1" style={{color: color.text}}>
+                      <p>✓ Doğru: {data.dogru}</p>
+                      <p>✗ Yanlış: {data.yanlis}</p>
+                      <p>⊘ Boş: {data.bos}</p>
+                      <p className="font-bold text-sm">NET: {data.net}</p>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+
+            <div className="rounded-lg p-4 bg-emerald-50 border-2 border-emerald-200 text-center mb-6">
+              <p className="text-xs font-semibold mb-1" style={{color: '#059669'}}>TOPLAM NET</p>
+              <p className="text-2xl font-extrabold text-emerald-600">{detailModal.totalNet}</p>
+            </div>
+
+            <button onClick={() => setDetailModal(null)} className="w-full px-4 py-2.5 rounded-xl border border-gray-300 text-sm font-semibold hover:bg-gray-50 transition-colors" style={{color: config.secondary_action_color}}>Kapat</button>
+          </div>
+        </div>
+      )}
+
+      <h1 className="text-3xl font-extrabold mb-8" style={{ color: config.text_color }}>Deneme Sınavı Girişi</h1>
+      
+      {/* 2 Sütun Layout */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-12">
+        {/* SOL TARAF: Deneme Tanımlama */}
+        <div className="lg:col-span-1">
+          <div className="rounded-2xl p-6 border-2 border-blue-200" style={{ background: '#F0F9FF' }}>
+            <h2 className="text-lg font-bold mb-4 text-blue-900">📋 Yeni Deneme Tanımla</h2>
+            
+            <form onSubmit={handleDefineExam} className="space-y-3 mb-6">
+              <div>
+                <label className="block text-xs font-semibold mb-1.5 text-blue-900">Deneme Adı</label>
+                <input
+                  type="text"
+                  value={newDefineExamName}
+                  onChange={(e) => setNewDefineExamName(e.target.value)}
+                  placeholder="1. Okul Denemesi"
+                  className="w-full px-3 py-2 rounded-lg border border-blue-300 text-sm font-medium bg-white"
+                  style={{ color: config.text_color }}
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-semibold mb-1.5 text-blue-900">Tarih</label>
+                <input
+                  type="date"
+                  value={newDefineExamDate}
+                  onChange={(e) => setNewDefineExamDate(e.target.value)}
+                  className="w-full px-3 py-2 rounded-lg border border-blue-300 text-sm font-medium bg-white"
+                  style={{ color: config.text_color }}
+                />
+              </div>
+              <button
+                type="submit"
+                className="w-full px-4 py-2 rounded-lg bg-blue-600 text-white text-sm font-bold hover:bg-blue-700 transition"
+              >
+                ✓ Tanımla
+              </button>
+            </form>
+
+            <div className="border-t border-blue-200 pt-4">
+              <h3 className="text-sm font-bold mb-3 text-blue-900">Tanımlanan Denemeler</h3>
+              {definedExams.length === 0 ? (
+                <p className="text-xs text-blue-700 text-center py-4">İlk denemeyi tanımlayın</p>
+              ) : (
+                <div className="space-y-2 max-h-64 overflow-y-auto">
+                  {definedExams.map(exam => (
+                    <div key={exam.id} className="flex items-center justify-between p-2 rounded-lg bg-white border border-blue-100">
+                      <div className="flex-1">
+                        <p className="text-xs font-bold text-blue-900">{exam.name}</p>
+                        <p className="text-xs text-blue-600">{new Date(exam.date).toLocaleDateString('tr-TR')}</p>
+                      </div>
+                      <button
+                        onClick={() => handleDeleteDefinedExam(exam.id)}
+                        className="text-red-500 hover:text-red-700 p-1"
+                      >
+                        🗑️
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+
+        {/* SAĞ TARAF: Deneme Girişi Formu */}
+        <div className="lg:col-span-2">
+          <form onSubmit={handleSave}>
+            <div className="rounded-2xl p-6 border border-gray-200 mb-6" style={{ background: config.surface_color }}>
+              <h2 className="text-lg font-bold mb-4" style={{ color: config.text_color }}>📝 Deneme Girişi</h2>
+              
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
+                <div>
+                  <label className="block text-sm font-semibold mb-2" style={{ color: config.text_color }}>Öğrenci Seçin *</label>
+                  <select
+                    value={selectedStudentId}
+                    onChange={(e) => setSelectedStudentId(e.target.value)}
+                    className="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-sm font-medium"
+                    style={{ background: config.surface_color, color: config.text_color }}
+                  >
+                    <option value="">-- Öğrenci Seçin --</option>
+                    {students.map(s => (
+                      <option key={s.__backendId} value={s.__backendId}>
+                        {s.student_name} {s.student_surname}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-semibold mb-2" style={{ color: config.text_color }}>Deneme Seçin</label>
+                  <select
+                    value={selectedDefinedExamId}
+                    onChange={(e) => handleSelectDefinedExam(e.target.value)}
+                    className="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-sm font-medium"
+                    style={{ background: config.surface_color, color: config.text_color }}
+                  >
+                    <option value="">-- Deneme Seçin --</option>
+                    {definedExams.map(exam => (
+                      <option key={exam.id} value={exam.id}>
+                        {exam.name}
+                      </option>
+                    ))}
+                    <option value="new">+ Yeni Deneme...</option>
+                  </select>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-semibold mb-2" style={{ color: config.text_color }}>Deneme Adı *</label>
+                  <input
+                    type="text"
+                    value={examName}
+                    onChange={(e) => setExamName(e.target.value)}
+                    className="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-sm font-medium"
+                    placeholder="1. Deneme"
+                    style={{ background: config.surface_color, color: config.text_color }}
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-semibold mb-2" style={{ color: config.text_color }}>Tarih *</label>
+                  <input
+                    type="date"
+                    value={selectedDate}
+                    onChange={(e) => setSelectedDate(e.target.value)}
+                    className="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-sm font-medium"
+                    style={{ background: config.surface_color, color: config.text_color }}
+                  />
+                </div>
+              </div>
+            </div>
+
+            {!selectedStudentId ? (
+              <div className="text-center py-12 rounded-2xl border-2 border-dashed border-gray-300">
+                <p className="text-lg font-medium" style={{ color: config.secondary_action_color }}>📌 Lütfen öğrenci seçin</p>
+              </div>
+            ) : (
+              <>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-5 mb-8">
+                  {Object.entries(subjects).map(([key, data]) => {
+                    const color = subjectColors[key];
+                    const net = calculateNet(data.dogru, data.yanlis);
+                    return (
+                      <div key={key} className="rounded-2xl p-5 border border-gray-100 card-hover" style={{ background: config.surface_color }}>
+                        <h3 className="text-lg font-bold mb-4 pb-3 border-b-2 flex items-center gap-2" style={{ color: color.text, borderColor: color.bg }}>{color.emoji} {color.name}</h3>
+                        <div className="space-y-3 mb-4">
+                          <div>
+                            <label htmlFor={`exam-${key}-dogru`} className="text-xs font-semibold mb-1 block" style={{ color: config.secondary_action_color }}>Doğru</label>
+                            <input id={`exam-${key}-dogru`} type="number" min="0" value={data.dogru} onChange={(e) => handleSubjectChange(key, 'dogru', e.target.value)} className="w-full px-3 py-2 rounded-lg border border-gray-200 text-sm font-semibold text-center" style={{ background: color.bg }} />
+                          </div>
+                          <div>
+                            <label htmlFor={`exam-${key}-yanlis`} className="text-xs font-semibold mb-1 block" style={{ color: config.secondary_action_color }}>Yanlış</label>
+                            <input id={`exam-${key}-yanlis`} type="number" min="0" value={data.yanlis} onChange={(e) => handleSubjectChange(key, 'yanlis', e.target.value)} className="w-full px-3 py-2 rounded-lg border border-gray-200 text-sm font-semibold text-center" style={{ background: color.bg }} />
+                          </div>
+                          <div>
+                            <label htmlFor={`exam-${key}-bos`} className="text-xs font-semibold mb-1 block" style={{ color: config.secondary_action_color }}>Boş</label>
+                            <input id={`exam-${key}-bos`} type="number" min="0" value={data.bos} onChange={(e) => handleSubjectChange(key, 'bos', e.target.value)} className="w-full px-3 py-2 rounded-lg border border-gray-200 text-sm font-semibold text-center" style={{ background: color.bg }} />
+                          </div>
+                        </div>
+                        <div className="text-center py-3 rounded-lg" style={{ background: color.bg }}>
+                          <p className="text-xs font-semibold mb-1" style={{ color: config.secondary_action_color }}>NET</p>
+                          <p className="text-2xl font-extrabold" style={{ color: color.text }}>{net}</p>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+
+                <div className="flex gap-3 mb-12">
+                  <button type="submit" className="flex-1 px-6 py-3.5 rounded-xl text-white text-base font-semibold transition-all hover:shadow-lg flex items-center justify-center gap-2" style={{ background: config.primary_action_color }}>
+                    <Icons.Check size={20} /> Denemeyi Kaydet
+                  </button>
+                  <button type="button" onClick={handleReset} className="px-6 py-3.5 rounded-xl border border-gray-300 text-sm font-semibold transition-colors hover:bg-gray-50" style={{ color: config.secondary_action_color }}>Formu Temizle</button>
+                </div>
+              </>
+            )}
+          </form>
+        </div>
+      </div>
+
+      {selectedStudentId && (
+        <div>
+          <h2 className="text-2xl font-bold mb-6" style={{ color: config.text_color }}>Daha Önce Girilen Denemeler</h2>
+          
+          {studentExams.length === 0 ? (
+            <div className="text-center py-12 rounded-2xl border-2 border-dashed border-gray-300">
+              <p className="text-base font-medium" style={{ color: config.secondary_action_color }}>Henüz deneme girilmemiş 📝</p>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+              {studentExams.map((exam) => (
+                <div key={exam.id} className="rounded-2xl border border-gray-100 p-6 card-hover" style={{ background: config.surface_color }}>
+                  <h3 className="text-xl font-bold mb-2" style={{ color: config.text_color }}>{exam.examName}</h3>
+                  <p className="text-sm mb-4" style={{ color: config.secondary_action_color }}>📅 {new Date(exam.date).toLocaleDateString('tr-TR')}</p>
+                  
+                  <div className="rounded-lg p-4 bg-emerald-50 text-center mb-5">
+                    <p className="text-xs font-semibold mb-1" style={{ color: '#059669' }}>TOPLAM NET</p>
+                    <p className="text-2xl font-extrabold text-emerald-600">{exam.totalNet}</p>
+                  </div>
+
+                  <div className="flex gap-2">
+                    <button onClick={() => setDetailModal(exam)} className="flex-1 px-3 py-2.5 rounded-lg text-white text-sm font-semibold transition-all" style={{background: config.primary_action_color}}>Detaylar</button>
+                    <button onClick={() => handleDelete(exam.id)} className="px-3 py-2.5 rounded-lg border border-red-200 text-red-600 hover:bg-red-50 font-semibold text-sm transition-colors">🗑️</button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function AnalysisPage({ config }) {
+  const { students } = useAppData();
+  const [selectedStudentId, setSelectedStudentId] = useState('');
+  const [dateFilter, setDateFilter] = useState('1month');
+  const [examData, setExamData] = useState([]);
+  const [studyData, setStudyData] = useState([]);
+
+  // Debug: öğrencileri kontrol et
+  useEffect(() => {
+    console.log('AnalysisPage - Öğrenciler:', students);
+    const studentsData = JSON.parse(localStorage.getItem('students') || '[]');
+    const studiesData = JSON.parse(localStorage.getItem('studies') || '[]');
+    const examsData = JSON.parse(localStorage.getItem('exams') || '[]');
+    console.log('AnalysisPage - localStorage students:', studentsData);
+    console.log('AnalysisPage - localStorage studies:', studiesData);
+    console.log('AnalysisPage - localStorage exams:', examsData);
+    
+    // Öğrenci ID'lerini kontrol et
+    if (studentsData.length > 0) {
+      console.log('AnalysisPage - İlk öğrenci ID:', studentsData[0].__backendId);
+    }
+    if (studiesData.length > 0) {
+      console.log('AnalysisPage - İlk çalışma student_id:', studiesData[0].student_id);
+    }
+  }, [students]);
+
+  // Sabit renkler
+  const colors = {
+    turkce: '#F59E0B',
+    matematik: '#3B82F6',
+    fen: '#10B981',
+    inkilap: '#8B5CF6',
+    ingilizce: '#EF4444',
+    din: '#EC4899',
+    paragraf: '#92400E',
+  };
+
+  // Tarih filtresine göre veri al
+  useEffect(() => {
+    if (!selectedStudentId) return;
+
+    console.log('AnalysisPage - Seçili öğrenci:', selectedStudentId);
+
+    const now = new Date();
+    let startDate = new Date();
+
+    if (dateFilter === '1month') {
+      startDate.setMonth(now.getMonth() - 1);
+    } else if (dateFilter === '3month') {
+      startDate.setMonth(now.getMonth() - 3);
+    } else {
+      startDate = new Date('2000-01-01');
+    }
+
+    try {
+      const exams = JSON.parse(localStorage.getItem('exams') || '[]') || [];
+      const studies = JSON.parse(localStorage.getItem('studies') || '[]') || [];
+
+      console.log('AnalysisPage - Tüm deneme:', exams);
+      console.log('AnalysisPage - Tüm çalışma:', studies);
+
+      const filtered = {
+        exams: exams.filter(e => {
+          const d = new Date(e.exam_date || e.created_at);
+          return d >= startDate && (e.student_id === selectedStudentId);
+        }),
+        studies: studies.filter(s => {
+          const d = new Date(s.study_date || s.created_at);
+          return d >= startDate && (s.student_id === selectedStudentId);
+        }),
+      };
+
+      setExamData(filtered.exams.sort((a, b) => new Date(a.exam_date || a.created_at) - new Date(b.exam_date || b.created_at)));
+      setStudyData(filtered.studies.sort((a, b) => new Date(a.study_date || a.created_at) - new Date(b.study_date || b.created_at)));
+      
+      console.log('AnalysisPage - Seçili öğrenci ID:', selectedStudentId);
+      console.log('AnalysisPage - Filtrelenen deneme sayısı:', filtered.exams.length);
+      console.log('AnalysisPage - Filtrelenen çalışma sayısı:', filtered.studies.length);
+      console.log('AnalysisPage - Filtrelenen deneme:', filtered.exams);
+      console.log('AnalysisPage - Filtrelenen çalışma:', filtered.studies);
+    } catch (e) {
+      console.error('Data loading error:', e);
+    }
+  }, [selectedStudentId, dateFilter]);
+
+  // Net hesapla
+  const calculateNet = (correct, wrong) => {
+    return (correct - (wrong / 3)).toFixed(2);
+  };
+
+  // Deneme veri işleme
+  const processExamData = useCallback(() => {
+    const processed = examData.map(exam => {
+      // exam_subjects JSON string olabilir
+      let subjects = {};
+      try {
+        if (exam.exam_subjects) {
+          subjects = typeof exam.exam_subjects === 'string' ? JSON.parse(exam.exam_subjects) : exam.exam_subjects;
+        } else if (exam.subjects) {
+          subjects = typeof exam.subjects === 'string' ? JSON.parse(exam.subjects) : exam.subjects;
+        }
+      } catch (e) {
+        console.warn('Failed to parse exam subjects', e, exam);
+      }
+
+      console.log('processExamData - exam:', exam);
+      console.log('processExamData - parsed subjects:', subjects);
+
+      const totalNet = Object.values(subjects).reduce((sum, s) => sum + parseFloat(calculateNet(s?.dogru || 0, s?.yanlis || 0)), 0);
+
+      const result = {
+        date: exam.exam_date ? exam.exam_date.split('T')[0] : exam.created_at.split('T')[0],
+        totalNet,
+        ...Object.fromEntries(
+          Object.entries(colors).map(([key]) => [
+            key,
+            subjects[key] ? parseFloat(calculateNet(subjects[key].dogru || 0, subjects[key].yanlis || 0)) : 0,
+          ])
+        ),
+      };
+      
+      console.log('processExamData - result:', result);
+      return result;
+    });
+    
+    console.log('processExamData - all processed:', processed);
+    return processed;
+  }, [examData, colors, calculateNet]);
+
+  // Günlük çalışma veri işleme
+  const processStudyData = useCallback(() => {
+    const processed = studyData.map(study => {
+      // study_subjects JSON string olabilir
+      let subjects = {};
+      try {
+        if (study.study_subjects) {
+          subjects = typeof study.study_subjects === 'string' ? JSON.parse(study.study_subjects) : study.study_subjects;
+        } else if (study.subjects) {
+          subjects = typeof study.subjects === 'string' ? JSON.parse(study.subjects) : study.subjects;
+        }
+      } catch (e) {
+        console.warn('Failed to parse study subjects', e);
+      }
+
+      return {
+        date: study.study_date ? study.study_date.split('T')[0] : study.created_at.split('T')[0],
+        ...Object.fromEntries(
+          Object.entries(colors).map(([key]) => [
+            key,
+            subjects[key] ? parseFloat(calculateNet(subjects[key].dogru || 0, subjects[key].yanlis || 0)) : 0,
+          ])
+        ),
+      };
+    });
+    
+    console.log('processStudyData - all processed:', processed);
+    return processed;
+  }, [studyData, colors, calculateNet]);
+
+  const processedExams = useMemo(() => processExamData(), [processExamData]);
+  const processedStudies = useMemo(() => processStudyData(), [processStudyData]);
+
+  // Performans kartları verileri
+  const getPerfData = () => {
+    if (processedExams.length === 0) return null;
+
+    const lastExam = processedExams[processedExams.length - 1];
+    const avgNet = (processedExams.reduce((sum, e) => sum + e.totalNet, 0) / processedExams.length).toFixed(2);
+    const maxNet = Math.max(...processedExams.map(e => e.totalNet)).toFixed(2);
+    
+    let change = 0;
+    if (processedExams.length >= 2) {
+      const prevTotal = processedExams[processedExams.length - 2].totalNet;
+      change = (processedExams[processedExams.length - 1].totalNet - prevTotal).toFixed(2);
+    }
+
+    return {
+      lastNet: lastExam.totalNet.toFixed(2),
+      avgNet,
+      maxNet,
+      change,
+    };
+  };
+
+  const perfData = getPerfData();
+
+  return (
+    <div className="max-w-7xl mx-auto px-4 py-8 fade-in">
+      {/* Header */}
+      <div className="mb-8">
+        <h1 className="text-3xl font-extrabold mb-6" style={{ color: config.text_color }}>Öğrenci Analizi</h1>
+
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+          {/* Öğrenci Seçici */}
+          <div>
+            <label htmlFor="student-select" className="block text-sm font-semibold mb-2" style={{ color: config.text_color }}>Öğrenci Seç</label>
+            <select
+              id="student-select"
+              value={selectedStudentId}
+              onChange={(e) => setSelectedStudentId(e.target.value)}
+              className="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-sm"
+              style={{ background: config.surface_color }}
+            >
+              <option value="">-- Öğrenci Seçin --</option>
+              {students.map(s => (
+                <option key={s.__backendId} value={s.__backendId}>{s.student_name} {s.student_surname}</option>
+              ))}
+            </select>
+          </div>
+
+          {/* Tarih Filtreleri */}
+          <div className="md:col-span-2">
+            <label className="block text-sm font-semibold mb-2" style={{ color: config.text_color }}>Zaman Aralığı</label>
+            <div className="flex gap-2">
+              {[
+                { id: '1month', label: 'Son 1 Ay' },
+                { id: '3month', label: 'Son 3 Ay' },
+                { id: 'all', label: 'Tümü' },
+              ].map(btn => (
+                <button
+                  key={btn.id}
+                  onClick={() => setDateFilter(btn.id)}
+                  className={`px-4 py-2.5 rounded-xl text-sm font-semibold transition-all ${
+                    dateFilter === btn.id ? 'text-white shadow-lg' : 'border border-gray-200'
+                  }`}
+                  style={{
+                    background: dateFilter === btn.id ? config.primary_action_color : config.surface_color,
+                    color: dateFilter === btn.id ? 'white' : config.text_color,
+                  }}
+                >
+                  {btn.label}
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Boş durumu göster */}
+      {!selectedStudentId ? (
+        <div className="flex items-center justify-center py-16 rounded-2xl border-2 border-dashed" style={{ borderColor: '#E2E8F0', background: config.surface_color }}>
+          <div className="text-center">
+            <div className="text-5xl mb-4">📊</div>
+            <p className="text-lg font-semibold" style={{ color: config.text_color }}>Lütfen öğrenci seçin</p>
+            <p className="text-sm mt-2" style={{ color: config.secondary_action_color }}>Analiz görmek için yukarıdan bir öğrenci seçiniz</p>
+          </div>
+        </div>
+      ) : (
+        <>
+        {/* Performans Kartları */}
+        {perfData ? (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+          {/* Son Deneme Neti */}
+          <div className="rounded-2xl p-6 shadow-lg" style={{ background: '#EFF6FF', borderLeft: '4px solid #3B82F6' }}>
+            <div className="flex items-start justify-between mb-4">
+              <div>
+                <p className="text-sm font-semibold text-gray-600 mb-2">Son Deneme Neti</p>
+                <p className="text-3xl font-extrabold" style={{ color: '#3B82F6' }}>{perfData.lastNet}</p>
+              </div>
+              <span className="text-3xl">📊</span>
+            </div>
+          </div>
+
+          {/* Ortalama Neti */}
+          <div className="rounded-2xl p-6 shadow-lg" style={{ background: '#ECFDF5', borderLeft: '4px solid #10B981' }}>
+            <div className="flex items-start justify-between mb-4">
+              <div>
+                <p className="text-sm font-semibold text-gray-600 mb-2">Ortalama Deneme Neti</p>
+                <p className="text-3xl font-extrabold" style={{ color: '#10B981' }}>{perfData.avgNet}</p>
+              </div>
+              <span className="text-3xl">📈</span>
+            </div>
+          </div>
+
+          {/* En Yüksek Net */}
+          <div className="rounded-2xl p-6 shadow-lg" style={{ background: '#FFFBEB', borderLeft: '4px solid #F59E0B' }}>
+            <div className="flex items-start justify-between mb-4">
+              <div>
+                <p className="text-sm font-semibold text-gray-600 mb-2">En Yüksek Net</p>
+                <p className="text-3xl font-extrabold" style={{ color: '#F59E0B' }}>{perfData.maxNet}</p>
+              </div>
+              <span className="text-3xl">🏆</span>
+            </div>
+          </div>
+
+          {/* Son 3 Deneme Değişimi */}
+          <div className={`rounded-2xl p-6 shadow-lg border-l-4`} style={{
+            background: parseFloat(perfData.change) >= 0 ? '#ECFDF5' : '#FEE2E2',
+            borderLeftColor: parseFloat(perfData.change) >= 0 ? '#10B981' : '#EF4444',
+          }}>
+            <div className="flex items-start justify-between mb-4">
+              <div>
+                <p className="text-sm font-semibold text-gray-600 mb-2">Son 2 Deneme Farkı</p>
+                <div className="flex items-baseline gap-1">
+                  <p className="text-3xl font-extrabold" style={{ color: parseFloat(perfData.change) >= 0 ? '#10B981' : '#EF4444' }}>
+                    {perfData.change}
+                  </p>
+                  <span className="text-xl">{parseFloat(perfData.change) >= 0 ? '↗️' : '↘️'}</span>
+                </div>
+              </div>
+              <span className="text-3xl">{parseFloat(perfData.change) >= 0 ? '📈' : '📉'}</span>
+            </div>
+          </div>
+        </div>
+      ) : (
+        <div className="rounded-2xl p-8 text-center mb-8" style={{ background: config.surface_color }}>
+          <p className="text-lg" style={{ color: config.secondary_action_color }}>Bu öğrenci için henüz deneme verisi yok 📊</p>
+        </div>
+      )}
+
+      {/* Ana Grafikler */}
+      {processedExams.length > 0 && (
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+          {/* Deneme Bazlı Net Gelişimi */}
+          <div className="rounded-2xl p-6 shadow-lg" style={{ background: config.surface_color }}>
+            <h3 className="text-lg font-bold mb-4" style={{ color: config.text_color }}>Deneme Bazlı Net Gelişimi</h3>
+            <svg width="100%" height="280" viewBox="0 0 500 280" preserveAspectRatio="xMidYMid meet">
+              {/* Grid çizgileri */}
+              {[0, 1, 2, 3, 4].map(i => (
+                <line key={`h-${i}`} x1="40" y1={40 + i * 40} x2="480" y2={40 + i * 40} stroke="#E2E8F0" strokeWidth="1" />
+              ))}
+              <line x1="40" y1="40" x2="40" y2="240" stroke="#94A3B8" strokeWidth="2" />
+              <line x1="40" y1="240" x2="480" y2="240" stroke="#94A3B8" strokeWidth="2" />
+              
+              {/* Çizgi grafik */}
+              {processedExams.length > 1 && (
+                <polyline
+                  points={processedExams.map((d, i) => {
+                    const x = 40 + (i / (processedExams.length - 1)) * 440;
+                    const maxNet = Math.max(...processedExams.map(e => e.totalNet), 1);
+                    const y = 240 - (parseFloat(d.totalNet) / maxNet) * 190;
+                    return `${x},${y}`;
+                  }).join(' ')}
+                  fill="none"
+                  stroke="#3B82F6"
+                  strokeWidth="3"
+                />
+              )}
+              
+              {/* Veri noktaları ve etiketler */}
+              {processedExams.map((d, i) => {
+                const x = 40 + (i / (processedExams.length - 1 || 1)) * 440;
+                const maxNet = Math.max(...processedExams.map(e => e.totalNet), 1);
+                const y = 240 - (parseFloat(d.totalNet) / maxNet) * 190;
+                return (
+                  <g key={i}>
+                    <circle cx={x} cy={y} r="4" fill="#3B82F6" />
+                    <text x={x} y={260} textAnchor="middle" fontSize="12" fill={config.text_color} style={{fontWeight: 'bold'}}>
+                      {parseFloat(d.totalNet).toFixed(1)}
+                    </text>
+                  </g>
+                );
+              })}
+            </svg>
+          </div>
+
+          {/* Günlük Çalışma Net Gelişimi */}
+          <div className="rounded-2xl p-6 shadow-lg" style={{ background: config.surface_color }}>
+            <h3 className="text-lg font-bold mb-4" style={{ color: config.text_color }}>Günlük Çalışma Net Gelişimi</h3>
+            {processedStudies.length > 0 ? (
+              <svg width="100%" height="280" viewBox="0 0 500 280" preserveAspectRatio="xMidYMid meet">
+                {/* Grid çizgileri */}
+                {[0, 1, 2, 3, 4].map(i => (
+                  <line key={`h-${i}`} x1="40" y1={40 + i * 40} x2="480" y2={40 + i * 40} stroke="#E2E8F0" strokeWidth="1" />
+                ))}
+                <line x1="40" y1="40" x2="40" y2="240" stroke="#94A3B8" strokeWidth="2" />
+                <line x1="40" y1="240" x2="480" y2="240" stroke="#94A3B8" strokeWidth="2" />
+                
+                {/* Çizgi grafik */}
+                {processedStudies.length > 1 && (
+                  <polyline
+                    points={processedStudies.map((d, i) => {
+                      const x = 40 + (i / (processedStudies.length - 1)) * 440;
+                      const totalDayNets = processedStudies.map(s => ['turkce', 'matematik', 'fen', 'inkilap', 'ingilizce', 'din', 'paragraf'].reduce((sum, key) => sum + (s[key] || 0), 0));
+                      const maxNet = Math.max(...totalDayNets, 1);
+                      const dayTotal = ['turkce', 'matematik', 'fen', 'inkilap', 'ingilizce', 'din', 'paragraf'].reduce((sum, key) => sum + (d[key] || 0), 0);
+                      const y = 240 - (dayTotal / maxNet) * 190;
+                      return `${x},${y}`;
+                    }).join(' ')}
+                    fill="none"
+                    stroke="#10B981"
+                    strokeWidth="3"
+                  />
+                )}
+                
+                {/* Veri noktaları ve etiketler */}
+                {processedStudies.map((d, i) => {
+                  const x = 40 + (i / (processedStudies.length - 1 || 1)) * 440;
+                  const totalDayNets = processedStudies.map(s => ['turkce', 'matematik', 'fen', 'inkilap', 'ingilizce', 'din', 'paragraf'].reduce((sum, key) => sum + (s[key] || 0), 0));
+                  const maxNet = Math.max(...totalDayNets, 1);
+                  const dayTotal = ['turkce', 'matematik', 'fen', 'inkilap', 'ingilizce', 'din', 'paragraf'].reduce((sum, key) => sum + (d[key] || 0), 0);
+                  const y = 240 - (dayTotal / maxNet) * 190;
+                  return (
+                    <g key={i}>
+                      <circle cx={x} cy={y} r="4" fill="#10B981" />
+                      <text x={x} y={260} textAnchor="middle" fontSize="12" fill={config.text_color} style={{fontWeight: 'bold'}}>
+                        {dayTotal.toFixed(1)}
+                      </text>
+                    </g>
+                  );
+                })}
+              </svg>
+            ) : (
+              <div className="h-64 flex items-center justify-center" style={{ background: '#F1F5F9' }}>
+                <p style={{ color: config.secondary_action_color }}>Günlük çalışma verisi yok</p>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* Mini Grafikler - Deneme Bazlı */}
+      {processedExams.length > 0 && (
+        <div className="mb-8">
+          <h3 className="text-xl font-bold mb-4" style={{ color: config.text_color }}>Deneme Bazlı Ders Analizi</h3>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {['turkce', 'matematik', 'fen', 'inkilap', 'ingilizce', 'din'].map(key => {
+              const color = colors[key];
+              const subjectExams = processedExams.map(e => ({ date: e.date, net: parseFloat(e[key] || 0) }));
+              
+              const lastNet = subjectExams[subjectExams.length - 1]?.net || 0;
+              const previousNet = subjectExams.length > 1 ? (subjectExams[subjectExams.length - 2]?.net || 0) : 0;
+              const netChange = lastNet - previousNet;
+              const changeText = netChange > 0 ? `+${netChange.toFixed(1)}` : netChange < 0 ? `${netChange.toFixed(1)}` : '=';
+              const changeColor = netChange > 0 ? '#10B981' : netChange < 0 ? '#EF4444' : '#64748B';
+              
+              // SVG çizgi grafik oluştur
+              const maxNet = Math.max(...subjectExams.map(x => x.net), 1) || 1;
+              const points = subjectExams.map((d, i) => {
+                const x = (i / (subjectExams.length - 1 || 1)) * 280;
+                const y = 60 - (d.net / maxNet) * 50;
+                return `${x},${y}`;
+              }).join(' ');
+
+              return (
+                <div key={key} className="rounded-xl p-4 shadow" style={{ background: config.surface_color }}>
+                  <div className="flex items-center justify-between mb-3">
+                    <h4 className="font-semibold capitalize" style={{ color }}>{key === 'ingilizce' ? 'İngilizce' : key === 'inkilap' ? 'İnkılap' : key === 'turkce' ? 'Türkçe' : key === 'matematik' ? 'Matematik' : key === 'fen' ? 'Fen' : key === 'din' ? 'Din' : 'Paragraf'}</h4>
+                    <span className="text-xs font-bold px-2 py-1 rounded" style={{ background: `${color}20`, color }}>Son: {lastNet.toFixed(1)}</span>
+                  </div>
+                  <svg width="100%" height="100" viewBox="0 0 300 100" style={{ marginBottom: '8px' }}>
+                    {/* Grid çizgileri */}
+                    <line x1="0" y1="60" x2="300" y2="60" stroke="#E2E8F0" strokeWidth="1" />
+                    {/* Çizgi grafik */}
+                    <polyline points={points} fill="none" stroke={color} strokeWidth="2" />
+                    {/* Veri noktaları */}
+                    {subjectExams.map((d, i) => {
+                      const x = (i / (subjectExams.length - 1 || 1)) * 280;
+                      const y = 60 - (d.net / maxNet) * 50;
+                      return (
+                        <g key={i}>
+                          <circle cx={x} cy={y} r="3" fill={color} />
+                          <text x={x} y={80} textAnchor="middle" fontSize="11" fill={color} style={{fontWeight: 'bold'}}>
+                            {d.net.toFixed(1)}
+                          </text>
+                        </g>
+                      );
+                    })}
+                  </svg>
+                  <div className="flex items-center gap-1 text-xs">
+                    <span style={{ color: changeColor }}>{changeText}</span>
+                    <span>{netChange > 0 ? '↗️' : netChange < 0 ? '↘️' : '→'}</span>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
+      {/* Mini Grafikler - Günlük Bazlı */}
+      {processedStudies.length > 0 && (
+        <div>
+          <h3 className="text-xl font-bold mb-4" style={{ color: config.text_color }}>Günlük Çalışma Ders Analizi</h3>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {['turkce', 'matematik', 'fen', 'inkilap', 'ingilizce', 'din', 'paragraf'].map(key => {
+              const color = colors[key];
+              const subjectStudies = processedStudies.map(s => ({ date: s.date, questions: s[key] || 0 }));
+              
+              const lastQuestions = subjectStudies[subjectStudies.length - 1]?.questions || 0;
+              const previousQuestions = subjectStudies.length > 1 ? (subjectStudies[subjectStudies.length - 2]?.questions || 0) : 0;
+              const questionChange = lastQuestions - previousQuestions;
+              const changeText = questionChange > 0 ? `+${questionChange}` : questionChange < 0 ? `${questionChange}` : '=';
+              const changeColor = questionChange > 0 ? '#10B981' : questionChange < 0 ? '#EF4444' : '#64748B';
+              
+              // SVG çizgi grafik oluştur
+              const maxQuestions = Math.max(...subjectStudies.map(x => x.questions), 1) || 1;
+              const points = subjectStudies.map((d, i) => {
+                const x = (i / (subjectStudies.length - 1 || 1)) * 280;
+                const y = 60 - (d.questions / maxQuestions) * 50;
+                return `${x},${y}`;
+              }).join(' ');
+
+              return (
+                <div key={`study-${key}`} className="rounded-xl p-4 shadow" style={{ background: config.surface_color }}>
+                  <div className="flex items-center justify-between mb-3">
+                    <h4 className="font-semibold capitalize" style={{ color }}>{key === 'ingilizce' ? 'İngilizce' : key === 'inkilap' ? 'İnkılap' : key === 'turkce' ? 'Türkçe' : key === 'matematik' ? 'Matematik' : key === 'fen' ? 'Fen' : key === 'din' ? 'Din' : 'Paragraf'}</h4>
+                    <span className="text-xs font-bold px-2 py-1 rounded" style={{ background: `${color}20`, color }}>Son: {lastQuestions}</span>
+                  </div>
+                  <svg width="100%" height="100" viewBox="0 0 300 100" style={{ marginBottom: '8px' }}>
+                    {/* Grid çizgileri */}
+                    <line x1="0" y1="60" x2="300" y2="60" stroke="#E2E8F0" strokeWidth="1" />
+                    {/* Çizgi grafik */}
+                    {subjectStudies.length > 1 && (
+                      <polyline points={points} fill="none" stroke={color} strokeWidth="2" />
+                    )}
+                    {/* Veri noktaları */}
+                    {subjectStudies.map((d, i) => {
+                      const x = (i / (subjectStudies.length - 1 || 1)) * 280;
+                      const y = 60 - (d.questions / maxQuestions) * 50;
+                      return (
+                        <g key={i}>
+                          <circle cx={x} cy={y} r="3" fill={color} />
+                          <text x={x} y={80} textAnchor="middle" fontSize="11" fill={color} style={{fontWeight: 'bold'}}>
+                            {d.questions}
+                          </text>
+                        </g>
+                      );
+                    })}
+                  </svg>
+                  <div className="flex items-center gap-1 text-xs">
+                    <span style={{ color: changeColor }}>{changeText}</span>
+                    <span>{questionChange > 0 ? '↗️' : questionChange < 0 ? '↘️' : '→'}</span>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
+      </>
+      )}
+    </div>
+  );
+}
+
+function DashboardPage({ config }) {
+  const [timeFilter, setTimeFilter] = useState('month');
+  const [studentData, setStudentData] = useState([]);
+  const [examData, setExamData] = useState([]);
+
+  useEffect(() => {
+    try {
+      // localStorage'dan doğrudan al
+      const studentsStr = localStorage.getItem('students');
+      const examsStr = localStorage.getItem('exams');
+      
+      const students = studentsStr ? JSON.parse(studentsStr) : [];
+      const exams = examsStr ? JSON.parse(examsStr) : [];
+      
+      console.log('Dashboard - Students from localStorage:', students);
+      console.log('Dashboard - Exams from localStorage:', exams);
+      
+      setStudentData(students);
+      setExamData(exams);
+    } catch (e) {
+      console.error('Dashboard data load error:', e);
+    }
+  }, []);
+
+  // Tarih filtresine göre denemeler
+  const filteredExams = useMemo(() => {
+    if (!examData || examData.length === 0) return [];
+    
+    const now = new Date();
+    const exams = examData
+      .map(e => {
+        const dateStr = e.exam_date || e.date || new Date().toISOString().split('T')[0];
+        const date = new Date(dateStr);
+        return { ...e, dateObj: date, date: dateStr };
+      })
+      .sort((a, b) => a.dateObj - b.dateObj);
+
+    if (timeFilter === 'week') {
+      const weekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+      return exams.filter(e => e.dateObj >= weekAgo);
+    } else if (timeFilter === 'month') {
+      const monthAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+      return exams.filter(e => e.dateObj >= monthAgo);
+    } else {
+      const threeMonthsAgo = new Date(now.getTime() - 90 * 24 * 60 * 60 * 1000);
+      return exams.filter(e => e.dateObj >= threeMonthsAgo);
+    }
+  }, [examData, timeFilter]);
+
+  // İstatistikler
+  const stats = useMemo(() => {
+    if (!studentData || studentData.length === 0) {
+      return {
+        totalStudents: 0,
+        lastExamAvg: 0,
+        upCount: 0,
+        downCount: 0,
+        allExams: filteredExams,
+        classAvgByExam: [],
+        lastExamBySubject: {},
+        studentStats: []
+      };
+    }
+
+    const allStudentLastExams = studentData.map(student => {
+      const studentExams = (filteredExams || []).filter(e => e.student_id === student.__backendId).sort((a, b) => new Date(a.date || a.exam_date) - new Date(b.date || b.exam_date));
+      if (studentExams.length === 0) return null;
+
+      const lastExam = studentExams[studentExams.length - 1];
+      const prevExam = studentExams.length > 1 ? studentExams[studentExams.length - 2] : null;
+
+      const lastNet = parseFloat(lastExam.exam_total_net || 0);
+      const prevNet = prevExam ? parseFloat(prevExam.exam_total_net || 0) : lastNet;
+      const change = lastNet - prevNet;
+
+      return {
+        student,
+        lastExam,
+        prevExam,
+        lastNet,
+        change,
+        studentExams
+      };
+    }).filter(s => s !== null);
+
+    const upCount = allStudentLastExams.filter(s => s.change > 0).length;
+    const downCount = allStudentLastExams.filter(s => s.change < 0).length;
+
+    // Sınıf ortalaması her deneme için
+    const examMap = {};
+    (filteredExams || []).forEach(exam => {
+      const dateKey = exam.exam_date || exam.date;
+      if (!examMap[dateKey]) {
+        examMap[dateKey] = [];
+      }
+      examMap[dateKey].push(parseFloat(exam.exam_total_net || 0));
+    });
+
+    const classAvgByExam = Object.entries(examMap).map(([date, nets]) => ({
+      date,
+      avg: nets.reduce((a, b) => a + b, 0) / nets.length
+    })).sort((a, b) => new Date(a.date) - new Date(b.date));
+
+    // Son deneme ders ortalamaları
+    const lastExamDates = {};
+    (filteredExams || []).forEach(exam => {
+      if (!lastExamDates[exam.student_id] || new Date(exam.exam_date || exam.date) > new Date(lastExamDates[exam.student_id].exam_date || lastExamDates[exam.student_id].date)) {
+        lastExamDates[exam.student_id] = exam;
+      }
+    });
+
+    const lastExams = Object.values(lastExamDates);
+    const lastExamBySubject = {};
+    ['turkce', 'matematik', 'fen', 'inkilap', 'ingilizce', 'din'].forEach(subject => {
+      const nets = lastExams.map(exam => {
+        let subjects = {};
+        try {
+          subjects = typeof exam.exam_subjects === 'string' ? JSON.parse(exam.exam_subjects) : exam.exam_subjects || {};
+        } catch (e) {}
+        return parseFloat(subjects[subject]?.net || 0) || 0;
+      }).filter(n => n > 0);
+
+      lastExamBySubject[subject] = nets.length > 0 ? (nets.reduce((a, b) => a + b, 0) / nets.length).toFixed(2) : 0;
+    });
+
+    const lastExamAvg = allStudentLastExams.length > 0 ? (allStudentLastExams.reduce((sum, s) => sum + s.lastNet, 0) / allStudentLastExams.length).toFixed(2) : 0;
+
+    return {
+      totalStudents: studentData.length,
+      lastExamAvg,
+      upCount,
+      downCount,
+      allExams: filteredExams,
+      classAvgByExam,
+      lastExamBySubject,
+      studentStats: allStudentLastExams
+    };
+  }, [studentData, filteredExams]);
+
+  // Sıralamalar
+  const rankings = useMemo(() => {
+    const bySubject = {};
+    ['turkce', 'matematik', 'fen', 'inkilap', 'ingilizce', 'din'].forEach(subject => {
+      bySubject[subject] = [];
+    });
+
+    stats.studentStats.forEach(({ student, lastExam }) => {
+      let subjects = {};
+      try {
+        subjects = typeof lastExam.exam_subjects === 'string' ? JSON.parse(lastExam.exam_subjects) : lastExam.exam_subjects || {};
+      } catch (e) {}
+
+      Object.keys(subjects).forEach(subject => {
+        if (bySubject[subject] !== undefined) {
+          bySubject[subject].push({
+            name: student.student_name,
+            net: parseFloat(subjects[subject]?.net || 0) || 0
+          });
+        }
+      });
+    });
+
+    Object.keys(bySubject).forEach(subject => {
+      bySubject[subject].sort((a, b) => b.net - a.net);
+    });
+
+    return bySubject;
+  }, [stats]);
+
+  const subjectNames = {
+    turkce: 'Türkçe',
+    matematik: 'Matematik',
+    fen: 'Fen',
+    inkilap: 'İnkılap',
+    ingilizce: 'İngilizce',
+    din: 'Din'
+  };
+
+  if (studentData.length === 0) {
+    return (
+      <div className="max-w-6xl mx-auto px-4 py-12">
+        <div className="text-center py-20">
+          <p className="text-2xl font-bold mb-2" style={{ color: config.text_color }}>Henüz öğrenci eklenmemiş 👥</p>
+          <p className="text-gray-500">Dashboard verilerini görmek için önce öğrenci ve deneme ekleyin.</p>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="max-w-7xl mx-auto px-4 py-8 fade-in">
+      {/* Başlık ve Filtreler */}
+      <div className="mb-8">
+        <h1 className="text-4xl font-bold mb-6" style={{ color: config.text_color }}>Kontrol Merkezi</h1>
+        
+        <div className="flex gap-3 flex-wrap">
+          {[
+            { label: 'Bu Hafta', value: 'week' },
+            { label: 'Bu Ay', value: 'month' },
+            { label: 'Son 3 Ay', value: 'threeMonths' }
+          ].map(btn => (
+            <button
+              key={btn.value}
+              onClick={() => setTimeFilter(btn.value)}
+              className={`px-6 py-2 rounded-lg font-semibold transition ${
+                timeFilter === btn.value
+                  ? 'text-white'
+                  : 'border-2'
+              }`}
+              style={{
+                background: timeFilter === btn.value ? config.primary_action_color : 'transparent',
+                borderColor: timeFilter === btn.value ? 'transparent' : config.primary_action_color,
+                color: timeFilter === btn.value ? 'white' : config.primary_action_color
+              }}
+            >
+              {btn.label}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* Genel Durum Kartları */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+        {/* Toplam Öğrenci */}
+        <div className="rounded-2xl p-6 shadow-lg text-white" style={{ background: '#3B82F6' }}>
+          <div className="flex justify-between items-start mb-4">
+            <h3 className="text-gray-100 font-semibold">Toplam Öğrenci</h3>
+            <span className="text-3xl">👥</span>
+          </div>
+          <p className="text-5xl font-bold">{stats.totalStudents}</p>
+        </div>
+
+        {/* Son Deneme Ortalaması */}
+        <div className="rounded-2xl p-6 shadow-lg text-white" style={{ background: '#10B981' }}>
+          <div className="flex justify-between items-start mb-4">
+            <h3 className="text-green-100 font-semibold">Son Deneme Ort.</h3>
+            <span className="text-3xl">📊</span>
+          </div>
+          <p className="text-5xl font-bold">{stats.lastExamAvg}</p>
+        </div>
+
+        {/* Yükselişte Olanlar */}
+        <div className="rounded-2xl p-6 shadow-lg text-white" style={{ background: '#10B981' }}>
+          <div className="flex justify-between items-start mb-4">
+            <h3 className="text-green-100 font-semibold">Yükselişte</h3>
+            <span className="text-3xl">↗️</span>
+          </div>
+          <p className="text-5xl font-bold">{stats.upCount}</p>
+        </div>
+
+        {/* Düşüşte Olanlar */}
+        <div className="rounded-2xl p-6 shadow-lg text-white" style={{ background: '#F97316' }}>
+          <div className="flex justify-between items-start mb-4">
+            <h3 className="text-orange-100 font-semibold">Düşüşte</h3>
+            <span className="text-3xl">↘️</span>
+          </div>
+          <p className="text-5xl font-bold">{stats.downCount}</p>
+        </div>
+      </div>
+
+      {/* Grafikler */}
+      {stats.classAvgByExam.length > 0 && (
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
+          {/* Sınıf Ortalama Net Gelişimi */}
+          <div className="rounded-2xl p-6 shadow-lg" style={{ background: config.surface_color }}>
+            <h3 className="text-lg font-bold mb-4" style={{ color: config.text_color }}>Sınıf Ortalama Net Gelişimi</h3>
+            <svg width="100%" height="300" viewBox="0 0 500 300" preserveAspectRatio="xMidYMid meet">
+              {/* Grid çizgileri */}
+              {[0, 1, 2, 3, 4].map(i => (
+                <line key={`h-${i}`} x1="40" y1={40 + i * 50} x2="480" y2={40 + i * 50} stroke="#E2E8F0" strokeWidth="1" />
+              ))}
+              <line x1="40" y1="40" x2="40" y2="290" stroke="#94A3B8" strokeWidth="2" />
+              <line x1="40" y1="290" x2="480" y2="290" stroke="#94A3B8" strokeWidth="2" />
+
+              {/* Çizgi */}
+              {stats.classAvgByExam.length > 1 && (
+                <polyline
+                  points={stats.classAvgByExam.map((d, i) => {
+                    const x = 40 + (i / (stats.classAvgByExam.length - 1)) * 440;
+                    const maxAvg = Math.max(...stats.classAvgByExam.map(e => e.avg), 1);
+                    const y = 290 - (d.avg / maxAvg) * 240;
+                    return `${x},${y}`;
+                  }).join(' ')}
+                  fill="none"
+                  stroke="#3B82F6"
+                  strokeWidth="3"
+                />
+              )}
+
+              {/* Noktalar ve değerler */}
+              {stats.classAvgByExam.map((d, i) => {
+                const x = 40 + (i / (stats.classAvgByExam.length - 1 || 1)) * 440;
+                const maxAvg = Math.max(...stats.classAvgByExam.map(e => e.avg), 1);
+                const y = 290 - (d.avg / maxAvg) * 240;
+                return (
+                  <g key={i}>
+                    <circle cx={x} cy={y} r="4" fill="#3B82F6" />
+                    <text x={x} y={310} textAnchor="middle" fontSize="11" fill={config.text_color} style={{fontWeight: 'bold'}}>
+                      {d.avg.toFixed(1)}
+                    </text>
+                  </g>
+                );
+              })}
+            </svg>
+          </div>
+
+          {/* Son Deneme Ders Ortalamaları - Bar Chart */}
+          <div className="rounded-2xl p-6 shadow-lg" style={{ background: config.surface_color }}>
+            <h3 className="text-lg font-bold mb-4" style={{ color: config.text_color }}>Son Deneme Ders Ortalamaları</h3>
+            <svg width="100%" height="300" viewBox="0 0 500 300" preserveAspectRatio="xMidYMid meet">
+              {/* Grid çizgileri */}
+              {[0, 1, 2, 3, 4].map(i => (
+                <line key={`h-${i}`} x1="40" y1={40 + i * 50} x2="480" y2={40 + i * 50} stroke="#E2E8F0" strokeWidth="1" />
+              ))}
+              <line x1="40" y1="40" x2="40" y2="290" stroke="#94A3B8" strokeWidth="2" />
+              <line x1="40" y1="290" x2="480" y2="290" stroke="#94A3B8" strokeWidth="2" />
+
+              {/* Barlar */}
+              {['turkce', 'matematik', 'fen', 'inkilap', 'ingilizce', 'din'].map((subject, i) => {
+                const maxVal = 30;
+                const val = parseFloat(stats.lastExamBySubject[subject]) || 0;
+                const height = (val / maxVal) * 240;
+                const x = 60 + (i * 70);
+                const colorMap = { turkce: '#EF4444', matematik: '#3B82F6', fen: '#10B981', inkilap: '#F59E0B', ingilizce: '#8B5CF6', din: '#EC4899' };
+                
+                return (
+                  <g key={subject}>
+                    <rect x={x} y={290 - height} width="50" height={height} fill={colorMap[subject]} rx="4" />
+                    <text x={x + 25} y={310} textAnchor="middle" fontSize="10" fill={config.text_color} style={{fontWeight: 'bold'}}>
+                      {subjectNames[subject].substring(0, 3)}
+                    </text>
+                    <text x={x + 25} y={290 - height - 8} textAnchor="middle" fontSize="11" fill={config.text_color} style={{fontWeight: 'bold'}}>
+                      {val}
+                    </text>
+                  </g>
+                );
+              })}
+            </svg>
+          </div>
+        </div>
+      )}
+
+      {/* En İyi 3 / Dikkat Gereken 3 */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
+        {/* En İyi 3 */}
+        <div className="rounded-2xl p-6 shadow-lg" style={{ background: config.surface_color, borderLeft: '5px solid #10B981' }}>
+          <h3 className="text-lg font-bold mb-4" style={{ color: config.text_color }}>En İyi 3 Öğrenci</h3>
+          <div className="space-y-3">
+            {stats.studentStats
+              .sort((a, b) => b.lastNet - a.lastNet)
+              .slice(0, 3)
+              .map((s, i) => (
+                <div key={i} className="flex items-center gap-3 p-3 rounded-lg" style={{ background: '#F0FDF4' }}>
+                  <div className="w-10 h-10 rounded-full flex items-center justify-center font-bold text-white" style={{ background: '#10B981' }}>
+                    {['🥇', '🥈', '🥉'][i]}
+                  </div>
+                  <div className="flex-1">
+                    <p className="font-bold" style={{ color: config.text_color }}>{s.student.student_name}</p>
+                    <p className="text-sm text-gray-500">{s.lastNet.toFixed(2)} net</p>
+                  </div>
+                </div>
+              ))}
+          </div>
+        </div>
+
+        {/* Dikkat Gereken 3 */}
+        <div className="rounded-2xl p-6 shadow-lg" style={{ background: config.surface_color, borderLeft: '5px solid #F97316' }}>
+          <h3 className="text-lg font-bold mb-4" style={{ color: config.text_color }}>Dikkat Gereken 3</h3>
+          <div className="space-y-3">
+            {stats.studentStats
+              .filter(s => s.change < 0)
+              .sort((a, b) => a.change - b.change)
+              .slice(0, 3)
+              .map((s, i) => (
+                <div key={i} className="flex items-center gap-3 p-3 rounded-lg" style={{ background: '#FFF7ED' }}>
+                  <div className="w-10 h-10 rounded-full flex items-center justify-center font-bold text-white" style={{ background: '#F97316' }}>
+                    {i + 1}
+                  </div>
+                  <div className="flex-1">
+                    <p className="font-bold" style={{ color: config.text_color }}>{s.student.student_name}</p>
+                    <p className="text-sm text-red-600">{s.change.toFixed(2)} net</p>
+                  </div>
+                </div>
+              ))}
+          </div>
+        </div>
+      </div>
+
+      {/* Ders Bazlı Sıralamalar */}
+      <div className="mb-8">
+        <h3 className="text-xl font-bold mb-4" style={{ color: config.text_color }}>Ders Bazlı Sıralamalar</h3>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          {Object.entries(rankings).map(([subject, students]) => (
+            <div key={subject} className="rounded-xl p-4 shadow" style={{ background: config.surface_color }}>
+              <h4 className="font-bold mb-3" style={{ color: config.text_color }}>En İyi {subjectNames[subject]}</h4>
+              <div className="space-y-2">
+                {students.slice(0, 3).map((s, i) => (
+                  <div key={i} className="flex justify-between items-center p-2 text-sm" style={{ background: '#F1F5F9', borderRadius: '6px' }}>
+                    <span style={{ color: config.text_color }}>{i + 1}. {s.name}</span>
+                    <span className="font-bold" style={{ color: config.primary_action_color }}>{s.net.toFixed(1)}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function LoginPage({ onLogin, config }) {
+  const [password, setPassword] = useState('');
+  const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
+
+  const correctPassword = '1234'; // Şifreyi buraya yazın
+
+  const handleLogin = (e) => {
+    e.preventDefault();
+    setError('');
+    setLoading(true);
+
+    // Şifreyi kontrol et
+    if (password === correctPassword) {
+      localStorage.setItem('appAuthenticated', 'true');
+      onLogin();
+    } else {
+      setError('❌ Şifre hatalı. Lütfen tekrar deneyin.');
+      setPassword('');
+    }
+
+    setLoading(false);
+  };
+
+  return (
+    <div className="h-full w-full flex items-center justify-center" style={{ background: config.background_color }}>
+      <div className="rounded-3xl shadow-2xl p-10 max-w-md w-full mx-4 fade-in border border-gray-100" style={{ background: config.surface_color }}>
+        <div className="text-center mb-8">
+          <div className="text-5xl mb-4">🔐</div>
+          <h1 className="text-3xl font-extrabold mb-2" style={{ color: config.text_color }}>
+            {config.app_title}
+          </h1>
+          <p className="text-sm" style={{ color: config.secondary_action_color }}>
+            Giriş yapmak için şifreyi girin
+          </p>
+        </div>
+
+        <form onSubmit={handleLogin} className="space-y-4">
+          <div>
+            <label className="block text-sm font-semibold mb-2" style={{ color: config.text_color }}>
+              Şifre
+            </label>
+            <input
+              type="password"
+              value={password}
+              onChange={(e) => {
+                setPassword(e.target.value);
+                setError('');
+              }}
+              placeholder="••••••"
+              className="w-full px-4 py-3 rounded-xl border-2 border-gray-200 text-sm font-medium transition-all focus:border-blue-500"
+              style={{ color: config.text_color }}
+              autoFocus
+            />
+          </div>
+
+          {error && (
+            <div className="p-3 rounded-lg bg-red-50 border border-red-200">
+              <p className="text-sm text-red-600 font-medium">{error}</p>
+            </div>
+          )}
+
+          <button
+            type="submit"
+            disabled={loading}
+            className="w-full px-4 py-3 rounded-xl text-white text-base font-semibold transition-all hover:shadow-lg disabled:opacity-50"
+            style={{ background: config.primary_action_color }}
+          >
+            {loading ? '⏳ Kontrol ediliyor...' : '✓ Giriş Yap'}
+          </button>
+        </form>
+
+        <div className="mt-8 pt-6 border-t border-gray-200 text-center">
+          <p className="text-xs" style={{ color: config.secondary_action_color }}>
+            © 2024 {config.app_title}
+          </p>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function App() {
+  const { route, navigate } = useRouter();
+  const config = useConfig();
+  const [isAuthenticated, setIsAuthenticated] = useState(() => {
+    return localStorage.getItem('appAuthenticated') === 'true';
   });
 
-  async function listele() {
-    ogrenciListesi.innerHTML = "";
-    const querySnapshot = await getDocs(collection(db, "ogrenciler"));
-    querySnapshot.forEach((doc) => {
-      const li = document.createElement("li");
-      li.textContent = doc.data().ad;
-      ogrenciListesi.appendChild(li);
+  const handleLogin = () => {
+    setIsAuthenticated(true);
+  };
+
+  const handleLogout = () => {
+    localStorage.removeItem('appAuthenticated');
+    setIsAuthenticated(false);
+  };
+
+  if (!isAuthenticated) {
+    return <LoginPage onLogin={handleLogin} config={config} />;
+  }
+
+  const fontStack = `${config.font_family}, 'Plus Jakarta Sans', sans-serif`;
+  const baseFontSize = config.font_size || 16;
+
+  const renderPage = () => {
+    switch(route) {
+      case 'ogrenciler': return <StudentsPage config={config}/>;
+      case 'gunluk-calisma': return <StudyPage config={config}/>;
+      case 'deneme-girisi': return <ExamPage config={config}/>;
+      case 'analiz': return <AnalysisPage config={config}/>;
+      case 'dashboard': return <DashboardPage config={config}/>;
+      default: return <HomePage navigate={navigate} config={config}/>;
+    }
+  };
+
+  return (
+    <div className="h-full w-full flex flex-col overflow-auto" style={{ background: config.background_color, fontFamily: fontStack, fontSize: `${baseFontSize}px` }}>
+      <Header route={route} navigate={navigate} config={config} onLogout={handleLogout}/>
+      <main className="flex-1">
+        {renderPage()}
+      </main>
+      <footer className="text-center py-4 border-t border-gray-100" style={{background: config.surface_color}}>
+        <p className="text-xs" style={{color: config.secondary_action_color}}>© 2024 {config.app_title}</p>
+      </footer>
+    </div>
+  );
+}
+
+(async function init() {
+  const dataHandler = {
+    onDataChanged(data) {
+      notifyDataChange(data);
+    }
+  };
+  const dataResult = await window.dataSdk.init(dataHandler);
+  if (!dataResult.isOk) {
+    console.error('Data SDK init failed');
+  }
+
+  if (window.elementSdk) {
+    window.elementSdk.init({
+      defaultConfig,
+      onConfigChange: async (config) => {
+        notifyConfigChange(config);
+        const fontStack = `${config.font_family || defaultConfig.font_family}, 'Plus Jakarta Sans', sans-serif`;
+        const baseSize = config.font_size || defaultConfig.font_size;
+        document.body.style.fontFamily = fontStack;
+        document.body.style.fontSize = `${baseSize}px`;
+        const wrapper = document.getElementById('root');
+        if (wrapper) wrapper.style.background = config.background_color || defaultConfig.background_color;
+      },
+      mapToCapabilities: (config) => ({
+        recolorables: [
+          { get: () => config.background_color || defaultConfig.background_color, set: (v) => { config.background_color = v; window.elementSdk.setConfig({ background_color: v }); } },
+          { get: () => config.surface_color || defaultConfig.surface_color, set: (v) => { config.surface_color = v; window.elementSdk.setConfig({ surface_color: v }); } },
+          { get: () => config.text_color || defaultConfig.text_color, set: (v) => { config.text_color = v; window.elementSdk.setConfig({ text_color: v }); } },
+          { get: () => config.primary_action_color || defaultConfig.primary_action_color, set: (v) => { config.primary_action_color = v; window.elementSdk.setConfig({ primary_action_color: v }); } },
+          { get: () => config.secondary_action_color || defaultConfig.secondary_action_color, set: (v) => { config.secondary_action_color = v; window.elementSdk.setConfig({ secondary_action_color: v }); } },
+        ],
+        borderables: [],
+        fontEditable: {
+          get: () => config.font_family || defaultConfig.font_family,
+          set: (v) => { config.font_family = v; window.elementSdk.setConfig({ font_family: v }); }
+        },
+        fontSizeable: {
+          get: () => config.font_size || defaultConfig.font_size,
+          set: (v) => { config.font_size = v; window.elementSdk.setConfig({ font_size: v }); }
+        },
+      }),
+      mapToEditPanelValues: (config) => new Map([
+        ['app_title', config.app_title || defaultConfig.app_title],
+        ['welcome_title', config.welcome_title || defaultConfig.welcome_title],
+        ['welcome_subtitle', config.welcome_subtitle || defaultConfig.welcome_subtitle],
+      ]),
     });
   }
 
-  // Sayfa yüklendiğinde listeyi getir
-  listele();
+  ReactDOM.createRoot(document.getElementById('root')).render(React.createElement(App));
+})();
 </script>
-
-</body>
+ <script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'9cd4782951cbe206',t:'MTc3MDk4NzIxNC4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
 </html>
