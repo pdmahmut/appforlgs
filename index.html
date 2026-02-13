@@ -2164,3 +2164,76 @@ function App() {
 </script>
  <script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'9cd4782951cbe206',t:'MTc3MDk4NzIxNC4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
 </html>
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>App for LGS</title>
+  <style>
+    body { font-family: Arial, sans-serif; padding: 20px; }
+    input, button { padding: 5px; margin: 5px; }
+  </style>
+</head>
+<body>
+
+<h1>Öğrenci Takip Uygulaması</h1>
+
+<div>
+  <input type="text" id="ogrenciAd" placeholder="Öğrenci adı">
+  <button id="ekleBtn">Öğrenci Ekle</button>
+</div>
+
+<ul id="ogrenciListesi"></ul>
+
+<!-- Firebase Bağlantısı -->
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+  import { getFirestore, collection, addDoc, getDocs } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+  import { getAnalytics } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-analytics.js";
+
+  // 🔹 Senin Firebase config kodun
+  const firebaseConfig = {
+    apiKey: "AIzaSyD0c_tWvaOD1yk7KtmKAVIbKRqNNxkV5po",
+    authDomain: "appforlgs.firebaseapp.com",
+    projectId: "appforlgs",
+    storageBucket: "appforlgs.firebasestorage.app",
+    messagingSenderId: "450937203696",
+    appId: "1:450937203696:web:20b50a85b975fea8400b35",
+    measurementId: "G-ZVTYPD1XX1"
+  };
+
+  // Firebase başlat
+  const app = initializeApp(firebaseConfig);
+  const db = getFirestore(app);
+  const analytics = getAnalytics(app);
+
+  console.log("Firebase bağlandı");
+
+  // Öğrenci ekleme ve listeleme
+  const ekleBtn = document.getElementById("ekleBtn");
+  const ogrenciAdInput = document.getElementById("ogrenciAd");
+  const ogrenciListesi = document.getElementById("ogrenciListesi");
+
+  ekleBtn.addEventListener("click", async () => {
+    const ad = ogrenciAdInput.value.trim();
+    if (!ad) return alert("Öğrenci adı girin!");
+    await addDoc(collection(db, "ogrenciler"), { ad });
+    ogrenciAdInput.value = "";
+    listele();
+  });
+
+  async function listele() {
+    ogrenciListesi.innerHTML = "";
+    const querySnapshot = await getDocs(collection(db, "ogrenciler"));
+    querySnapshot.forEach((doc) => {
+      const li = document.createElement("li");
+      li.textContent = doc.data().ad;
+      ogrenciListesi.appendChild(li);
+    });
+  }
+
+  listele();
+</script>
+
+</body>
+</html>
