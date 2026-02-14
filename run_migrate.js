@@ -1,14 +1,14 @@
 const fs = require('fs');
 const path = require('path');
 const { Client } = require('pg');
+require('dotenv').config({ path: path.join(__dirname, '.env.local') });
 
 function readConnectionString() {
-  const txtPath = path.join(__dirname, 'supabase.txt');
-  if (!fs.existsSync(txtPath)) throw new Error('supabase.txt not found in project root');
-  const txt = fs.readFileSync(txtPath, 'utf8');
-  const m = txt.match(/postgresql:\/\/[^\s]+/m);
-  if (!m) throw new Error('No postgresql connection string found in supabase.txt');
-  return m[0].trim();
+  const connStr = process.env.DATABASE_URL;
+  if (!connStr) {
+    throw new Error('DATABASE_URL not found in .env.local');
+  }
+  return connStr;
 }
 
 async function run() {

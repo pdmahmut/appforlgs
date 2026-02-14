@@ -1,251 +1,354 @@
-// Data SDK - Veri yönetim sistemi
-window.dataSdk = {
-  // Bellekte saklanan veriler
-  _store: [],
-  _nextId: 1,
+// Data SDK - Supabase tabanlı veri yönetimi
+(function initDataSdk() {
+  const SUPABASE_URL =
+    (window.__APP_CONFIG && window.__APP_CONFIG.SUPABASE_URL) ||
+    'https://mnwxfknxkwwurrevmlri.supabase.co';
+  const SUPABASE_ANON_KEY =
+    (window.__APP_CONFIG && window.__APP_CONFIG.SUPABASE_ANON_KEY) ||
+    'sb_publishable_qci3p2BNw3oqVNwd4Fhq9A_pgwOZrpc';
 
-  /**
-   * Yeni kayıt oluştur
-   */
-  async create(data) {
-    try {
-      const record = {
-        ...data,
-        __backendId: `${data.type}-${this._nextId++}`,
-        __createdAt: new Date().toISOString(),
-      };
-      this._store.push(record);
-
-      // localStorage'a kayıt tipine göre ekle
-      if (data.type === 'exam') {
-        const exams = this._getExamsFromStorage();
-        exams.push(record);
-        localStorage.setItem('exams', JSON.stringify(exams));
-      } else if (data.type === 'study') {
-        const studies = this._getStudiesFromStorage();
-        studies.push(record);
-        localStorage.setItem('studies', JSON.stringify(studies));
-      } else if (data.type === 'student') {
-        const students = this._getStudentsFromStorage();
-        students.push(record);
-        localStorage.setItem('students', JSON.stringify(students));
-      }
-
-      // HTML'deki global notifyDataChange fonksiyonunu çağır
-      if (typeof window.notifyDataChange === 'function') {
-        window.notifyDataChange(this._store);
-      }
-
-      return { isOk: true, data: record };
-    } catch (error) {
-      console.error('Create error:', error);
-      return { isOk: false, error: error.message };
-    }
-  },
-
-  /**
-   * Kaydı güncelle
-   */
-  async update(data) {
-    try {
-      const idx = this._store.findIndex(r => r.__backendId === data.__backendId);
-      if (idx === -1) {
-        return { isOk: false, error: 'Record not found' };
-      }
-      
-      this._store[idx] = {
-        ...this._store[idx],
-        ...data,
-        __updatedAt: new Date().toISOString(),
-      };
-
-      // localStorage'ı güncelle
-      if (data.type === 'exam') {
-        const exams = this._getExamsFromStorage();
-        const examIdx = exams.findIndex(e => e.__backendId === data.__backendId);
-        if (examIdx !== -1) exams[examIdx] = this._store[idx];
-        localStorage.setItem('exams', JSON.stringify(exams));
-      } else if (data.type === 'study') {
-        const studies = this._getStudiesFromStorage();
-        const studyIdx = studies.findIndex(s => s.__backendId === data.__backendId);
-        if (studyIdx !== -1) studies[studyIdx] = this._store[idx];
-        localStorage.setItem('studies', JSON.stringify(studies));
-      } else if (data.type === 'student') {
-        const students = this._getStudentsFromStorage();
-        const studentIdx = students.findIndex(s => s.__backendId === data.__backendId);
-        if (studentIdx !== -1) students[studentIdx] = this._store[idx];
-        localStorage.setItem('students', JSON.stringify(students));
-      }
-
-      // HTML'deki global notifyDataChange fonksiyonunu çağır
-      if (typeof window.notifyDataChange === 'function') {
-        window.notifyDataChange(this._store);
-      }
-
-      return { isOk: true, data: this._store[idx] };
-    } catch (error) {
-      console.error('Update error:', error);
-      return { isOk: false, error: error.message };
-    }
-  },
-
-  /**
-   * Kaydı sil
-   */
-  async delete(record) {
-    try {
-      const idx = this._store.findIndex(r => r.__backendId === record.__backendId);
-      if (idx === -1) {
-        return { isOk: false, error: 'Record not found' };
-      }
-
-      const deleted = this._store.splice(idx, 1)[0];
-
-      // localStorage'dan sil
-      if (record.type === 'exam') {
-        const exams = this._getExamsFromStorage().filter(e => e.__backendId !== record.__backendId);
-        localStorage.setItem('exams', JSON.stringify(exams));
-      } else if (record.type === 'study') {
-        const studies = this._getStudiesFromStorage().filter(s => s.__backendId !== record.__backendId);
-        localStorage.setItem('studies', JSON.stringify(studies));
-      } else if (record.type === 'student') {
-        const students = this._getStudentsFromStorage().filter(s => s.__backendId !== record.__backendId);
-        localStorage.setItem('students', JSON.stringify(students));
-      }
-
-      // HTML'deki global notifyDataChange fonksiyonunu çağır
-      if (typeof window.notifyDataChange === 'function') {
-        window.notifyDataChange(this._store);
-      }
-
-      return { isOk: true, data: deleted };
-    } catch (error) {
-      console.error('Delete error:', error);
-      return { isOk: false, error: error.message };
-    }
-  },
-
-  /**
-   * localStorage'dan öğrencileri al
-   */
-  _getStudentsFromStorage() {
-    try {
-      const stored = localStorage.getItem('students');
-      return stored ? JSON.parse(stored) : [];
-    } catch {
-      return [];
-    }
-  },
-
-  /**
-   * localStorage'dan sınavları al
-   */
-  _getExamsFromStorage() {
-    try {
-      const stored = localStorage.getItem('exams');
-      return stored ? JSON.parse(stored) : [];
-    } catch {
-      return [];
-    }
-  },
-
-  /**
-   * localStorage'dan çalışmaları al
-   */
-  _getStudiesFromStorage() {
-    try {
-      const stored = localStorage.getItem('studies');
-      return stored ? JSON.parse(stored) : [];
-    } catch {
-      return [];
-    }
-  },
-
-  /**
-   * Tüm verileri al
-   */
-  getAll() {
-    return this._store;
-  },
-
-  /**
-   * Tipe göre verileri al
-   */
-  getByType(type) {
-    if (type === 'student') {
-      return this._getStudentsFromStorage();
-    } else if (type === 'exam') {
-      return this._getExamsFromStorage();
-    } else if (type === 'study') {
-      return this._getStudiesFromStorage();
-    }
-    return [];
-  },
-
-  /**
-   * Depoyu başlat (localStorage'dan yükle)
-   */
-  async initialize() {
-    try {
-      const students = this._getStudentsFromStorage();
-      const exams = this._getExamsFromStorage();
-      const studies = this._getStudiesFromStorage();
-
-      this._store = [...students, ...exams, ...studies];
-      
-      // Maksimum ID'yi güncelle
-      if (this._store.length > 0) {
-        const ids = this._store
-          .map(r => {
-            const match = r.__backendId?.match(/-(\d+)$/);
-            return match ? parseInt(match[1]) : 0;
-          })
-          .filter(id => id > 0);
-        this._nextId = Math.max(...ids) + 1;
-      }
-
-      // HTML'deki global notifyDataChange fonksiyonunu çağır
-      if (typeof window.notifyDataChange === 'function') {
-        window.notifyDataChange(this._store);
-      }
-
-      return { isOk: true };
-    } catch (error) {
-      console.error('Initialize error:', error);
-      return { isOk: false, error: error.message };
-    }
-  },
-
-  /**
-   * HTML tarafından çağrılan init fonksiyonu
-   */
-  async init(dataHandler) {
-    try {
-      if (dataHandler && dataHandler.onDataChanged) {
-        // dataHandler'ı kaydet
-        this._dataHandler = dataHandler;
-      }
-      
-      // initialize'ı çağır
-      const result = await this.initialize();
-      
-      return { isOk: result.isOk };
-    } catch (error) {
-      console.error('Init error:', error);
-      return { isOk: false, error: error.message };
-    }
+  function createBackendId(prefix) {
+    const rand = Math.random().toString(36).slice(2, 10);
+    return `${prefix}-${Date.now()}-${rand}`;
   }
-};
 
-// Başlatmadan önce biraz bekle (HTML'nin fonksiyonları tanımlaması için)
-if (document.readyState === 'loading') {
-  document.addEventListener('DOMContentLoaded', () => {
-    window.dataSdk.initialize().then(() => {
-      console.log('Data SDK initialized');
-    });
-  });
-} else {
-  window.dataSdk.initialize().then(() => {
-    console.log('Data SDK initialized');
-  });
-}
+  function safeJson(value) {
+    if (value == null) return null;
+    if (typeof value === 'string') {
+      try {
+        return JSON.parse(value);
+      } catch {
+        return null;
+      }
+    }
+    return value;
+  }
+
+  function mapRowToRecord(type, row) {
+    if (!row) return null;
+    if (type === 'student') {
+      return {
+        type,
+        __backendId: row.backend_id || String(row.id),
+        student_name: row.student_name,
+        student_surname: row.student_surname,
+        student_number: row.student_number,
+        created_at: row.created_at,
+      };
+    }
+    if (type === 'study') {
+      return {
+        type,
+        __backendId: row.backend_id || String(row.id),
+        student_id: row.student_backend_id,
+        study_date: row.study_date,
+        study_subjects: row.study_subjects,
+        study_total_net: row.study_total_net,
+        created_at: row.created_at,
+      };
+    }
+    if (type === 'exam') {
+      return {
+        type,
+        __backendId: row.backend_id || String(row.id),
+        student_id: row.student_backend_id,
+        exam_name: row.exam_name,
+        exam_date: row.exam_date,
+        exam_subjects: row.exam_subjects,
+        exam_total_net: row.exam_total_net,
+        defined_exam_id: row.defined_exam_id,
+        created_at: row.created_at,
+      };
+    }
+    if (type === 'defined_exam') {
+      return {
+        type,
+        __backendId: String(row.id),
+        name: row.name,
+        exam_date: row.exam_date,
+        created_at: row.created_at,
+      };
+    }
+    return null;
+  }
+
+  window.dataSdk = {
+    _store: [],
+    _supabase: null,
+    _dataHandler: null,
+
+    _notify() {
+      const snapshot = [...this._store];
+      if (this._dataHandler && typeof this._dataHandler.onDataChanged === 'function') {
+        this._dataHandler.onDataChanged(snapshot);
+      }
+      if (typeof window.notifyDataChange === 'function') {
+        window.notifyDataChange(snapshot);
+      }
+    },
+
+    async init(dataHandler) {
+      this._dataHandler = dataHandler || null;
+      if (!window.supabase || !window.supabase.createClient) {
+        return { isOk: false, error: 'Supabase client not loaded' };
+      }
+      this._supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+      return this.initialize();
+    },
+
+    async initialize() {
+      try {
+        const client = this._supabase;
+        if (!client) return { isOk: false, error: 'Supabase client missing' };
+
+        const [studentsRes, studiesRes, examsRes, definedRes] = await Promise.all([
+          client.from('students').select('*'),
+          client.from('studies').select('*'),
+          client.from('exams').select('*'),
+          client.from('defined_exams').select('*'),
+        ]);
+
+        if (studentsRes.error || studiesRes.error || examsRes.error || definedRes.error) {
+          const error =
+            studentsRes.error || studiesRes.error || examsRes.error || definedRes.error;
+          return { isOk: false, error: error.message };
+        }
+
+        const students = (studentsRes.data || []).map((r) => mapRowToRecord('student', r));
+        const studies = (studiesRes.data || []).map((r) => mapRowToRecord('study', r));
+        const exams = (examsRes.data || []).map((r) => mapRowToRecord('exam', r));
+        const definedExams = (definedRes.data || []).map((r) => mapRowToRecord('defined_exam', r));
+
+        this._store = [...students, ...studies, ...exams, ...definedExams].filter(Boolean);
+        this._notify();
+        return { isOk: true };
+      } catch (error) {
+        console.error('Initialize error:', error);
+        return { isOk: false, error: error.message };
+      }
+    },
+
+    async create(data) {
+      try {
+        const client = this._supabase;
+        if (!client) return { isOk: false, error: 'Supabase client missing' };
+        if (!data || !data.type) return { isOk: false, error: 'Missing type' };
+
+        if (data.type === 'student') {
+          const backendId = data.__backendId || createBackendId('student');
+          const payload = {
+            backend_id: backendId,
+            student_name: data.student_name,
+            student_surname: data.student_surname,
+            student_number: data.student_number || null,
+            created_at: data.created_at || new Date().toISOString(),
+          };
+          const res = await client.from('students').insert(payload).select('*').single();
+          if (res.error) throw res.error;
+          const record = mapRowToRecord('student', res.data);
+          this._store.push(record);
+          this._notify();
+          return { isOk: true, data: record };
+        }
+
+        if (data.type === 'study') {
+          const backendId = data.__backendId || createBackendId('study');
+          const payload = {
+            backend_id: backendId,
+            student_backend_id: data.student_id || data.student_backend_id || null,
+            study_date: data.study_date || null,
+            study_subjects: safeJson(data.study_subjects),
+            study_total_net: data.study_total_net || null,
+            created_at: data.created_at || new Date().toISOString(),
+          };
+          const res = await client.from('studies').insert(payload).select('*').single();
+          if (res.error) throw res.error;
+          const record = mapRowToRecord('study', res.data);
+          this._store.push(record);
+          this._notify();
+          return { isOk: true, data: record };
+        }
+
+        if (data.type === 'exam') {
+          const backendId = data.__backendId || createBackendId('exam');
+          const payload = {
+            backend_id: backendId,
+            student_backend_id: data.student_id || data.student_backend_id || null,
+            exam_name: data.exam_name || null,
+            exam_date: data.exam_date || null,
+            exam_subjects: safeJson(data.exam_subjects),
+            exam_total_net: data.exam_total_net || null,
+            defined_exam_id: data.defined_exam_id || null,
+            created_at: data.created_at || new Date().toISOString(),
+          };
+          const res = await client.from('exams').insert(payload).select('*').single();
+          if (res.error) throw res.error;
+          const record = mapRowToRecord('exam', res.data);
+          this._store.push(record);
+          this._notify();
+          return { isOk: true, data: record };
+        }
+
+        if (data.type === 'defined_exam') {
+          const payload = {
+            name: data.name,
+            exam_date: data.exam_date || null,
+            created_at: data.created_at || new Date().toISOString(),
+          };
+          const res = await client.from('defined_exams').insert(payload).select('*').single();
+          if (res.error) throw res.error;
+          const record = mapRowToRecord('defined_exam', res.data);
+          this._store.push(record);
+          this._notify();
+          return { isOk: true, data: record };
+        }
+
+        return { isOk: false, error: 'Unknown type' };
+      } catch (error) {
+        console.error('Create error:', error);
+        return { isOk: false, error: error.message };
+      }
+    },
+
+    async update(data) {
+      try {
+        const client = this._supabase;
+        if (!client) return { isOk: false, error: 'Supabase client missing' };
+        if (!data || !data.type) return { isOk: false, error: 'Missing type' };
+
+        if (data.type === 'student') {
+          const payload = {
+            student_name: data.student_name,
+            student_surname: data.student_surname,
+            student_number: data.student_number || null,
+          };
+          const res = await client
+            .from('students')
+            .update(payload)
+            .eq('backend_id', data.__backendId)
+            .select('*')
+            .single();
+          if (res.error) throw res.error;
+          const record = mapRowToRecord('student', res.data);
+          this._store = this._store.map((r) =>
+            r.__backendId === record.__backendId && r.type === 'student' ? record : r
+          );
+          this._notify();
+          return { isOk: true, data: record };
+        }
+
+        if (data.type === 'study') {
+          const payload = {
+            student_backend_id: data.student_id || data.student_backend_id || null,
+            study_date: data.study_date || null,
+            study_subjects: safeJson(data.study_subjects),
+            study_total_net: data.study_total_net || null,
+          };
+          const res = await client
+            .from('studies')
+            .update(payload)
+            .eq('backend_id', data.__backendId)
+            .select('*')
+            .single();
+          if (res.error) throw res.error;
+          const record = mapRowToRecord('study', res.data);
+          this._store = this._store.map((r) =>
+            r.__backendId === record.__backendId && r.type === 'study' ? record : r
+          );
+          this._notify();
+          return { isOk: true, data: record };
+        }
+
+        if (data.type === 'exam') {
+          const payload = {
+            student_backend_id: data.student_id || data.student_backend_id || null,
+            exam_name: data.exam_name || null,
+            exam_date: data.exam_date || null,
+            exam_subjects: safeJson(data.exam_subjects),
+            exam_total_net: data.exam_total_net || null,
+            defined_exam_id: data.defined_exam_id || null,
+          };
+          const res = await client
+            .from('exams')
+            .update(payload)
+            .eq('backend_id', data.__backendId)
+            .select('*')
+            .single();
+          if (res.error) throw res.error;
+          const record = mapRowToRecord('exam', res.data);
+          this._store = this._store.map((r) =>
+            r.__backendId === record.__backendId && r.type === 'exam' ? record : r
+          );
+          this._notify();
+          return { isOk: true, data: record };
+        }
+
+        if (data.type === 'defined_exam') {
+          const payload = {
+            name: data.name,
+            exam_date: data.exam_date || null,
+          };
+          const res = await client
+            .from('defined_exams')
+            .update(payload)
+            .eq('id', Number(data.__backendId))
+            .select('*')
+            .single();
+          if (res.error) throw res.error;
+          const record = mapRowToRecord('defined_exam', res.data);
+          this._store = this._store.map((r) =>
+            r.__backendId === record.__backendId && r.type === 'defined_exam' ? record : r
+          );
+          this._notify();
+          return { isOk: true, data: record };
+        }
+
+        return { isOk: false, error: 'Unknown type' };
+      } catch (error) {
+        console.error('Update error:', error);
+        return { isOk: false, error: error.message };
+      }
+    },
+
+    async delete(record) {
+      try {
+        const client = this._supabase;
+        if (!client) return { isOk: false, error: 'Supabase client missing' };
+        if (!record || !record.type) return { isOk: false, error: 'Missing type' };
+
+        if (record.type === 'student') {
+          const res = await client.from('students').delete().eq('backend_id', record.__backendId);
+          if (res.error) throw res.error;
+        } else if (record.type === 'study') {
+          const res = await client.from('studies').delete().eq('backend_id', record.__backendId);
+          if (res.error) throw res.error;
+        } else if (record.type === 'exam') {
+          const res = await client.from('exams').delete().eq('backend_id', record.__backendId);
+          if (res.error) throw res.error;
+        } else if (record.type === 'defined_exam') {
+          const res = await client.from('defined_exams').delete().eq('id', Number(record.__backendId));
+          if (res.error) throw res.error;
+        } else {
+          return { isOk: false, error: 'Unknown type' };
+        }
+
+        this._store = this._store.filter(
+          (r) => !(r.__backendId === record.__backendId && r.type === record.type)
+        );
+        this._notify();
+        return { isOk: true };
+      } catch (error) {
+        console.error('Delete error:', error);
+        return { isOk: false, error: error.message };
+      }
+    },
+
+    getAll() {
+      return this._store;
+    },
+
+    getByType(type) {
+      return this._store.filter((r) => r.type === type);
+    },
+  };
+})();

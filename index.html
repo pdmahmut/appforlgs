@@ -9,6 +9,15 @@
   <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
   <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
   <script src="https://unpkg.com/recharts@2.10.3/dist/Recharts.js"></script>
+  <script>
+    window.__APP_CONFIG = {
+      SUPABASE_URL: 'https://mnwxfknxkwwurrevmlri.supabase.co',
+      SUPABASE_ANON_KEY: 'sb_publishable_qci3p2BNw3oqVNwd4Fhq9A_pgwOZrpc',
+      APP_TITLE: 'Öğrenci Takip Sistemi',
+      LOGIN_PASSWORD: '1234'
+    };
+  </script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.49.1/dist/umd/supabase.min.js"></script>
   <script src="/_sdk/element_sdk.js"></script>
   <script src="/_sdk/data_sdk.js"></script>
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -59,7 +68,7 @@ const Icons = {
 const studentColors = ['#3B82F6', '#10B981', '#F59E0B', '#EF4444', '#8B5CF6', '#EC4899', '#14B8A6', '#F97316'];
 
 const defaultConfig = {
-  app_title: 'Öğrenci Takip Sistemi',
+  app_title: (window.__APP_CONFIG && window.__APP_CONFIG.APP_TITLE) || 'Öğrenci Takip Sistemi',
   welcome_title: 'Hoş Geldiniz 👋',
   welcome_subtitle: 'Lütfen menüden bir bölüm seçin',
   background_color: '#F8FAFC',
@@ -75,6 +84,7 @@ let allData = [];
 let dataChangeListeners = [];
 function subscribeData(fn) { dataChangeListeners.push(fn); return () => { dataChangeListeners = dataChangeListeners.filter(f => f !== fn); }; }
 function notifyDataChange(d) { allData = d; dataChangeListeners.forEach(fn => fn(d)); }
+window.notifyDataChange = notifyDataChange;
 
 function useAppData() {
   const [data, setData] = useState(allData);
@@ -82,7 +92,8 @@ function useAppData() {
   const students = useMemo(() => data.filter(d => d.type === 'student'), [data]);
   const studies = useMemo(() => data.filter(d => d.type === 'study'), [data]);
   const exams = useMemo(() => data.filter(d => d.type === 'exam'), [data]);
-  return { students, studies, exams, allData: data };
+  const definedExams = useMemo(() => data.filter(d => d.type === 'defined_exam'), [data]);
+  return { students, studies, exams, definedExams, allData: data };
 }
 
 let appConfig = { ...defaultConfig };
@@ -192,7 +203,7 @@ function Header({ route, navigate, config, onLogout }) {
 
 function HomePage({ navigate, config }) {
   const { students, studies, exams } = useAppData();
-  const examCount = localStorage.getItem('exams') ? JSON.parse(localStorage.getItem('exams')).length : 0;
+  const examCount = exams.length;
   const cards = [
     { id: 'ogrenciler', title: 'Öğrenciler', desc: 'Öğrenci kayıtlarını yönetin', icon: Icons.Users, count: students.length, color: '#3B82F6', bg: '#EFF6FF' },
     { id: 'gunluk-calisma', title: 'Günlük Çalışma', desc: 'Çalışma kayıtlarını takip edin', icon: Icons.BookOpen, count: studies.length, color: '#10B981', bg: '#ECFDF5' },
@@ -255,7 +266,7 @@ function StudentsPage({ config }) {
       if (result.isOk) { setToast({ msg: 'Öğrenci güncellendi!', type: 'success' }); setShowForm(false); resetForm(); }
       else setToast({ msg: 'Hata oluştu', type: 'error' });
     } else {
-      if (allData.length >= 999) { setToast({ msg: 'Maksimum kayıt limitine ulaşıldı (999)', type: 'error' }); return; }
+      if (students.length >= 999) { setToast({ msg: 'Maksimum kayıt limitine ulaşıldı (999)', type: 'error' }); return; }
       setLoading(true);
       const result = await window.dataSdk.create({ 
         type: 'student', 
@@ -581,10 +592,16 @@ function StudyPage({ config }) {
                 <tbody>
                   {recentStudies.map((study, idx) => {
                     let subj = {};
-                    try {
-                      subj = JSON.parse(study.study_subjects);
-                    } catch (e) {
-                      subj = {};
+                    if (study.study_subjects) {
+                      if (typeof study.study_subjects === 'string') {
+                        try {
+                          subj = JSON.parse(study.study_subjects);
+                        } catch (e) {
+                          subj = {};
+                        }
+                      } else {
+                        subj = study.study_subjects;
+                      }
                     }
                     const displayDate = new Date(study.study_date).toLocaleDateString('tr-TR');
                     return (
@@ -612,7 +629,7 @@ function StudyPage({ config }) {
 }
 
 function ExamPage({ config }) {
-  const { students } = useAppData();
+  const { students, exams, definedExams } = useAppData();
   const [selectedStudentId, setSelectedStudentId] = useState('');
   const [selectedDefinedExamId, setSelectedDefinedExamId] = useState('');
   const [examName, setExamName] = useState('');
@@ -625,14 +642,7 @@ function ExamPage({ config }) {
     ingilizce: { dogru: 0, yanlis: 0, bos: 0 },
     din: { dogru: 0, yanlis: 0, bos: 0 },
   });
-  const [exams, setExams] = useState(() => {
-    const saved = localStorage.getItem('exams');
-    return saved ? JSON.parse(saved) : [];
-  });
-  const [definedExams, setDefinedExams] = useState(() => {
-    const saved = localStorage.getItem('definedExams');
-    return saved ? JSON.parse(saved) : [];
-  });
+  const [isSaving, setIsSaving] = useState(false);
   const [newDefineExamName, setNewDefineExamName] = useState('');
   const [newDefineExamDate, setNewDefineExamDate] = useState(new Date().toISOString().split('T')[0]);
   const [toast, setToast] = useState(null);
@@ -657,32 +667,35 @@ function ExamPage({ config }) {
       .toFixed(2);
   };
 
-  const handleDefineExam = (e) => {
+  const handleDefineExam = async (e) => {
     e.preventDefault();
     if (!newDefineExamName.trim()) {
       setToast({ msg: 'Deneme adı boş olamaz', type: 'error' });
       return;
     }
-    
-    const newExam = {
-      id: Date.now().toString(),
+    setIsSaving(true);
+    const result = await window.dataSdk.create({
+      type: 'defined_exam',
       name: newDefineExamName,
-      date: newDefineExamDate
-    };
-    
-    const updated = [...definedExams, newExam];
-    setDefinedExams(updated);
-    localStorage.setItem('definedExams', JSON.stringify(updated));
-    setToast({ msg: 'Deneme tanımlandı! 🎉', type: 'success' });
-    setNewDefineExamName('');
-    setNewDefineExamDate(new Date().toISOString().split('T')[0]);
+      exam_date: newDefineExamDate,
+      created_at: new Date().toISOString()
+    });
+    setIsSaving(false);
+    if (result.isOk) {
+      setToast({ msg: 'Deneme tanımlandı! 🎉', type: 'success' });
+      setNewDefineExamName('');
+      setNewDefineExamDate(new Date().toISOString().split('T')[0]);
+    } else {
+      setToast({ msg: 'Hata oluştu', type: 'error' });
+    }
   };
 
-  const handleDeleteDefinedExam = (id) => {
-    const updated = definedExams.filter(e => e.id !== id);
-    setDefinedExams(updated);
-    localStorage.setItem('definedExams', JSON.stringify(updated));
-    setToast({ msg: 'Deneme silindi', type: 'success' });
+  const handleDeleteDefinedExam = async (id) => {
+    setIsSaving(true);
+    const result = await window.dataSdk.delete({ type: 'defined_exam', __backendId: id });
+    setIsSaving(false);
+    if (result.isOk) setToast({ msg: 'Deneme silindi', type: 'success' });
+    else setToast({ msg: 'Silme hatası', type: 'error' });
   };
 
   const handleSelectDefinedExam = (examId) => {
@@ -691,11 +704,11 @@ function ExamPage({ config }) {
       setExamName('');
       setSelectedDate(new Date().toISOString().split('T')[0]);
     } else {
-      const exam = definedExams.find(e => e.id === examId);
+      const exam = definedExams.find(e => e.__backendId === examId);
       if (exam) {
         setSelectedDefinedExamId(examId);
         setExamName(exam.name);
-        setSelectedDate(exam.date);
+        setSelectedDate(exam.exam_date);
       }
     }
   };
@@ -719,6 +732,7 @@ function ExamPage({ config }) {
       return;
     }
 
+    setIsSaving(true);
     const result = await window.dataSdk.create({
       type: 'exam',
       student_id: selectedStudentId,
@@ -729,26 +743,9 @@ function ExamPage({ config }) {
       defined_exam_id: selectedDefinedExamId || null,
       created_at: new Date().toISOString()
     });
+    setIsSaving(false);
 
     if (result.isOk) {
-      const newExam = {
-        id: Date.now().toString(),
-        studentId: selectedStudentId,
-        examName,
-        date: selectedDate,
-        subjects: Object.entries(subjects).reduce((acc, [key, data]) => {
-          acc[key] = {
-            dogru: data.dogru,
-            yanlis: data.yanlis,
-            bos: data.bos,
-            net: calculateNet(data.dogru, data.yanlis)
-          };
-          return acc;
-        }, {}),
-        totalNet: getTotalNet()
-      };
-      const updated = [...exams, newExam];
-      setExams(updated);
       setToast({ msg: 'Deneme kaydedildi! 🎉', type: 'success' });
       handleReset();
     } else {
@@ -770,14 +767,44 @@ function ExamPage({ config }) {
     });
   };
 
-  const handleDelete = (id) => {
-    const updated = exams.filter(e => e.id !== id);
-    setExams(updated);
-    localStorage.setItem('exams', JSON.stringify(updated));
-    setToast({ msg: 'Deneme silindi', type: 'success' });
+  const handleDelete = async (id) => {
+    setIsSaving(true);
+    const result = await window.dataSdk.delete({ type: 'exam', __backendId: id });
+    setIsSaving(false);
+    if (result.isOk) setToast({ msg: 'Deneme silindi', type: 'success' });
+    else setToast({ msg: 'Silme hatası', type: 'error' });
   };
 
-  const studentExams = exams.filter(e => e.studentId === selectedStudentId);
+  const studentExams = exams.filter(e => e.student_id === selectedStudentId);
+  const openExamDetail = (exam) => {
+    let subjects = {};
+    if (exam.exam_subjects) {
+      if (typeof exam.exam_subjects === 'string') {
+        try {
+          subjects = JSON.parse(exam.exam_subjects);
+        } catch (e) {
+          subjects = {};
+        }
+      } else {
+        subjects = exam.exam_subjects;
+      }
+    }
+    const computed = Object.entries(subjects).reduce((acc, [key, data]) => {
+      acc[key] = {
+        dogru: data.dogru || 0,
+        yanlis: data.yanlis || 0,
+        bos: data.bos || 0,
+        net: calculateNet(data.dogru || 0, data.yanlis || 0),
+      };
+      return acc;
+    }, {});
+    setDetailModal({
+      examName: exam.exam_name,
+      date: exam.exam_date || exam.created_at,
+      subjects: computed,
+      totalNet: exam.exam_total_net,
+    });
+  };
 
   return (
     <div className="max-w-7xl mx-auto px-4 py-8 fade-in">
@@ -851,9 +878,10 @@ function ExamPage({ config }) {
               </div>
               <button
                 type="submit"
-                className="w-full px-4 py-2 rounded-lg bg-blue-600 text-white text-sm font-bold hover:bg-blue-700 transition"
+                disabled={isSaving}
+                className="w-full px-4 py-2 rounded-lg bg-blue-600 text-white text-sm font-bold hover:bg-blue-700 transition disabled:opacity-60"
               >
-                ✓ Tanımla
+                {isSaving ? 'Kaydediliyor...' : '✓ Tanımla'}
               </button>
             </form>
 
@@ -864,14 +892,15 @@ function ExamPage({ config }) {
               ) : (
                 <div className="space-y-2 max-h-64 overflow-y-auto">
                   {definedExams.map(exam => (
-                    <div key={exam.id} className="flex items-center justify-between p-2 rounded-lg bg-white border border-blue-100">
+                    <div key={exam.__backendId} className="flex items-center justify-between p-2 rounded-lg bg-white border border-blue-100">
                       <div className="flex-1">
                         <p className="text-xs font-bold text-blue-900">{exam.name}</p>
-                        <p className="text-xs text-blue-600">{new Date(exam.date).toLocaleDateString('tr-TR')}</p>
+                        <p className="text-xs text-blue-600">{new Date(exam.exam_date).toLocaleDateString('tr-TR')}</p>
                       </div>
                       <button
-                        onClick={() => handleDeleteDefinedExam(exam.id)}
+                        onClick={() => handleDeleteDefinedExam(exam.__backendId)}
                         className="text-red-500 hover:text-red-700 p-1"
+                        disabled={isSaving}
                       >
                         🗑️
                       </button>
@@ -917,7 +946,7 @@ function ExamPage({ config }) {
                   >
                     <option value="">-- Deneme Seçin --</option>
                     {definedExams.map(exam => (
-                      <option key={exam.id} value={exam.id}>
+                      <option key={exam.__backendId} value={exam.__backendId}>
                         {exam.name}
                       </option>
                     ))}
@@ -989,8 +1018,9 @@ function ExamPage({ config }) {
                 </div>
 
                 <div className="flex gap-3 mb-12">
-                  <button type="submit" className="flex-1 px-6 py-3.5 rounded-xl text-white text-base font-semibold transition-all hover:shadow-lg flex items-center justify-center gap-2" style={{ background: config.primary_action_color }}>
-                    <Icons.Check size={20} /> Denemeyi Kaydet
+                  <button type="submit" disabled={isSaving} className="flex-1 px-6 py-3.5 rounded-xl text-white text-base font-semibold transition-all hover:shadow-lg flex items-center justify-center gap-2 disabled:opacity-60" style={{ background: config.primary_action_color }}>
+                    {isSaving ? <Spinner size="sm" /> : <Icons.Check size={20} />}
+                    {isSaving ? 'Kaydediliyor...' : 'Denemeyi Kaydet'}
                   </button>
                   <button type="button" onClick={handleReset} className="px-6 py-3.5 rounded-xl border border-gray-300 text-sm font-semibold transition-colors hover:bg-gray-50" style={{ color: config.secondary_action_color }}>Formu Temizle</button>
                 </div>
@@ -1011,18 +1041,18 @@ function ExamPage({ config }) {
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
               {studentExams.map((exam) => (
-                <div key={exam.id} className="rounded-2xl border border-gray-100 p-6 card-hover" style={{ background: config.surface_color }}>
-                  <h3 className="text-xl font-bold mb-2" style={{ color: config.text_color }}>{exam.examName}</h3>
-                  <p className="text-sm mb-4" style={{ color: config.secondary_action_color }}>📅 {new Date(exam.date).toLocaleDateString('tr-TR')}</p>
+                <div key={exam.__backendId} className="rounded-2xl border border-gray-100 p-6 card-hover" style={{ background: config.surface_color }}>
+                  <h3 className="text-xl font-bold mb-2" style={{ color: config.text_color }}>{exam.exam_name}</h3>
+                  <p className="text-sm mb-4" style={{ color: config.secondary_action_color }}>📅 {new Date(exam.exam_date || exam.created_at).toLocaleDateString('tr-TR')}</p>
                   
                   <div className="rounded-lg p-4 bg-emerald-50 text-center mb-5">
                     <p className="text-xs font-semibold mb-1" style={{ color: '#059669' }}>TOPLAM NET</p>
-                    <p className="text-2xl font-extrabold text-emerald-600">{exam.totalNet}</p>
+                    <p className="text-2xl font-extrabold text-emerald-600">{exam.exam_total_net}</p>
                   </div>
 
                   <div className="flex gap-2">
-                    <button onClick={() => setDetailModal(exam)} className="flex-1 px-3 py-2.5 rounded-lg text-white text-sm font-semibold transition-all" style={{background: config.primary_action_color}}>Detaylar</button>
-                    <button onClick={() => handleDelete(exam.id)} className="px-3 py-2.5 rounded-lg border border-red-200 text-red-600 hover:bg-red-50 font-semibold text-sm transition-colors">🗑️</button>
+                    <button onClick={() => openExamDetail(exam)} className="flex-1 px-3 py-2.5 rounded-lg text-white text-sm font-semibold transition-all" style={{background: config.primary_action_color}}>Detaylar</button>
+                    <button onClick={() => handleDelete(exam.__backendId)} className="px-3 py-2.5 rounded-lg border border-red-200 text-red-600 hover:bg-red-50 font-semibold text-sm transition-colors">🗑️</button>
                   </div>
                 </div>
               ))}
@@ -1035,30 +1065,11 @@ function ExamPage({ config }) {
 }
 
 function AnalysisPage({ config }) {
-  const { students } = useAppData();
+  const { students, exams, studies } = useAppData();
   const [selectedStudentId, setSelectedStudentId] = useState('');
   const [dateFilter, setDateFilter] = useState('1month');
   const [examData, setExamData] = useState([]);
   const [studyData, setStudyData] = useState([]);
-
-  // Debug: öğrencileri kontrol et
-  useEffect(() => {
-    console.log('AnalysisPage - Öğrenciler:', students);
-    const studentsData = JSON.parse(localStorage.getItem('students') || '[]');
-    const studiesData = JSON.parse(localStorage.getItem('studies') || '[]');
-    const examsData = JSON.parse(localStorage.getItem('exams') || '[]');
-    console.log('AnalysisPage - localStorage students:', studentsData);
-    console.log('AnalysisPage - localStorage studies:', studiesData);
-    console.log('AnalysisPage - localStorage exams:', examsData);
-    
-    // Öğrenci ID'lerini kontrol et
-    if (studentsData.length > 0) {
-      console.log('AnalysisPage - İlk öğrenci ID:', studentsData[0].__backendId);
-    }
-    if (studiesData.length > 0) {
-      console.log('AnalysisPage - İlk çalışma student_id:', studiesData[0].student_id);
-    }
-  }, [students]);
 
   // Sabit renkler
   const colors = {
@@ -1075,8 +1086,6 @@ function AnalysisPage({ config }) {
   useEffect(() => {
     if (!selectedStudentId) return;
 
-    console.log('AnalysisPage - Seçili öğrenci:', selectedStudentId);
-
     const now = new Date();
     let startDate = new Date();
 
@@ -1088,36 +1097,20 @@ function AnalysisPage({ config }) {
       startDate = new Date('2000-01-01');
     }
 
-    try {
-      const exams = JSON.parse(localStorage.getItem('exams') || '[]') || [];
-      const studies = JSON.parse(localStorage.getItem('studies') || '[]') || [];
+    const filtered = {
+      exams: (exams || []).filter(e => {
+        const d = new Date(e.exam_date || e.created_at);
+        return d >= startDate && (e.student_id === selectedStudentId);
+      }),
+      studies: (studies || []).filter(s => {
+        const d = new Date(s.study_date || s.created_at);
+        return d >= startDate && (s.student_id === selectedStudentId);
+      }),
+    };
 
-      console.log('AnalysisPage - Tüm deneme:', exams);
-      console.log('AnalysisPage - Tüm çalışma:', studies);
-
-      const filtered = {
-        exams: exams.filter(e => {
-          const d = new Date(e.exam_date || e.created_at);
-          return d >= startDate && (e.student_id === selectedStudentId);
-        }),
-        studies: studies.filter(s => {
-          const d = new Date(s.study_date || s.created_at);
-          return d >= startDate && (s.student_id === selectedStudentId);
-        }),
-      };
-
-      setExamData(filtered.exams.sort((a, b) => new Date(a.exam_date || a.created_at) - new Date(b.exam_date || b.created_at)));
-      setStudyData(filtered.studies.sort((a, b) => new Date(a.study_date || a.created_at) - new Date(b.study_date || b.created_at)));
-      
-      console.log('AnalysisPage - Seçili öğrenci ID:', selectedStudentId);
-      console.log('AnalysisPage - Filtrelenen deneme sayısı:', filtered.exams.length);
-      console.log('AnalysisPage - Filtrelenen çalışma sayısı:', filtered.studies.length);
-      console.log('AnalysisPage - Filtrelenen deneme:', filtered.exams);
-      console.log('AnalysisPage - Filtrelenen çalışma:', filtered.studies);
-    } catch (e) {
-      console.error('Data loading error:', e);
-    }
-  }, [selectedStudentId, dateFilter]);
+    setExamData(filtered.exams.sort((a, b) => new Date(a.exam_date || a.created_at) - new Date(b.exam_date || b.created_at)));
+    setStudyData(filtered.studies.sort((a, b) => new Date(a.study_date || a.created_at) - new Date(b.study_date || b.created_at)));
+  }, [selectedStudentId, dateFilter, exams, studies]);
 
   // Net hesapla
   const calculateNet = (correct, wrong) => {
@@ -1139,9 +1132,6 @@ function AnalysisPage({ config }) {
         console.warn('Failed to parse exam subjects', e, exam);
       }
 
-      console.log('processExamData - exam:', exam);
-      console.log('processExamData - parsed subjects:', subjects);
-
       const totalNet = Object.values(subjects).reduce((sum, s) => sum + parseFloat(calculateNet(s?.dogru || 0, s?.yanlis || 0)), 0);
 
       const result = {
@@ -1155,11 +1145,8 @@ function AnalysisPage({ config }) {
         ),
       };
       
-      console.log('processExamData - result:', result);
       return result;
     });
-    
-    console.log('processExamData - all processed:', processed);
     return processed;
   }, [examData, colors, calculateNet]);
 
@@ -1189,7 +1176,6 @@ function AnalysisPage({ config }) {
       };
     });
     
-    console.log('processStudyData - all processed:', processed);
     return processed;
   }, [studyData, colors, calculateNet]);
 
@@ -1571,28 +1557,16 @@ function AnalysisPage({ config }) {
 }
 
 function DashboardPage({ config }) {
+  const { students, exams } = useAppData();
   const [timeFilter, setTimeFilter] = useState('month');
-  const [studentData, setStudentData] = useState([]);
-  const [examData, setExamData] = useState([]);
-
-  useEffect(() => {
-    try {
-      // localStorage'dan doğrudan al
-      const studentsStr = localStorage.getItem('students');
-      const examsStr = localStorage.getItem('exams');
-      
-      const students = studentsStr ? JSON.parse(studentsStr) : [];
-      const exams = examsStr ? JSON.parse(examsStr) : [];
-      
-      console.log('Dashboard - Students from localStorage:', students);
-      console.log('Dashboard - Exams from localStorage:', exams);
-      
-      setStudentData(students);
-      setExamData(exams);
-    } catch (e) {
-      console.error('Dashboard data load error:', e);
-    }
-  }, []);
+  const studentData = students || [];
+  const examData = exams || [];
+  const calcSubjectNet = (subject) => {
+    if (!subject) return 0;
+    const dogru = parseFloat(subject.dogru || 0);
+    const yanlis = parseFloat(subject.yanlis || 0);
+    return parseFloat((dogru - (yanlis / 3)).toFixed(2));
+  };
 
   // Tarih filtresine göre denemeler
   const filteredExams = useMemo(() => {
@@ -1689,7 +1663,7 @@ function DashboardPage({ config }) {
         try {
           subjects = typeof exam.exam_subjects === 'string' ? JSON.parse(exam.exam_subjects) : exam.exam_subjects || {};
         } catch (e) {}
-        return parseFloat(subjects[subject]?.net || 0) || 0;
+        return calcSubjectNet(subjects[subject]) || 0;
       }).filter(n => n > 0);
 
       lastExamBySubject[subject] = nets.length > 0 ? (nets.reduce((a, b) => a + b, 0) / nets.length).toFixed(2) : 0;
@@ -1726,7 +1700,7 @@ function DashboardPage({ config }) {
         if (bySubject[subject] !== undefined) {
           bySubject[subject].push({
             name: student.student_name,
-            net: parseFloat(subjects[subject]?.net || 0) || 0
+            net: calcSubjectNet(subjects[subject]) || 0
           });
         }
       });
@@ -1986,7 +1960,7 @@ function LoginPage({ onLogin, config }) {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
-  const correctPassword = '1234'; // Şifreyi buraya yazın
+  const correctPassword = (window.__APP_CONFIG && window.__APP_CONFIG.LOGIN_PASSWORD) || '1234'; // Şifreyi buraya yazın
 
   const handleLogin = (e) => {
     e.preventDefault();
@@ -2162,5 +2136,5 @@ function App() {
   ReactDOM.createRoot(document.getElementById('root')).render(React.createElement(App));
 })();
 </script>
- <script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'9cd4782951cbe206',t:'MTc3MDk4NzIxNC4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+</body>
 </html>
