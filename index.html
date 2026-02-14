@@ -392,13 +392,13 @@ function StudyPage({ config }) {
   const [selectedStudentId, setSelectedStudentId] = useState('');
   const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0]);
   const [subjects, setSubjects] = useState({
-    turkce: { dogru: 0, yanlis: 0, bos: 0 },
-    matematik: { dogru: 0, yanlis: 0, bos: 0 },
-    fen: { dogru: 0, yanlis: 0, bos: 0 },
-    inkilap: { dogru: 0, yanlis: 0, bos: 0 },
-    ingilizce: { dogru: 0, yanlis: 0, bos: 0 },
-    din: { dogru: 0, yanlis: 0, bos: 0 },
-    paragraf: { dogru: 0, yanlis: 0, bos: 0 },
+    turkce: { dogru: '', yanlis: '', bos: '' },
+    matematik: { dogru: '', yanlis: '', bos: '' },
+    fen: { dogru: '', yanlis: '', bos: '' },
+    inkilap: { dogru: '', yanlis: '', bos: '' },
+    ingilizce: { dogru: '', yanlis: '', bos: '' },
+    din: { dogru: '', yanlis: '', bos: '' },
+    paragraf: { dogru: '', yanlis: '', bos: '' },
   });
   const [toast, setToast] = useState(null);
   const [loading, setLoading] = useState(false);
@@ -413,8 +413,20 @@ function StudyPage({ config }) {
     paragraf: { bg: '#CCFBF1', text: '#0D9488', name: 'Paragraf' },
   };
 
+  const toNum = (v) => {
+    if (v === '' || v == null) return 0;
+    const n = parseInt(v, 10);
+    return Number.isFinite(n) ? n : 0;
+  };
+
+  const normalizeIntInput = (value) => {
+    const digits = String(value).replace(/[^\d]/g, '');
+    if (digits === '') return '';
+    return digits.replace(/^0+(?=\d)/, '');
+  };
+
   const calculateNet = (dogru, yanlis) => {
-    return (dogru - (yanlis / 3)).toFixed(2);
+    return (toNum(dogru) - (toNum(yanlis) / 3)).toFixed(2);
   };
 
   const getTotalNet = () => {
@@ -424,7 +436,7 @@ function StudyPage({ config }) {
   };
 
   const handleSubjectChange = (key, field, value) => {
-    const num = Math.max(0, parseInt(value) || 0);
+    const num = normalizeIntInput(value);
     setSubjects(prev => ({
       ...prev,
       [key]: { ...prev[key], [field]: num }
@@ -439,11 +451,20 @@ function StudyPage({ config }) {
     }
 
     setLoading(true);
+    const serializeSubjects = (obj) => {
+      return Object.fromEntries(
+        Object.entries(obj).map(([k, v]) => [
+          k,
+          { dogru: toNum(v.dogru), yanlis: toNum(v.yanlis), bos: toNum(v.bos) }
+        ])
+      );
+    };
+
     const result = await window.dataSdk.create({
       type: 'study',
       student_id: selectedStudentId,
       study_date: selectedDate,
-      study_subjects: JSON.stringify(subjects),
+      study_subjects: JSON.stringify(serializeSubjects(subjects)),
       study_total_net: getTotalNet(),
       created_at: new Date().toISOString()
     });
@@ -459,13 +480,13 @@ function StudyPage({ config }) {
 
   const handleReset = () => {
     setSubjects({
-      turkce: { dogru: 0, yanlis: 0, bos: 0 },
-      matematik: { dogru: 0, yanlis: 0, bos: 0 },
-      fen: { dogru: 0, yanlis: 0, bos: 0 },
-      inkilap: { dogru: 0, yanlis: 0, bos: 0 },
-      ingilizce: { dogru: 0, yanlis: 0, bos: 0 },
-      din: { dogru: 0, yanlis: 0, bos: 0 },
-      paragraf: { dogru: 0, yanlis: 0, bos: 0 },
+      turkce: { dogru: '', yanlis: '', bos: '' },
+      matematik: { dogru: '', yanlis: '', bos: '' },
+      fen: { dogru: '', yanlis: '', bos: '' },
+      inkilap: { dogru: '', yanlis: '', bos: '' },
+      ingilizce: { dogru: '', yanlis: '', bos: '' },
+      din: { dogru: '', yanlis: '', bos: '' },
+      paragraf: { dogru: '', yanlis: '', bos: '' },
     });
     setSelectedDate(new Date().toISOString().split('T')[0]);
   };
@@ -531,15 +552,15 @@ function StudyPage({ config }) {
                   <div className="space-y-3 mb-4">
                     <div>
                       <label htmlFor={`${key}-dogru`} className="text-xs font-semibold mb-1 block" style={{ color: config.secondary_action_color }}>Doğru</label>
-                      <input id={`${key}-dogru`} type="number" min="0" value={data.dogru} onChange={(e) => handleSubjectChange(key, 'dogru', e.target.value)} className="w-full px-3 py-2 rounded-lg border border-gray-200 text-sm font-semibold text-center" style={{ background: color.bg }} />
+                      <input id={`${key}-dogru`} type="number" min="0" step="1" inputMode="numeric" value={data.dogru} onChange={(e) => handleSubjectChange(key, 'dogru', e.target.value)} className="w-full px-3 py-2 rounded-lg border border-gray-200 text-sm font-semibold text-center" style={{ background: color.bg }} />
                     </div>
                     <div>
                       <label htmlFor={`${key}-yanlis`} className="text-xs font-semibold mb-1 block" style={{ color: config.secondary_action_color }}>Yanlış</label>
-                      <input id={`${key}-yanlis`} type="number" min="0" value={data.yanlis} onChange={(e) => handleSubjectChange(key, 'yanlis', e.target.value)} className="w-full px-3 py-2 rounded-lg border border-gray-200 text-sm font-semibold text-center" style={{ background: color.bg }} />
+                      <input id={`${key}-yanlis`} type="number" min="0" step="1" inputMode="numeric" value={data.yanlis} onChange={(e) => handleSubjectChange(key, 'yanlis', e.target.value)} className="w-full px-3 py-2 rounded-lg border border-gray-200 text-sm font-semibold text-center" style={{ background: color.bg }} />
                     </div>
                     <div>
                       <label htmlFor={`${key}-bos`} className="text-xs font-semibold mb-1 block" style={{ color: config.secondary_action_color }}>Boş</label>
-                      <input id={`${key}-bos`} type="number" min="0" value={data.bos} onChange={(e) => handleSubjectChange(key, 'bos', e.target.value)} className="w-full px-3 py-2 rounded-lg border border-gray-200 text-sm font-semibold text-center" style={{ background: color.bg }} />
+                      <input id={`${key}-bos`} type="number" min="0" step="1" inputMode="numeric" value={data.bos} onChange={(e) => handleSubjectChange(key, 'bos', e.target.value)} className="w-full px-3 py-2 rounded-lg border border-gray-200 text-sm font-semibold text-center" style={{ background: color.bg }} />
                     </div>
                   </div>
                   <div className="text-center py-3 rounded-lg" style={{ background: color.bg }}>
@@ -635,12 +656,12 @@ function ExamPage({ config }) {
   const [examName, setExamName] = useState('');
   const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0]);
   const [subjects, setSubjects] = useState({
-    turkce: { dogru: 0, yanlis: 0, bos: 0 },
-    matematik: { dogru: 0, yanlis: 0, bos: 0 },
-    fen: { dogru: 0, yanlis: 0, bos: 0 },
-    inkilap: { dogru: 0, yanlis: 0, bos: 0 },
-    ingilizce: { dogru: 0, yanlis: 0, bos: 0 },
-    din: { dogru: 0, yanlis: 0, bos: 0 },
+    turkce: { dogru: '', yanlis: '', bos: '' },
+    matematik: { dogru: '', yanlis: '', bos: '' },
+    fen: { dogru: '', yanlis: '', bos: '' },
+    inkilap: { dogru: '', yanlis: '', bos: '' },
+    ingilizce: { dogru: '', yanlis: '', bos: '' },
+    din: { dogru: '', yanlis: '', bos: '' },
   });
   const [isSaving, setIsSaving] = useState(false);
   const [newDefineExamName, setNewDefineExamName] = useState('');
@@ -657,8 +678,20 @@ function ExamPage({ config }) {
     din: { bg: '#FCE7F3', text: '#BE185D', name: 'Din', emoji: '☪️' },
   };
 
+  const toNum = (v) => {
+    if (v === '' || v == null) return 0;
+    const n = parseInt(v, 10);
+    return Number.isFinite(n) ? n : 0;
+  };
+
+  const normalizeIntInput = (value) => {
+    const digits = String(value).replace(/[^\d]/g, '');
+    if (digits === '') return '';
+    return digits.replace(/^0+(?=\d)/, '');
+  };
+
   const calculateNet = (dogru, yanlis) => {
-    return (dogru - (yanlis / 3)).toFixed(2);
+    return (toNum(dogru) - (toNum(yanlis) / 3)).toFixed(2);
   };
 
   const getTotalNet = () => {
@@ -714,7 +747,7 @@ function ExamPage({ config }) {
   };
 
   const handleSubjectChange = (key, field, value) => {
-    const num = Math.max(0, parseInt(value) || 0);
+    const num = normalizeIntInput(value);
     setSubjects(prev => ({
       ...prev,
       [key]: { ...prev[key], [field]: num }
@@ -733,12 +766,21 @@ function ExamPage({ config }) {
     }
 
     setIsSaving(true);
+    const serializeSubjects = (obj) => {
+      return Object.fromEntries(
+        Object.entries(obj).map(([k, v]) => [
+          k,
+          { dogru: toNum(v.dogru), yanlis: toNum(v.yanlis), bos: toNum(v.bos) }
+        ])
+      );
+    };
+
     const result = await window.dataSdk.create({
       type: 'exam',
       student_id: selectedStudentId,
       exam_name: examName,
       exam_date: selectedDate,
-      exam_subjects: JSON.stringify(subjects),
+      exam_subjects: JSON.stringify(serializeSubjects(subjects)),
       exam_total_net: getTotalNet(),
       defined_exam_id: selectedDefinedExamId || null,
       created_at: new Date().toISOString()
@@ -758,12 +800,12 @@ function ExamPage({ config }) {
     setSelectedDefinedExamId('');
     setSelectedDate(new Date().toISOString().split('T')[0]);
     setSubjects({
-      turkce: { dogru: 0, yanlis: 0, bos: 0 },
-      matematik: { dogru: 0, yanlis: 0, bos: 0 },
-      fen: { dogru: 0, yanlis: 0, bos: 0 },
-      inkilap: { dogru: 0, yanlis: 0, bos: 0 },
-      ingilizce: { dogru: 0, yanlis: 0, bos: 0 },
-      din: { dogru: 0, yanlis: 0, bos: 0 },
+      turkce: { dogru: '', yanlis: '', bos: '' },
+      matematik: { dogru: '', yanlis: '', bos: '' },
+      fen: { dogru: '', yanlis: '', bos: '' },
+      inkilap: { dogru: '', yanlis: '', bos: '' },
+      ingilizce: { dogru: '', yanlis: '', bos: '' },
+      din: { dogru: '', yanlis: '', bos: '' },
     });
   };
 
@@ -997,15 +1039,15 @@ function ExamPage({ config }) {
                         <div className="space-y-3 mb-4">
                           <div>
                             <label htmlFor={`exam-${key}-dogru`} className="text-xs font-semibold mb-1 block" style={{ color: config.secondary_action_color }}>Doğru</label>
-                            <input id={`exam-${key}-dogru`} type="number" min="0" value={data.dogru} onChange={(e) => handleSubjectChange(key, 'dogru', e.target.value)} className="w-full px-3 py-2 rounded-lg border border-gray-200 text-sm font-semibold text-center" style={{ background: color.bg }} />
+                            <input id={`exam-${key}-dogru`} type="number" min="0" step="1" inputMode="numeric" value={data.dogru} onChange={(e) => handleSubjectChange(key, 'dogru', e.target.value)} className="w-full px-3 py-2 rounded-lg border border-gray-200 text-sm font-semibold text-center" style={{ background: color.bg }} />
                           </div>
                           <div>
                             <label htmlFor={`exam-${key}-yanlis`} className="text-xs font-semibold mb-1 block" style={{ color: config.secondary_action_color }}>Yanlış</label>
-                            <input id={`exam-${key}-yanlis`} type="number" min="0" value={data.yanlis} onChange={(e) => handleSubjectChange(key, 'yanlis', e.target.value)} className="w-full px-3 py-2 rounded-lg border border-gray-200 text-sm font-semibold text-center" style={{ background: color.bg }} />
+                            <input id={`exam-${key}-yanlis`} type="number" min="0" step="1" inputMode="numeric" value={data.yanlis} onChange={(e) => handleSubjectChange(key, 'yanlis', e.target.value)} className="w-full px-3 py-2 rounded-lg border border-gray-200 text-sm font-semibold text-center" style={{ background: color.bg }} />
                           </div>
                           <div>
                             <label htmlFor={`exam-${key}-bos`} className="text-xs font-semibold mb-1 block" style={{ color: config.secondary_action_color }}>Boş</label>
-                            <input id={`exam-${key}-bos`} type="number" min="0" value={data.bos} onChange={(e) => handleSubjectChange(key, 'bos', e.target.value)} className="w-full px-3 py-2 rounded-lg border border-gray-200 text-sm font-semibold text-center" style={{ background: color.bg }} />
+                            <input id={`exam-${key}-bos`} type="number" min="0" step="1" inputMode="numeric" value={data.bos} onChange={(e) => handleSubjectChange(key, 'bos', e.target.value)} className="w-full px-3 py-2 rounded-lg border border-gray-200 text-sm font-semibold text-center" style={{ background: color.bg }} />
                           </div>
                         </div>
                         <div className="text-center py-3 rounded-lg" style={{ background: color.bg }}>
