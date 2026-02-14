@@ -1,0 +1,25 @@
+# Node
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+package-lock.json
+
+# Local env
+.env
+supabase.txt
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Tools and editors
+.vscode/
+.idea/
+
+# Built files
+dist/
+build/
+
+# Python server PID/temp
+*.pid

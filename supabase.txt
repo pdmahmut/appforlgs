@@ -1,4 +1,0 @@
-db password : PNAhS014hmZASMe1
-https://mnwxfknxkwwurrevmlri.supabase.co
-sb_publishable_qci3p2BNw3oqVNwd4Fhq9A_pgwOZrpc
-postgresql://postgres:PNAhS014hmZASMe1@db.mnwxfknxkwwurrevmlri.supabase.co:5432/postgres
