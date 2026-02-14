@@ -1,4 +1,9 @@
 {
+  "scripts": {
+    "supabase:login": "npx supabase login",
+    "supabase:link": "npx supabase link --project-ref mnwxfknxkwwurrevmlri",
+    "db:push": "npx supabase db push"
+  },
   "dependencies": {
     "dotenv": "^17.3.1",
     "pg": "^8.18.0"
