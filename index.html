@@ -430,8 +430,8 @@ function StudentDetailPage({ config, studentId, onBack }) {
   const [lessonRange, setLessonRange] = useState(30);
   const [trendRange, setTrendRange] = useState(30);
   const [trendHover, setTrendHover] = useState(null);
-  const [selectedTrendSubjects, setSelectedTrendSubjects] = useState([]);
-  const [selectedLessonSubjects, setSelectedLessonSubjects] = useState([]);
+  const [selectedTrendSubjects, setSelectedTrendSubjects] = useState(null);
+  const [selectedLessonSubjects, setSelectedLessonSubjects] = useState(null);
   const weekdays = ['Paz', 'Pzt', 'Sal', 'Çar', 'Per', 'Cum', 'Cmt'];
   const monthNames = ['Ocak','Şubat','Mart','Nisan','Mayıs','Haziran','Temmuz','Ağustos','Eylül','Ekim','Kasım','Aralık'];
   const start = new Date(yearStart);
@@ -583,8 +583,8 @@ function StudentDetailPage({ config, studentId, onBack }) {
     { key: 'ing', label: 'İngilizce', color: '#8b5cf6' },
     { key: 'din', label: 'Din', color: '#84cc16' },
   ];
-  const activeTrendSubjects = selectedTrendSubjects.length ? selectedTrendSubjects : subjectKeys.map(s => s.key);
-  const activeLessonSubjects = selectedLessonSubjects.length ? selectedLessonSubjects : subjectKeys.map(s => s.key);
+  const activeTrendSubjects = selectedTrendSubjects === null ? subjectKeys.map(s => s.key) : selectedTrendSubjects;
+  const activeLessonSubjects = selectedLessonSubjects === null ? subjectKeys.map(s => s.key) : selectedLessonSubjects;
   const dailySubjectMap = {};
   studentQuick.forEach(q => {
     const dateKey = q.study_date ? toDateKey(q.study_date) : '';
@@ -877,25 +877,25 @@ function StudentDetailPage({ config, studentId, onBack }) {
                 </button>
               </div>
               <div className="flex flex-wrap gap-2 justify-end">
-                <button
-                  onClick={() => setSelectedTrendSubjects([])}
-                  className="px-3 py-1 rounded-full text-xs font-semibold border border-gray-200"
-                >
-                  Tümü
-                </button>
-                {subjectKeys.map(s => {
-                  const active = activeTrendSubjects.includes(s.key);
-                  return (
-                    <button
-                      key={s.key}
-                      onClick={() => setSelectedTrendSubjects(prev => {
-                        if (prev.length === 0) return [s.key];
-                        return prev.includes(s.key) ? prev.filter(k => k !== s.key) : [...prev, s.key];
-                      })}
-                      className={`px-3 py-1 rounded-full text-xs font-semibold border ${active ? 'text-white' : 'border-gray-200'}`}
-                      style={{ background: active ? s.color : 'transparent' }}
-                    >
-                      {s.label}
+              <button
+                onClick={() => setSelectedTrendSubjects(prev => (prev === null ? [] : null))}
+                className="px-3 py-1 rounded-full text-xs font-semibold border border-gray-200"
+              >
+                Tümü
+              </button>
+              {subjectKeys.map(s => {
+                const active = selectedTrendSubjects === null ? true : activeTrendSubjects.includes(s.key);
+                return (
+                  <button
+                    key={s.key}
+                    onClick={() => setSelectedTrendSubjects(prev => {
+                      if (prev === null) return [s.key];
+                      return prev.includes(s.key) ? prev.filter(k => k !== s.key) : [...prev, s.key];
+                    })}
+                    className={`px-3 py-1 rounded-full text-xs font-semibold border ${active ? 'text-white' : 'border-gray-200'}`}
+                    style={{ background: active ? s.color : 'transparent' }}
+                  >
+                    {s.label}
                     </button>
                   );
                 })}
@@ -1065,22 +1065,22 @@ function StudentDetailPage({ config, studentId, onBack }) {
             <div className="flex items-center justify-between mb-4">
               <div className="text-xs font-semibold" style={{ color: config.secondary_action_color }}>Ders Filtreleri</div>
               <div className="flex flex-wrap gap-2">
-                <button
-                  onClick={() => setSelectedLessonSubjects([])}
-                  className="px-3 py-1 rounded-full text-xs font-semibold border border-gray-200"
-                >
-                  Tümü
-                </button>
-                {subjectKeys.map(s => {
-                  const active = activeLessonSubjects.includes(s.key);
-                  return (
-                    <button
-                      key={s.key}
-                      onClick={() => setSelectedLessonSubjects(prev => {
-                        if (prev.length === 0) return [s.key];
-                        return prev.includes(s.key) ? prev.filter(k => k !== s.key) : [...prev, s.key];
-                      })}
-                      className={`px-3 py-1 rounded-full text-xs font-semibold border ${active ? 'text-white' : 'border-gray-200'}`}
+              <button
+                onClick={() => setSelectedLessonSubjects(prev => (prev === null ? [] : null))}
+                className="px-3 py-1 rounded-full text-xs font-semibold border border-gray-200"
+              >
+                Tümü
+              </button>
+              {subjectKeys.map(s => {
+                const active = selectedLessonSubjects === null ? true : activeLessonSubjects.includes(s.key);
+                return (
+                  <button
+                    key={s.key}
+                    onClick={() => setSelectedLessonSubjects(prev => {
+                      if (prev === null) return [s.key];
+                      return prev.includes(s.key) ? prev.filter(k => k !== s.key) : [...prev, s.key];
+                    })}
+                    className={`px-3 py-1 rounded-full text-xs font-semibold border ${active ? 'text-white' : 'border-gray-200'}`}
                     style={{ background: active ? s.color : 'transparent' }}
                   >
                     {s.label}
