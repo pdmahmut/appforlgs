@@ -57,6 +57,7 @@
         exam_subjects: row.exam_subjects,
         exam_total_net: row.exam_total_net,
         defined_exam_id: row.defined_exam_id,
+        deneme_tipi: row.deneme_tipi,
         created_at: row.created_at,
       };
     }
@@ -208,6 +209,7 @@
             exam_subjects: safeJson(data.exam_subjects),
             exam_total_net: data.exam_total_net || null,
             defined_exam_id: data.defined_exam_id || null,
+            deneme_tipi: data.deneme_tipi || null,
             created_at: data.created_at || new Date().toISOString(),
           };
           const res = await client.from('exams').insert(payload).select('*').single();
@@ -330,6 +332,7 @@
             exam_subjects: safeJson(data.exam_subjects),
             exam_total_net: data.exam_total_net || null,
             defined_exam_id: data.defined_exam_id || null,
+            deneme_tipi: data.deneme_tipi || null,
           };
           const res = await client
             .from('exams')

@@ -597,6 +597,7 @@ function ExamPage({ config }) {
   const { students, exams, definedExams } = useAppData();
   const [selectedStudentId, setSelectedStudentId] = useState('');
   const [selectedDefinedExamId, setSelectedDefinedExamId] = useState('');
+  const [examType, setExamType] = useState('ortak');
   const [examName, setExamName] = useState('');
   const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0]);
   const [subjects, setSubjects] = useState({
@@ -658,6 +659,10 @@ function ExamPage({ config }) {
       setToast({ msg: 'Deneme adı boş olamaz', type: 'error' });
       return;
     }
+    if (!newDefineExamDate) {
+      setToast({ msg: 'Tarih seçin', type: 'error' });
+      return;
+    }
     setIsSaving(true);
     const result = await window.dataSdk.create({
       type: 'defined_exam',
@@ -712,7 +717,11 @@ function ExamPage({ config }) {
       setToast({ msg: 'Lütfen öğrenci seçin', type: 'error' });
       return;
     }
-    if (!examName.trim()) {
+    if (examType === 'ortak' && !selectedDefinedExamId) {
+      setToast({ msg: 'Lütfen ortak deneme seçin', type: 'error' });
+      return;
+    }
+    if (examType === 'bireysel' && !examName.trim()) {
       setToast({ msg: 'Lütfen deneme adı girin', type: 'error' });
       return;
     }
@@ -730,11 +739,12 @@ function ExamPage({ config }) {
     const result = await window.dataSdk.create({
       type: 'exam',
       student_id: selectedStudentId,
-      exam_name: examName,
+      exam_name: examType === 'bireysel' ? examName : (definedExams.find(e => e.__backendId === selectedDefinedExamId)?.name || examName),
       exam_date: selectedDate,
       exam_subjects: JSON.stringify(serializeSubjects(subjects)),
       exam_total_net: getTotalNet(),
-      defined_exam_id: selectedDefinedExamId || null,
+      defined_exam_id: examType === 'ortak' ? (selectedDefinedExamId || null) : null,
+      deneme_tipi: examType,
       created_at: new Date().toISOString()
     });
     setIsSaving(false);
@@ -931,38 +941,6 @@ function ExamPage({ config }) {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-semibold mb-2" style={{ color: config.text_color }}>Deneme Seçin</label>
-                  <select
-                    value={selectedDefinedExamId}
-                    onChange={(e) => handleSelectDefinedExam(e.target.value)}
-                    className="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-sm font-medium"
-                    style={{ background: config.surface_color, color: config.text_color }}
-                  >
-                    <option value="">-- Deneme Seçin --</option>
-                    {definedExams.map(exam => (
-                      <option key={exam.__backendId} value={exam.__backendId}>
-                        {exam.name}
-                      </option>
-                    ))}
-                    <option value="new">+ Yeni Deneme...</option>
-                  </select>
-                </div>
-              </div>
-
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-semibold mb-2" style={{ color: config.text_color }}>Deneme Adı *</label>
-                  <input
-                    type="text"
-                    value={examName}
-                    onChange={(e) => setExamName(e.target.value)}
-                    className="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-sm font-medium"
-                    placeholder="1. Deneme"
-                    style={{ background: config.surface_color, color: config.text_color }}
-                  />
-                </div>
-
-                <div>
                   <label className="block text-sm font-semibold mb-2" style={{ color: config.text_color }}>Tarih *</label>
                   <input
                     type="date"
@@ -973,6 +951,66 @@ function ExamPage({ config }) {
                   />
                 </div>
               </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
+                <div>
+                  <label className="block text-sm font-semibold mb-2" style={{ color: config.text_color }}>Deneme Tipi *</label>
+                  <div className="flex items-center gap-4">
+                    <label className="flex items-center gap-2 text-sm font-medium" style={{ color: config.text_color }}>
+                      <input type="radio" name="examType" value="ortak" checked={examType === 'ortak'} onChange={() => setExamType('ortak')} />
+                      Ortak Deneme
+                    </label>
+                    <label className="flex items-center gap-2 text-sm font-medium" style={{ color: config.text_color }}>
+                      <input type="radio" name="examType" value="bireysel" checked={examType === 'bireysel'} onChange={() => { setExamType('bireysel'); setSelectedDefinedExamId(''); }} />
+                      Bireysel Deneme
+                    </label>
+                  </div>
+                </div>
+              </div>
+
+              {examType === 'ortak' ? (
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-semibold mb-2" style={{ color: config.text_color }}>Ortak Deneme Seçin *</label>
+                    <select
+                      value={selectedDefinedExamId}
+                      onChange={(e) => handleSelectDefinedExam(e.target.value)}
+                      className="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-sm font-medium"
+                      style={{ background: config.surface_color, color: config.text_color }}
+                    >
+                      <option value="">-- Deneme Seçin --</option>
+                      {definedExams.map(exam => (
+                        <option key={exam.__backendId} value={exam.__backendId}>
+                          {exam.name}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                  <div className="flex items-center text-sm" style={{ color: config.secondary_action_color }}>
+                    {selectedDefinedExamId ? (
+                      <>Seçilen: <span className="ml-1 font-semibold" style={{ color: config.text_color }}>
+                        {definedExams.find(e => e.__backendId === selectedDefinedExamId)?.name}
+                      </span> · {new Date(selectedDate).toLocaleDateString('tr-TR')}</>
+                    ) : (
+                      <>Lütfen bir ortak deneme seçin</>
+                    )}
+                  </div>
+                </div>
+              ) : (
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-semibold mb-2" style={{ color: config.text_color }}>Deneme Adı *</label>
+                    <input
+                      type="text"
+                      value={examName}
+                      onChange={(e) => setExamName(e.target.value)}
+                      className="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-sm font-medium"
+                      placeholder="TYT Yayınları 8. Deneme"
+                      style={{ background: config.surface_color, color: config.text_color }}
+                    />
+                  </div>
+                </div>
+              )}
             </div>
 
             {!selectedStudentId ? (
@@ -1033,6 +1071,11 @@ function ExamPage({ config }) {
                       })}
                     </div>
                   ))}
+                </div>
+
+                <div className="rounded-xl p-4 mb-6 text-center" style={{ background: '#ECFDF5', border: '1px solid #BBF7D0' }}>
+                  <span className="text-sm font-semibold" style={{ color: '#059669' }}>Toplam Net: </span>
+                  <span className="text-lg font-bold" style={{ color: '#047857' }}>{getTotalNet()}</span>
                 </div>
 
                 <div className="flex gap-3 mb-12">
