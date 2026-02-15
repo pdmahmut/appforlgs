@@ -388,18 +388,8 @@ function StudentsPage({ config }) {
 }
 
 function StudyPage({ config }) {
-  const { students, studies } = useAppData();
+  const { students } = useAppData();
   const [selectedStudentId, setSelectedStudentId] = useState('');
-  const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0]);
-  const [subjects, setSubjects] = useState({
-    turkce: { dogru: '', yanlis: '', bos: '' },
-    matematik: { dogru: '', yanlis: '', bos: '' },
-    fen: { dogru: '', yanlis: '', bos: '' },
-    inkilap: { dogru: '', yanlis: '', bos: '' },
-    ingilizce: { dogru: '', yanlis: '', bos: '' },
-    din: { dogru: '', yanlis: '', bos: '' },
-    paragraf: { dogru: '', yanlis: '', bos: '' },
-  });
   const [toast, setToast] = useState(null);
   const [loading, setLoading] = useState(false);
   const [quickDate, setQuickDate] = useState('');
@@ -413,15 +403,14 @@ function StudyPage({ config }) {
   });
   const quickFirstRef = React.useRef(null);
 
-  const subjectColors = {
-    turkce: { bg: '#FEE2E2', text: '#DC2626', name: 'Türkçe' },
-    matematik: { bg: '#DBEAFE', text: '#0284C7', name: 'Matematik' },
-    fen: { bg: '#DCFCE7', text: '#16A34A', name: 'Fen' },
-    inkilap: { bg: '#FEF3C7', text: '#D97706', name: 'İnkılap' },
-    ingilizce: { bg: '#F3E8FF', text: '#7C3AED', name: 'İngilizce' },
-    din: { bg: '#FCE7F3', text: '#BE185D', name: 'Din' },
-    paragraf: { bg: '#CCFBF1', text: '#0D9488', name: 'Paragraf' },
-  };
+  const quickSubjects = [
+    { key: 'tur', label: 'TÜR', accent: '#EF4444', soft: '#FEE2E2' },
+    { key: 'mat', label: 'MAT', accent: '#3B82F6', soft: '#DBEAFE' },
+    { key: 'fen', label: 'FEN', accent: '#10B981', soft: '#DCFCE7' },
+    { key: 'ink', label: 'İNK', accent: '#F59E0B', soft: '#FEF3C7' },
+    { key: 'din', label: 'DİN', accent: '#EC4899', soft: '#FCE7F3' },
+    { key: 'ing', label: 'İNG', accent: '#8B5CF6', soft: '#F3E8FF' },
+  ];
 
   const toNum = (v) => {
     if (v === '' || v == null) return 0;
@@ -437,20 +426,6 @@ function StudyPage({ config }) {
 
   const calculateNet = (dogru, yanlis) => {
     return (toNum(dogru) - (toNum(yanlis) / 3)).toFixed(2);
-  };
-
-  const getTotalNet = () => {
-    return Object.values(subjects)
-      .reduce((sum, s) => sum + parseFloat(calculateNet(s.dogru, s.yanlis)), 0)
-      .toFixed(2);
-  };
-
-  const handleSubjectChange = (key, field, value) => {
-    const num = normalizeIntInput(value);
-    setSubjects(prev => ({
-      ...prev,
-      [key]: { ...prev[key], [field]: num }
-    }));
   };
 
   const handleQuickChange = (key, value) => {
@@ -501,6 +476,12 @@ function StudyPage({ config }) {
     } else {
       setToast({ msg: 'Hata oluştu', type: 'error' });
     }
+  };
+
+  const quickNet = (key) => {
+    const d = quickInputs[`${key}_d`];
+    const y = quickInputs[`${key}_y`];
+    return calculateNet(d, y);
   };
 
   const handleSave = async (e) => {
@@ -557,23 +538,41 @@ function StudyPage({ config }) {
     .slice(0, 5);
 
   return (
-    <div className="max-w-7xl mx-auto px-4 py-8 fade-in">
+    <div className="max-w-6xl mx-auto px-4 py-8 fade-in">
       {toast && <Toast message={toast.msg} type={toast.type} onClose={() => setToast(null)} />}
 
       <div className="mb-10">
-        <div className="rounded-2xl p-6 border border-gray-200 bg-white">
-          <div className="flex items-center justify-between flex-wrap gap-3 mb-4">
-            <h2 className="text-xl font-bold" style={{ color: config.text_color }}>Hızlı Giriş</h2>
-            <div className="flex items-center gap-3">
-              <label className="text-sm font-semibold" style={{ color: config.text_color }}>Tarih *</label>
-              <input
-                type="date"
-                value={quickDate}
-                onChange={(e) => setQuickDate(e.target.value)}
-                className="px-3 py-2 rounded-lg border border-gray-200 text-sm font-medium"
-                style={{ background: config.surface_color, color: config.text_color }}
-                required
-              />
+        <div className="rounded-2xl p-8 border border-gray-200 bg-white">
+          <div className="flex items-center justify-center flex-wrap gap-6 mb-6">
+            <h2 className="text-2xl font-bold" style={{ color: config.text_color }}>Hızlı Giriş</h2>
+            <div className="flex items-center gap-4">
+              <div className="flex items-center gap-2">
+                <label className="text-sm font-semibold" style={{ color: config.text_color }}>Tarih *</label>
+                <input
+                  type="date"
+                  value={quickDate}
+                  onChange={(e) => setQuickDate(e.target.value)}
+                  className="px-3 py-2 rounded-lg border border-gray-200 text-sm font-medium"
+                  style={{ background: config.surface_color, color: config.text_color }}
+                  required
+                />
+              </div>
+              <div className="flex items-center gap-2">
+                <label className="text-sm font-semibold" style={{ color: config.text_color }}>Öğrenci *</label>
+                <select
+                  value={selectedStudentId}
+                  onChange={(e) => setSelectedStudentId(e.target.value)}
+                  className="px-3 py-2 rounded-lg border border-gray-200 text-sm font-medium"
+                  style={{ background: config.surface_color, color: config.text_color }}
+                >
+                  <option value="">-- Öğrenci Seçin --</option>
+                  {students.map(s => (
+                    <option key={s.__backendId} value={s.__backendId}>
+                      {s.student_name} {s.student_surname}
+                    </option>
+                  ))}
+                </select>
+              </div>
             </div>
           </div>
 
@@ -581,23 +580,13 @@ function StudyPage({ config }) {
             <div className="overflow-x-auto">
               <div className="min-w-[1100px]">
                 <div className="grid grid-cols-6 gap-4 items-center text-xs font-semibold uppercase" style={{ color: config.secondary_action_color }}>
-                  <div className="text-center">TÜR</div>
-                  <div className="text-center">MAT</div>
-                  <div className="text-center">FEN</div>
-                  <div className="text-center">İNK</div>
-                  <div className="text-center">DİN</div>
-                  <div className="text-center">İNG</div>
+                  {quickSubjects.map(s => (
+                    <div key={s.key} className="text-center">{s.label}</div>
+                  ))}
                 </div>
 
-                <div className="grid grid-cols-6 gap-4 mt-2">
-                  {[
-                    { key: 'tur', label: 'TÜR' },
-                    { key: 'mat', label: 'MAT' },
-                    { key: 'fen', label: 'FEN' },
-                    { key: 'ink', label: 'İNK' },
-                    { key: 'din', label: 'DİN' },
-                    { key: 'ing', label: 'İNG' },
-                  ].map((s, idx) => (
+                <div className="grid grid-cols-6 gap-4 mt-3">
+                  {quickSubjects.map((s, idx) => (
                     <div key={s.key} className="flex flex-col gap-2">
                       <div className="grid grid-cols-3 gap-2 text-[10px] font-semibold text-center" style={{ color: config.secondary_action_color }}>
                         <div>D</div>
@@ -613,7 +602,8 @@ function StudyPage({ config }) {
                           maxLength={3}
                           value={quickInputs[`${s.key}_d`]}
                           onChange={(e) => handleQuickChange(`${s.key}_d`, e.target.value)}
-                          className="px-3 py-2 rounded-lg border border-gray-200 text-sm font-semibold text-center"
+                          className="px-3 py-2 rounded-lg border text-sm font-semibold text-center"
+                          style={{ background: s.soft, borderColor: s.soft }}
                         />
                         <input
                           type="text"
@@ -621,7 +611,8 @@ function StudyPage({ config }) {
                           maxLength={3}
                           value={quickInputs[`${s.key}_y`]}
                           onChange={(e) => handleQuickChange(`${s.key}_y`, e.target.value)}
-                          className="px-3 py-2 rounded-lg border border-gray-200 text-sm font-semibold text-center"
+                          className="px-3 py-2 rounded-lg border text-sm font-semibold text-center"
+                          style={{ background: s.soft, borderColor: s.soft }}
                         />
                         <input
                           type="text"
@@ -629,8 +620,12 @@ function StudyPage({ config }) {
                           maxLength={3}
                           value={quickInputs[`${s.key}_b`]}
                           onChange={(e) => handleQuickChange(`${s.key}_b`, e.target.value)}
-                          className="px-3 py-2 rounded-lg border border-gray-200 text-sm font-semibold text-center"
+                          className="px-3 py-2 rounded-lg border text-sm font-semibold text-center"
+                          style={{ background: s.soft, borderColor: s.soft }}
                         />
+                      </div>
+                      <div className="rounded-lg py-2 text-center text-sm font-bold" style={{ background: s.soft, color: s.accent }}>
+                        Net: {quickNet(s.key)}
                       </div>
                     </div>
                   ))}
@@ -646,153 +641,6 @@ function StudyPage({ config }) {
             </div>
           </form>
         </div>
-      </div>
-
-      <div className="mb-8">
-        <h1 className="text-3xl font-extrabold mb-6" style={{ color: config.text_color }}>Günlük Çalışma Girişi</h1>
-        
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
-          <div>
-            <label htmlFor="student-select" className="block text-sm font-semibold mb-2" style={{ color: config.text_color }}>Öğrenci Seçin *</label>
-            <select
-              id="student-select"
-              value={selectedStudentId}
-              onChange={(e) => setSelectedStudentId(e.target.value)}
-              className="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-sm font-medium"
-              style={{ background: config.surface_color, color: config.text_color }}
-            >
-              <option value="">-- Öğrenci Seçin --</option>
-              {students.map(s => (
-                <option key={s.__backendId} value={s.__backendId}>
-                  {s.student_name} {s.student_surname}
-                </option>
-              ))}
-            </select>
-          </div>
-
-          <div>
-            <label htmlFor="date-select" className="block text-sm font-semibold mb-2" style={{ color: config.text_color }}>Tarih</label>
-            <input
-              id="date-select"
-              type="date"
-              value={selectedDate}
-              onChange={(e) => setSelectedDate(e.target.value)}
-              className="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-sm font-medium"
-              style={{ background: config.surface_color, color: config.text_color }}
-            />
-          </div>
-        </div>
-      </div>
-
-      {!selectedStudentId ? (
-        <div className="text-center py-12 rounded-2xl border-2 border-dashed border-gray-300">
-          <p className="text-lg font-medium" style={{ color: config.secondary_action_color }}>📌 Lütfen öğrenci seçin</p>
-        </div>
-      ) : (
-        <form onSubmit={handleSave}>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5 mb-8">
-            {Object.entries(subjects).map(([key, data]) => {
-              const color = subjectColors[key];
-              const net = calculateNet(data.dogru, data.yanlis);
-              return (
-                <div key={key} className="rounded-2xl p-5 border border-gray-100 card-hover" style={{ background: config.surface_color }}>
-                  <h3 className="text-lg font-bold mb-4 pb-3 border-b-2" style={{ color: color.text, borderColor: color.bg }}>{color.name}</h3>
-                  <div className="space-y-3 mb-4">
-                    <div>
-                      <label htmlFor={`${key}-dogru`} className="text-xs font-semibold mb-1 block" style={{ color: config.secondary_action_color }}>Doğru</label>
-                      <input id={`${key}-dogru`} type="number" min="0" step="1" inputMode="numeric" value={data.dogru} onChange={(e) => handleSubjectChange(key, 'dogru', e.target.value)} className="w-full px-3 py-2 rounded-lg border border-gray-200 text-sm font-semibold text-center" style={{ background: color.bg }} />
-                    </div>
-                    <div>
-                      <label htmlFor={`${key}-yanlis`} className="text-xs font-semibold mb-1 block" style={{ color: config.secondary_action_color }}>Yanlış</label>
-                      <input id={`${key}-yanlis`} type="number" min="0" step="1" inputMode="numeric" value={data.yanlis} onChange={(e) => handleSubjectChange(key, 'yanlis', e.target.value)} className="w-full px-3 py-2 rounded-lg border border-gray-200 text-sm font-semibold text-center" style={{ background: color.bg }} />
-                    </div>
-                    <div>
-                      <label htmlFor={`${key}-bos`} className="text-xs font-semibold mb-1 block" style={{ color: config.secondary_action_color }}>Boş</label>
-                      <input id={`${key}-bos`} type="number" min="0" step="1" inputMode="numeric" value={data.bos} onChange={(e) => handleSubjectChange(key, 'bos', e.target.value)} className="w-full px-3 py-2 rounded-lg border border-gray-200 text-sm font-semibold text-center" style={{ background: color.bg }} />
-                    </div>
-                  </div>
-                  <div className="text-center py-3 rounded-lg" style={{ background: color.bg }}>
-                    <p className="text-xs font-semibold mb-1" style={{ color: config.secondary_action_color }}>NET</p>
-                    <p className="text-2xl font-extrabold" style={{ color: color.text }}>{net}</p>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-
-          <div className="rounded-2xl p-8 mb-8 text-center border border-gray-100 bg-emerald-50">
-            <p className="text-sm font-semibold mb-2" style={{ color: config.secondary_action_color }}>TOPLAM NET</p>
-            <p className="text-5xl font-extrabold text-emerald-600">{getTotalNet()}</p>
-          </div>
-
-          <div className="flex flex-col sm:flex-row gap-3">
-            <button type="submit" disabled={loading} className="flex-1 px-6 py-3.5 rounded-xl text-white text-base font-semibold transition-all hover:shadow-lg flex items-center justify-center gap-2" style={{ background: config.primary_action_color }}>
-              {loading ? <Spinner size="sm" /> : <Icons.Check size={20} />}
-              {loading ? 'Kaydediliyor...' : 'Tümünü Kaydet'}
-            </button>
-            <button type="button" onClick={handleReset} className="px-6 py-3.5 rounded-xl border border-gray-300 text-sm font-semibold transition-colors hover:bg-gray-50" style={{ color: config.secondary_action_color }}>Formu Temizle</button>
-          </div>
-        </form>
-      )}
-
-      {selectedStudentId && (
-        <div className="mt-12">
-          <h2 className="text-2xl font-bold mb-6" style={{ color: config.text_color }}>Son 5 Kayıt</h2>
-          {recentStudies.length === 0 ? (
-            <div className="text-center py-12 rounded-2xl border-2 border-dashed border-gray-300">
-              <p className="text-base font-medium" style={{ color: config.secondary_action_color }}>Henüz kayıt yok 📋</p>
-            </div>
-          ) : (
-            <div className="overflow-x-auto rounded-2xl border border-gray-200">
-              <table className="w-full text-sm">
-                <thead style={{ background: '#F1F5F9' }}>
-                  <tr>
-                    <th className="px-4 py-3 text-left font-bold" style={{ color: config.text_color }}>Tarih</th>
-                    <th className="px-3 py-3 text-center font-bold" style={{ color: config.text_color }}>Türk.</th>
-                    <th className="px-3 py-3 text-center font-bold" style={{ color: config.text_color }}>Mat.</th>
-                    <th className="px-3 py-3 text-center font-bold" style={{ color: config.text_color }}>Fen</th>
-                    <th className="px-3 py-3 text-center font-bold" style={{ color: config.text_color }}>İnk.</th>
-                    <th className="px-3 py-3 text-center font-bold" style={{ color: config.text_color }}>İng.</th>
-                    <th className="px-3 py-3 text-center font-bold" style={{ color: config.text_color }}>Din</th>
-                    <th className="px-3 py-3 text-center font-bold" style={{ color: config.text_color }}>Par.</th>
-                    <th className="px-4 py-3 text-center font-bold text-emerald-600">Toplam</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {recentStudies.map((study, idx) => {
-                    let subj = {};
-                    if (study.study_subjects) {
-                      if (typeof study.study_subjects === 'string') {
-                        try {
-                          subj = JSON.parse(study.study_subjects);
-                        } catch (e) {
-                          subj = {};
-                        }
-                      } else {
-                        subj = study.study_subjects;
-                      }
-                    }
-                    const displayDate = new Date(study.study_date).toLocaleDateString('tr-TR');
-                    return (
-                      <tr key={study.__backendId} className="border-t border-gray-200 hover:bg-gray-50 transition-colors" style={{ background: idx % 2 === 0 ? config.surface_color : '#F8FAFC' }}>
-                        <td className="px-4 py-3 font-medium" style={{ color: config.text_color }}>{displayDate}</td>
-                        <td className="px-3 py-3 text-center font-semibold text-red-600">{subj.turkce ? calculateNet(subj.turkce.dogru, subj.turkce.yanlis) : '-'}</td>
-                        <td className="px-3 py-3 text-center font-semibold text-blue-600">{subj.matematik ? calculateNet(subj.matematik.dogru, subj.matematik.yanlis) : '-'}</td>
-                        <td className="px-3 py-3 text-center font-semibold text-green-600">{subj.fen ? calculateNet(subj.fen.dogru, subj.fen.yanlis) : '-'}</td>
-                        <td className="px-3 py-3 text-center font-semibold text-amber-600">{subj.inkilap ? calculateNet(subj.inkilap.dogru, subj.inkilap.yanlis) : '-'}</td>
-                        <td className="px-3 py-3 text-center font-semibold text-purple-600">{subj.ingilizce ? calculateNet(subj.ingilizce.dogru, subj.ingilizce.yanlis) : '-'}</td>
-                        <td className="px-3 py-3 text-center font-semibold text-pink-600">{subj.din ? calculateNet(subj.din.dogru, subj.din.yanlis) : '-'}</td>
-                        <td className="px-3 py-3 text-center font-semibold text-teal-600">{subj.paragraf ? calculateNet(subj.paragraf.dogru, subj.paragraf.yanlis) : '-'}</td>
-                        <td className="px-4 py-3 text-center font-bold text-emerald-600">{study.study_total_net}</td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
-            </div>
-          )}
-        </div>
-      )}
     </div>
   );
 }
