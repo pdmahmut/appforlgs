@@ -428,6 +428,8 @@ function StudentDetailPage({ config, studentId, onBack }) {
   const [saving, setSaving] = useState(false);
   const [form, setForm] = useState({ fullName: '', sinif: '8A', okulNo: '' });
   const [lessonRange, setLessonRange] = useState(30);
+  const [trendRange, setTrendRange] = useState(30);
+  const [trendHover, setTrendHover] = useState(null);
   const weekdays = ['Paz', 'Pzt', 'Sal', 'Çar', 'Per', 'Cum', 'Cmt'];
   const monthNames = ['Ocak','Şubat','Mart','Nisan','Mayıs','Haziran','Temmuz','Ağustos','Eylül','Ekim','Kasım','Aralık'];
   const start = new Date(yearStart);
@@ -900,16 +902,33 @@ function StudentDetailPage({ config, studentId, onBack }) {
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           <div className="rounded-2xl p-4 border border-gray-100" style={{ background: config.surface_color }}>
-            <h3 className="text-sm font-semibold mb-3" style={{ color: config.text_color }}>📈 30 Günlük Soru Çözüm Trendi</h3>
+            <div className="flex items-center justify-between mb-3">
+              <h3 className="text-sm font-semibold" style={{ color: config.text_color }}>📈 Soru Çözüm Trendi</h3>
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => setTrendRange(7)}
+                  className={`px-3 py-1 rounded-full text-xs font-semibold border ${trendRange === 7 ? 'bg-blue-600 text-white border-blue-600' : 'border-gray-200'}`}
+                >
+                  Son 7 gün
+                </button>
+                <button
+                  onClick={() => setTrendRange(30)}
+                  className={`px-3 py-1 rounded-full text-xs font-semibold border ${trendRange === 30 ? 'bg-blue-600 text-white border-blue-600' : 'border-gray-200'}`}
+                >
+                  Son 30 gün
+                </button>
+              </div>
+            </div>
             {Object.keys(dailyTotalsMap).length === 0 ? (
               <div className="text-center py-10 text-sm" style={{ color: config.secondary_action_color }}>Henüz veri yok</div>
             ) : (
               (() => {
+                const totalDays = trendRange;
                 const days30 = [];
                 const avgWindow = [];
                 const start = new Date();
-                start.setDate(start.getDate() - 29);
-                for (let i = 0; i < 30; i++) {
+                start.setDate(start.getDate() - (totalDays - 1));
+                for (let i = 0; i < totalDays; i++) {
                   const d = new Date(start);
                   d.setDate(start.getDate() + i);
                   const key = toDateKey(d);
@@ -931,7 +950,7 @@ function StudentDetailPage({ config, studentId, onBack }) {
                       return (
                         <>
                           <line x1="40" y1={avgY} x2="500" y2={avgY} stroke="#64748B" strokeWidth="1" strokeDasharray="4 4" />
-                          <text x="4" y={avgY - 2} textAnchor="start" fontSize="10" fill="#64748B">Ort: {avg.toFixed(1)}</text>
+                          <text x="2" y={avgY - 2} textAnchor="start" fontSize="10" fill="#64748B">Ort: {avg.toFixed(1)}</text>
                         </>
                       );
                     })()}
@@ -943,7 +962,7 @@ function StudentDetailPage({ config, studentId, onBack }) {
                     </defs>
                     <polyline
                       points={days30.map((d, i) => {
-                        const x = 40 + (i / 29) * 460;
+                        const x = 40 + (i / ((days30.length - 1) || 1)) * 460;
                         const y = 200 - (d.total / max) * 160;
                         return `${x},${y}`;
                       }).join(' ')}
@@ -952,26 +971,36 @@ function StudentDetailPage({ config, studentId, onBack }) {
                       strokeWidth="2.5"
                     />
                     {days30.map((d, i) => {
-                      const x = 40 + (i / 29) * 460;
+                      const x = 40 + (i / ((days30.length - 1) || 1)) * 460;
                       const y = 200 - (d.total / max) * 160;
                       const color = d.total >= avg ? '#10B981' : '#EF4444';
                       const title = d.date.toLocaleDateString('tr-TR', { day: '2-digit', month: 'long', weekday: 'long' }) + ` - ${d.total} soru`;
                       return (
-                        <g key={d.key} style={{ pointerEvents: 'all' }}>
-                          <title>{title}</title>
-                          <circle cx={x} cy={y} r="8" fill="transparent" />
+                        <g
+                          key={d.key}
+                          style={{ pointerEvents: 'all' }}
+                          onMouseEnter={() => setTrendHover({ x, y, text: title })}
+                          onMouseLeave={() => setTrendHover(null)}
+                        >
+                          <circle cx={x} cy={y} r="10" fill="transparent" />
                           <circle cx={x} cy={y} r="3.5" fill={color} />
-                          {i % 5 === 0 ? (
+                          {i % (days30.length <= 10 ? 1 : 5) === 0 ? (
                             <text x={x} y={220} textAnchor="middle" fontSize="9" fill={config.secondary_action_color}>
                               {d.date.getDate()}/{d.date.getMonth() + 1}
                             </text>
                           ) : null}
-                          {i % 5 === 0 ? (
+                          {i % (days30.length <= 10 ? 1 : 5) === 0 ? (
                             <text x={x} y={y - 6} textAnchor="middle" fontSize="8" fill={config.text_color}>{d.total}</text>
                           ) : null}
                         </g>
                       );
                     })}
+                    {trendHover && (
+                      <g>
+                        <rect x={Math.min(trendHover.x + 8, 320)} y={Math.max(trendHover.y - 28, 8)} width="190" height="20" rx="6" fill="#0F172A" opacity="0.9" />
+                        <text x={Math.min(trendHover.x + 14, 326)} y={Math.max(trendHover.y - 14, 22)} fontSize="9" fill="#fff">{trendHover.text}</text>
+                      </g>
+                    )}
                   </svg>
                 );
               })()
@@ -1024,7 +1053,7 @@ function StudentDetailPage({ config, studentId, onBack }) {
 
         <div className="rounded-2xl p-4 border border-gray-100 mt-6" style={{ background: config.surface_color }}>
           <div className="flex items-center justify-between mb-4">
-            <h3 className="text-sm font-semibold" style={{ color: config.text_color }}>🎯 Ders Bazlı Analiz</h3>
+            <div className="text-xs font-semibold" style={{ color: config.secondary_action_color }}>Ders Bazlı</div>
             <div className="flex items-center gap-2">
               <button
                 onClick={() => setLessonRange(7)}
