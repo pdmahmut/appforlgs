@@ -213,6 +213,22 @@ function Header({ route, navigate, config, onLogout }) {
 function HomePage({ navigate, config }) {
   const { students, studies, exams } = useAppData();
   const examCount = exams.length;
+  const [countdown, setCountdown] = useState({ days: 0, hours: 0, minutes: 0 });
+  useEffect(() => {
+    const target = new Date(2026, 5, 14, 9, 30, 0); // 14 Haziran 2026
+    const tick = () => {
+      const now = new Date();
+      let diff = target.getTime() - now.getTime();
+      if (diff < 0) diff = 0;
+      const days = Math.floor(diff / (24 * 60 * 60 * 1000));
+      const hours = Math.floor((diff / (60 * 60 * 1000)) % 24);
+      const minutes = Math.floor((diff / (60 * 1000)) % 60);
+      setCountdown({ days, hours, minutes });
+    };
+    tick();
+    const id = setInterval(tick, 60000);
+    return () => clearInterval(id);
+  }, []);
   const cards = [
     { id: 'ogrenciler', title: 'Öğrenciler', desc: 'Öğrenci kayıtlarını yönetin', icon: Icons.Users, count: students.length, color: '#3B82F6', bg: '#EFF6FF' },
     { id: 'gunluk-calisma', title: 'Günlük Çalışma', desc: 'Çalışma kayıtlarını takip edin', icon: Icons.BookOpen, count: studies.length, color: '#10B981', bg: '#ECFDF5' },
@@ -221,6 +237,24 @@ function HomePage({ navigate, config }) {
   ];
   return (
     <div className="max-w-5xl mx-auto px-4 py-10 fade-in">
+      <div className="rounded-2xl p-5 mb-6 border border-gray-100 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3" style={{ background: config.surface_color }}>
+        <div>
+          <div className="text-sm font-semibold" style={{ color: config.secondary_action_color }}>LGS Sayaç 2026</div>
+          <div className="text-lg font-bold" style={{ color: config.text_color }}>14 Haziran 2026</div>
+        </div>
+        <div className="flex gap-3 text-center">
+          {[
+            { label: 'Gün', value: countdown.days },
+            { label: 'Saat', value: countdown.hours },
+            { label: 'Dak', value: countdown.minutes },
+          ].map((c, i) => (
+            <div key={i} className="rounded-xl px-4 py-2 border border-gray-100" style={{ background: '#F8FAFC' }}>
+              <div className="text-xl font-extrabold" style={{ color: config.text_color }}>{c.value}</div>
+              <div className="text-[11px]" style={{ color: config.secondary_action_color }}>{c.label}</div>
+            </div>
+          ))}
+        </div>
+      </div>
       <div className="text-center mb-10">
         <h1 className="text-3xl sm:text-4xl font-extrabold mb-3" style={{color: config.text_color}}>{config.welcome_title}</h1>
         <p className="text-base sm:text-lg" style={{color: config.secondary_action_color}}>{config.welcome_subtitle}</p>
