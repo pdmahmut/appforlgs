@@ -2378,7 +2378,7 @@ function DashboardPage({ config, onSelectStudent, onNavigate }) {
   const renderValue = (val, emptyText) => {
     if (!hasStudents) return 'Henüz öğrenci eklenmemiş';
     if (!hasOrtak) return 'Henüz ortak deneme girilmemiş';
-    return val ? emptyText;
+    return val ?? emptyText;
   };
 
   const cards = [
