@@ -2447,8 +2447,6 @@ function DashboardPage({ config, onSelectStudent, onNavigate }) {
     const total = students.length || 0;
     const count = lastGroup.records.length;
     return { title, count, total };
-
-  const chartMinWidth = chartData ? Math.max(chartData.rows.length * 40, 700) : 700;
   }, [lastGroup, students.length]);
 
   const chartData = useMemo(() => {
@@ -2475,6 +2473,8 @@ function DashboardPage({ config, onSelectStudent, onNavigate }) {
 
     return { rows, avg, maxNet };
   }, [lastGroup, studentMap]);
+
+  const chartMinWidth = chartData ? Math.max(chartData.rows.length * 40, 700) : 700;
 
   useEffect(() => {
     if (!chartRef.current) return;
