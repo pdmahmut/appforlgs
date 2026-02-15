@@ -2378,7 +2378,7 @@ function DashboardPage({ config, onSelectStudent, onNavigate }) {
   const renderValue = (val, emptyText) => {
     if (!hasStudents) return 'Henüz öğrenci eklenmemiş';
     if (!hasOrtak) return 'Henüz ortak deneme girilmemiş';
-    return val ?? emptyText;
+    return val ? emptyText;
   };
 
   const cards = [
@@ -2857,14 +2857,14 @@ function DashboardPage({ config, onSelectStudent, onNavigate }) {
               <div className="text-sm font-bold mt-1" style={{ color: '#14532d' }}>
                 {radarData && radarData.hasAny && radarData.subjects[radarData.maxIdx] ? radarData.subjects[radarData.maxIdx].label : '—'}
               </div>
-              <div className="text-xs" style={{ color: '#14532d' }}>{radarData ? `${radarData.maxVal.toFixed(1)} net` : ''}</div>
+              <div className="text-xs" style={{ color: '#14532d' }}>{radarData && radarData.hasAny ? `${radarData.maxVal.toFixed(1)} net` : ''}</div>
             </div>
             <div className="rounded-xl p-4 border" style={{ background: '#fef5e7', borderColor: '#f39c12' }}>
               <div className="text-xs font-semibold" style={{ color: '#7c2d12' }}>⚠️ Gelişim alanı</div>
               <div className="text-sm font-bold mt-1" style={{ color: '#7c2d12' }}>
                 {radarData && radarData.hasAny && radarData.subjects[radarData.minIdx] ? radarData.subjects[radarData.minIdx].label : '—'}
               </div>
-              <div className="text-xs" style={{ color: '#7c2d12' }}>{radarData ? `${radarData.minVal.toFixed(1)} net` : ''}</div>
+              <div className="text-xs" style={{ color: '#7c2d12' }}>{radarData && radarData.hasAny ? `${radarData.minVal.toFixed(1)} net` : ''}</div>
             </div>
           </div>
         </div>
