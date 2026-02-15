@@ -840,35 +840,6 @@ function StudentDetailPage({ config, studentId, onBack }) {
 
       <div className="mb-8">
         <h2 className="text-xl font-bold mb-4" style={{ color: config.text_color }}>Günlük Çalışma Analizi</h2>
-        <div className="rounded-2xl p-4 border border-gray-100 mb-6" style={{ background: config.surface_color }}>
-          <div className="flex items-center justify-between mb-3">
-            <div className="text-xs font-semibold" style={{ color: config.secondary_action_color }}>Ders Filtreleri</div>
-            <button
-              onClick={() => setSelectedSubjects([])}
-              className="px-3 py-1 rounded-full text-xs font-semibold border border-gray-200"
-            >
-              Tümü
-            </button>
-          </div>
-          <div className="flex flex-wrap gap-2">
-            {subjectKeys.map(s => {
-              const active = activeSubjects.includes(s.key);
-              return (
-                <button
-                  key={s.key}
-                  onClick={() => setSelectedSubjects(prev => {
-                    if (prev.length === 0) return [s.key];
-                    return prev.includes(s.key) ? prev.filter(k => k !== s.key) : [...prev, s.key];
-                  })}
-                  className={`px-3 py-1 rounded-full text-xs font-semibold border ${active ? 'text-white' : 'border-gray-200'}`}
-                  style={{ background: active ? s.color : 'transparent' }}
-                >
-                  {s.label}
-                </button>
-              );
-            })}
-          </div>
-        </div>
         <div className="rounded-2xl p-4 border border-gray-100 mb-6 heatmap-container" style={{ background: config.surface_color }}>
           <h3 className="text-sm font-semibold mb-3" style={{ color: config.text_color }}>📅 Çalışma Takvimi</h3>
           {heatmapValues.length === 0 ? (
@@ -928,6 +899,36 @@ function StudentDetailPage({ config, studentId, onBack }) {
                 </div>
               </button>
             ))}
+          </div>
+        </div>
+
+        <div className="rounded-2xl p-4 border border-gray-100 mb-4" style={{ background: config.surface_color }}>
+          <div className="flex items-center justify-between">
+            <div className="text-xs font-semibold" style={{ color: config.secondary_action_color }}>Trend & Haftalık Karşılaştırma</div>
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => setSelectedSubjects([])}
+                className="px-3 py-1 rounded-full text-xs font-semibold border border-gray-200"
+              >
+                Tümü
+              </button>
+              {subjectKeys.map(s => {
+                const active = activeSubjects.includes(s.key);
+                return (
+                  <button
+                    key={s.key}
+                    onClick={() => setSelectedSubjects(prev => {
+                      if (prev.length === 0) return [s.key];
+                      return prev.includes(s.key) ? prev.filter(k => k !== s.key) : [...prev, s.key];
+                    })}
+                    className={`px-2.5 py-1 rounded-full text-[11px] font-semibold border ${active ? 'text-white' : 'border-gray-200'}`}
+                    style={{ background: active ? s.color : 'transparent' }}
+                  >
+                    {s.label}
+                  </button>
+                );
+              })}
+            </div>
           </div>
         </div>
 
@@ -1103,6 +1104,33 @@ function StudentDetailPage({ config, studentId, onBack }) {
               </button>
             </div>
           </div>
+          <div className="flex items-center justify-between mb-4">
+            <div className="text-xs font-semibold" style={{ color: config.secondary_action_color }}>Ders Filtreleri</div>
+            <div className="flex flex-wrap gap-2">
+              <button
+                onClick={() => setSelectedSubjects([])}
+                className="px-3 py-1 rounded-full text-xs font-semibold border border-gray-200"
+              >
+                Tümü
+              </button>
+              {subjectKeys.map(s => {
+                const active = activeSubjects.includes(s.key);
+                return (
+                  <button
+                    key={s.key}
+                    onClick={() => setSelectedSubjects(prev => {
+                      if (prev.length === 0) return [s.key];
+                      return prev.includes(s.key) ? prev.filter(k => k !== s.key) : [...prev, s.key];
+                    })}
+                    className={`px-3 py-1 rounded-full text-xs font-semibold border ${active ? 'text-white' : 'border-gray-200'}`}
+                    style={{ background: active ? s.color : 'transparent' }}
+                  >
+                    {s.label}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
 
           {Object.keys(dailySubjectMap).length === 0 ? (
             <div className="text-center py-8 text-sm" style={{ color: config.secondary_action_color }}>Henüz çalışma verisi girilmemiş</div>
@@ -1125,7 +1153,7 @@ function StudentDetailPage({ config, studentId, onBack }) {
                 acc[s.key] = days.reduce((t, d) => t + (d.subj[s.key] || 0), 0);
                 return acc;
               }, {});
-              const totalAll = Object.values(totalsBySubject).reduce((s, v) => s + v, 0);
+              const totalAll = activeSubjects.reduce((s, k) => s + (totalsBySubject[k] || 0), 0);
               const maxDay = Math.max(...days.map(d => d.total), 1);
               const maxAvg = Math.max(...Object.values(totalsBySubject).map(v => v / (rangeDays || 1)), 1);
               return (
@@ -1185,7 +1213,7 @@ function StudentDetailPage({ config, studentId, onBack }) {
                                 let acc = 0;
                                 const r = 80;
                                 const inner = 48;
-                                return subjectKeys.map(s => {
+                                return subjectKeys.filter(s => activeSubjects.includes(s.key)).map(s => {
                                   const v = totalsBySubject[s.key] || 0;
                                   const pct = v / totalAll;
                                   const startAngle = acc * 2 * Math.PI;
