@@ -8,6 +8,7 @@
   <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
   <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
   <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
   <script src="https://unpkg.com/recharts@2.10.3/dist/Recharts.js"></script>
   <script src="https://unpkg.com/react-calendar-heatmap@1.10.0/dist/react-calendar-heatmap.min.js"></script>
   <link rel="stylesheet" href="https://unpkg.com/react-calendar-heatmap@1.10.0/dist/react-calendar-heatmap.css">
@@ -56,7 +57,7 @@
  <body class="h-full">
   <div id="root" class="h-full"></div>
   <script type="text/babel">
-const { useState, useEffect, useCallback, useMemo } = React;
+const { useState, useEffect, useCallback, useMemo, useRef } = React;
 
 const Icons = {
   GraduationCap: (p) => <svg xmlns="http://www.w3.org/2000/svg" width={p.size||20} height={p.size||20} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={p.className}><path d="M21.42 10.922a1 1 0 0 0-.019-1.838L12.83 5.18a2 2 0 0 0-1.66 0L2.6 9.08a1 1 0 0 0 0 1.832l8.57 3.908a2 2 0 0 0 1.66 0z"/><path d="M22 10v6"/><path d="M6 12.5V16a6 3 0 0 0 12 0v-3.5"/></svg>,
@@ -2230,11 +2231,13 @@ function ExamPage({ config }) {
   );
 }
 
-function DashboardPage({ config, onSelectStudent }) {
+function DashboardPage({ config, onSelectStudent, onNavigate }) {
   const { students, exams } = useAppData();
   const [loading, setLoading] = useState(true);
   const [showRiskModal, setShowRiskModal] = useState(false);
   const [showDropModal, setShowDropModal] = useState(false);
+  const chartRef = useRef(null);
+  const chartInstanceRef = useRef(null);
 
   useEffect(() => {
     const t = setTimeout(() => setLoading(false), 400);
@@ -2438,6 +2441,228 @@ function DashboardPage({ config, onSelectStudent }) {
     }
   ];
 
+  const lastExamMeta = useMemo(() => {
+    if (!lastGroup) return null;
+    const title = `${lastGroup.name} - ${new Date(lastGroup.dateStr).toLocaleDateString('tr-TR')}`;
+    const total = students.length || 0;
+    const count = lastGroup.records.length;
+    return { title, count, total };
+
+  const chartMinWidth = chartData ? Math.max(chartData.rows.length * 40, 700) : 700;
+  }, [lastGroup, students.length]);
+
+  const chartData = useMemo(() => {
+    if (!lastGroup) return null;
+    const rows = lastGroup.records.map(r => {
+      let subj = {};
+      try { subj = typeof r.exam_subjects === 'string' ? JSON.parse(r.exam_subjects) : r.exam_subjects || {}; } catch {}
+      const net = parseFloat(r.exam_total_net || 0);
+      const name = (studentMap[r.student_id]?.ad_soyad || '').trim() || (studentMap[r.student_id]?.student_name || 'Öğrenci');
+      const parts = name.split(' ');
+      const shortName = parts.length > 1 ? `${parts[0]} ${parts[1][0]}.` : parts[0];
+      const details = {
+        turkce: calcNet(subj.turkce),
+        matematik: calcNet(subj.matematik),
+        fen: calcNet(subj.fen),
+        inkilap: calcNet(subj.inkilap),
+        ingilizce: calcNet(subj.ingilizce),
+      };
+      return { studentId: r.student_id, name, shortName, net, details };
+    }).sort((a, b) => b.net - a.net);
+
+    const avg = classAvg(lastGroup);
+    const maxNet = rows.length ? Math.max(...rows.map(r => r.net)) : 0;
+
+    return { rows, avg, maxNet };
+  }, [lastGroup, studentMap]);
+
+  useEffect(() => {
+    if (!chartRef.current) return;
+    if (!chartData || !chartData.rows || chartData.rows.length === 0) {
+      if (chartInstanceRef.current) {
+        chartInstanceRef.current.destroy();
+        chartInstanceRef.current = null;
+      }
+      return;
+    }
+
+    const ctx = chartRef.current.getContext('2d');
+    if (chartInstanceRef.current) {
+      chartInstanceRef.current.destroy();
+      chartInstanceRef.current = null;
+    }
+
+    const labels = chartData.rows.map(r => r.shortName);
+    const nets = chartData.rows.map(r => r.net);
+    const avg = chartData.avg;
+    const maxNet = chartData.maxNet;
+
+    const colors = chartData.rows.map(r => {
+      if (r.net >= avg + 5) return '#2ecc71';
+      if (Math.abs(r.net - avg) <= 5) return '#f39c12';
+      return '#e74c3c';
+    });
+
+    const highlightIndex = chartData.rows.findIndex(r => r.net === maxNet);
+    if (highlightIndex >= 0) {
+      colors[highlightIndex] = '#16a34a';
+    }
+
+    const averageLinePlugin = {
+      id: 'averageLine',
+      afterDatasetsDraw(chart) {
+        const { ctx, chartArea, scales } = chart;
+        const y = scales.y.getPixelForValue(avg);
+        ctx.save();
+        ctx.setLineDash([6, 6]);
+        ctx.strokeStyle = '#ef4444';
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.moveTo(chartArea.left, y);
+        ctx.lineTo(chartArea.right, y);
+        ctx.stroke();
+        ctx.setLineDash([]);
+
+        const label = `Sınıf Ort: ${avg.toFixed(1)}`;
+        ctx.fillStyle = '#fff';
+        ctx.strokeStyle = '#ef4444';
+        ctx.lineWidth = 1;
+        const padding = 6;
+        ctx.font = '12px Plus Jakarta Sans';
+        const textWidth = ctx.measureText(label).width;
+        const boxX = chartArea.right - textWidth - padding * 2 - 8;
+        const boxY = y - 16;
+        ctx.beginPath();
+        ctx.roundRect(boxX, boxY, textWidth + padding * 2, 20, 6);
+        ctx.fill();
+        ctx.stroke();
+        ctx.fillStyle = '#ef4444';
+        ctx.fillText(label, boxX + padding, boxY + 14);
+        ctx.restore();
+      }
+    };
+
+    const starPlugin = {
+      id: 'maxStar',
+      afterDatasetsDraw(chart) {
+        const { ctx, scales } = chart;
+        const index = highlightIndex;
+        if (index < 0) return;
+        const x = scales.x.getPixelForValue(index);
+        const y = scales.y.getPixelForValue(nets[index]) - 18;
+        ctx.save();
+        ctx.font = '16px Plus Jakarta Sans';
+        ctx.fillText('⭐', x - 8, y);
+        ctx.restore();
+      }
+    };
+
+    const valueLabelPlugin = {
+      id: 'valueLabels',
+      afterDatasetsDraw(chart) {
+        const { ctx, scales } = chart;
+        ctx.save();
+        ctx.font = '12px Plus Jakarta Sans';
+        ctx.fillStyle = '#0f172a';
+        nets.forEach((v, i) => {
+          const x = scales.x.getPixelForValue(i);
+          const y = scales.y.getPixelForValue(v) - 6;
+          ctx.fillText(v.toFixed(0), x - 8, y);
+        });
+        ctx.restore();
+      }
+    };
+
+    const chart = new window.Chart(ctx, {
+      type: 'bar',
+      data: {
+        labels,
+        datasets: [
+          {
+            data: nets,
+            backgroundColor: colors,
+            borderRadius: { topLeft: 4, topRight: 4 },
+            borderSkipped: false,
+            hoverBorderColor: '#0f172a',
+            hoverBorderWidth: 1,
+          }
+        ]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: { display: false },
+          tooltip: {
+            callbacks: {
+              title: (items) => {
+                const idx = items[0].dataIndex;
+                return chartData.rows[idx].name;
+              },
+              label: (item) => {
+                const idx = item.dataIndex;
+                const r = chartData.rows[idx];
+                const diff = r.net - avg;
+                const diffText = diff >= 0 ? `Ort +${diff.toFixed(1)}` : `Ort ${diff.toFixed(1)}`;
+                return `Toplam Net: ${r.net.toFixed(1)} (${diffText})`;
+              },
+              afterBody: (items) => {
+                const idx = items[0].dataIndex;
+                const d = chartData.rows[idx].details;
+                return [
+                  `Türkçe: ${d.turkce.toFixed(1)}`,
+                  `Matematik: ${d.matematik.toFixed(1)}`,
+                  `Fen: ${d.fen.toFixed(1)}`,
+                  `Sosyal: ${d.inkilap.toFixed(1)}`,
+                  `İngilizce: ${d.ingilizce.toFixed(1)}`,
+                ];
+              }
+            }
+          }
+        },
+        scales: {
+          y: {
+            min: 0,
+            max: 320,
+            ticks: { stepSize: 20 },
+            grid: { color: '#e0e0e0' }
+          },
+          x: {
+            grid: { display: false },
+            ticks: {
+              maxRotation: 45,
+              minRotation: 0
+            }
+          }
+        },
+        animation: {
+          duration: 800,
+          delay: (ctx) => ctx.dataIndex * 50
+        },
+        onHover: (evt, elements) => {
+          const canvas = evt?.chart?.canvas;
+          if (canvas) canvas.style.cursor = elements.length ? 'pointer' : 'default';
+        },
+        onClick: (evt, elements) => {
+          if (!elements.length) return;
+          const idx = elements[0].index;
+          const studentId = chartData.rows[idx].studentId;
+          if (onSelectStudent) onSelectStudent(studentId);
+        }
+      },
+      plugins: [averageLinePlugin, starPlugin, valueLabelPlugin]
+    });
+
+    chartInstanceRef.current = chart;
+
+    return () => {
+      if (chartInstanceRef.current) {
+        chartInstanceRef.current.destroy();
+        chartInstanceRef.current = null;
+      }
+    };
+  }, [chartData, onSelectStudent]);
+
   return (
     <div className="max-w-7xl mx-auto px-4 py-8 fade-in">
       <div className="mb-8">
@@ -2472,6 +2697,39 @@ function DashboardPage({ config, onSelectStudent }) {
               <div className="text-xs mt-2" style={{ color: c.subColor || '#94a3b8' }}>{c.sub}</div>
             </div>
           ))
+        )}
+      </div>
+
+      <div className="mt-8">
+        <div className="flex items-center justify-between mb-2">
+          <div>
+            <h2 className="text-lg font-bold" style={{ color: config.text_color }}>📊 Son Ortak Deneme Performansı</h2>
+            <div className="text-sm" style={{ color: config.secondary_action_color }}>{lastExamMeta ? lastExamMeta.title : '?'}</div>
+          </div>
+          {lastExamMeta && (
+            <div className="text-sm font-semibold" style={{ color: config.secondary_action_color }}>{lastExamMeta.count}/{lastExamMeta.total} öğrenci katıldı</div>
+          )}
+        </div>
+
+        {!hasOrtak ? (
+          <div className="rounded-2xl p-6 border border-dashed text-center" style={{ background: config.surface_color, borderColor: '#E2E8F0' }}>
+            <p className="text-sm" style={{ color: config.secondary_action_color }}>Hen?z ortak deneme girilmemi?</p>
+            <button
+              onClick={() => onNavigate && onNavigate('deneme-girisi')}
+              className="mt-3 px-4 py-2 rounded-lg text-sm font-semibold text-white"
+              style={{ background: config.primary_action_color }}
+            >
+              Deneme Tan?mla
+            </button>
+          </div>
+        ) : (
+          <div className="rounded-2xl p-6 shadow-lg" style={{ background: config.surface_color }}>
+            <div className="overflow-x-auto">
+              <div style={{ height: 440, minWidth: chartMinWidth }}>
+                <canvas ref={chartRef}></canvas>
+              </div>
+            </div>
+          </div>
         )}
       </div>
 
@@ -2553,7 +2811,7 @@ function App() {
       case 'ogrenci-detay': return <StudentDetailPage config={config} studentId={selectedStudentId} onBack={() => navigate('ogrenciler')} />;
       case 'gunluk-calisma': return <StudyPage config={config}/>;
       case 'deneme-girisi': return <ExamPage config={config}/>;
-      case 'dashboard': return <DashboardPage config={config} onSelectStudent={(id) => { setSelectedStudentId(id); navigate('ogrenci-detay'); }} />;
+      case 'dashboard': return <DashboardPage config={config} onSelectStudent={(id) => { setSelectedStudentId(id); navigate('ogrenci-detay'); }} onNavigate={navigate} />;
       default: return <HomePage navigate={navigate} config={config}/>;
     }
   };
