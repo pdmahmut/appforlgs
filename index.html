@@ -579,9 +579,8 @@ function StudyPage({ config }) {
 
           <form onSubmit={handleQuickSubmit}>
             <div className="overflow-x-auto">
-              <div className="min-w-[760px]">
-                <div className="grid grid-cols-7 gap-3 items-center text-xs font-semibold uppercase" style={{ color: config.secondary_action_color }}>
-                  <div></div>
+              <div className="min-w-[1100px]">
+                <div className="grid grid-cols-6 gap-4 items-center text-xs font-semibold uppercase" style={{ color: config.secondary_action_color }}>
                   <div className="text-center">TÜR</div>
                   <div className="text-center">MAT</div>
                   <div className="text-center">FEN</div>
@@ -590,34 +589,51 @@ function StudyPage({ config }) {
                   <div className="text-center">İNG</div>
                 </div>
 
-                <div className="grid grid-cols-7 gap-3 mt-2">
-                  <div className="flex items-center font-bold" style={{ color: config.text_color }}>D</div>
-                  <input ref={quickFirstRef} autoFocus type="text" inputMode="numeric" maxLength={3} value={quickInputs.tur_d} onChange={(e) => handleQuickChange('tur_d', e.target.value)} className="px-3 py-2 rounded-lg border border-gray-200 text-sm font-semibold text-center" />
-                  <input type="text" inputMode="numeric" maxLength={3} value={quickInputs.mat_d} onChange={(e) => handleQuickChange('mat_d', e.target.value)} className="px-3 py-2 rounded-lg border border-gray-200 text-sm font-semibold text-center" />
-                  <input type="text" inputMode="numeric" maxLength={3} value={quickInputs.fen_d} onChange={(e) => handleQuickChange('fen_d', e.target.value)} className="px-3 py-2 rounded-lg border border-gray-200 text-sm font-semibold text-center" />
-                  <input type="text" inputMode="numeric" maxLength={3} value={quickInputs.ink_d} onChange={(e) => handleQuickChange('ink_d', e.target.value)} className="px-3 py-2 rounded-lg border border-gray-200 text-sm font-semibold text-center" />
-                  <input type="text" inputMode="numeric" maxLength={3} value={quickInputs.din_d} onChange={(e) => handleQuickChange('din_d', e.target.value)} className="px-3 py-2 rounded-lg border border-gray-200 text-sm font-semibold text-center" />
-                  <input type="text" inputMode="numeric" maxLength={3} value={quickInputs.ing_d} onChange={(e) => handleQuickChange('ing_d', e.target.value)} className="px-3 py-2 rounded-lg border border-gray-200 text-sm font-semibold text-center" />
-                </div>
-
-                <div className="grid grid-cols-7 gap-3 mt-3">
-                  <div className="flex items-center font-bold" style={{ color: config.text_color }}>Y</div>
-                  <input type="text" inputMode="numeric" maxLength={3} value={quickInputs.tur_y} onChange={(e) => handleQuickChange('tur_y', e.target.value)} className="px-3 py-2 rounded-lg border border-gray-200 text-sm font-semibold text-center" />
-                  <input type="text" inputMode="numeric" maxLength={3} value={quickInputs.mat_y} onChange={(e) => handleQuickChange('mat_y', e.target.value)} className="px-3 py-2 rounded-lg border border-gray-200 text-sm font-semibold text-center" />
-                  <input type="text" inputMode="numeric" maxLength={3} value={quickInputs.fen_y} onChange={(e) => handleQuickChange('fen_y', e.target.value)} className="px-3 py-2 rounded-lg border border-gray-200 text-sm font-semibold text-center" />
-                  <input type="text" inputMode="numeric" maxLength={3} value={quickInputs.ink_y} onChange={(e) => handleQuickChange('ink_y', e.target.value)} className="px-3 py-2 rounded-lg border border-gray-200 text-sm font-semibold text-center" />
-                  <input type="text" inputMode="numeric" maxLength={3} value={quickInputs.din_y} onChange={(e) => handleQuickChange('din_y', e.target.value)} className="px-3 py-2 rounded-lg border border-gray-200 text-sm font-semibold text-center" />
-                  <input type="text" inputMode="numeric" maxLength={3} value={quickInputs.ing_y} onChange={(e) => handleQuickChange('ing_y', e.target.value)} className="px-3 py-2 rounded-lg border border-gray-200 text-sm font-semibold text-center" />
-                </div>
-
-                <div className="grid grid-cols-7 gap-3 mt-3">
-                  <div className="flex items-center font-bold" style={{ color: config.text_color }}>B</div>
-                  <input type="text" inputMode="numeric" maxLength={3} value={quickInputs.tur_b} onChange={(e) => handleQuickChange('tur_b', e.target.value)} className="px-3 py-2 rounded-lg border border-gray-200 text-sm font-semibold text-center" />
-                  <input type="text" inputMode="numeric" maxLength={3} value={quickInputs.mat_b} onChange={(e) => handleQuickChange('mat_b', e.target.value)} className="px-3 py-2 rounded-lg border border-gray-200 text-sm font-semibold text-center" />
-                  <input type="text" inputMode="numeric" maxLength={3} value={quickInputs.fen_b} onChange={(e) => handleQuickChange('fen_b', e.target.value)} className="px-3 py-2 rounded-lg border border-gray-200 text-sm font-semibold text-center" />
-                  <input type="text" inputMode="numeric" maxLength={3} value={quickInputs.ink_b} onChange={(e) => handleQuickChange('ink_b', e.target.value)} className="px-3 py-2 rounded-lg border border-gray-200 text-sm font-semibold text-center" />
-                  <input type="text" inputMode="numeric" maxLength={3} value={quickInputs.din_b} onChange={(e) => handleQuickChange('din_b', e.target.value)} className="px-3 py-2 rounded-lg border border-gray-200 text-sm font-semibold text-center" />
-                  <input type="text" inputMode="numeric" maxLength={3} value={quickInputs.ing_b} onChange={(e) => handleQuickChange('ing_b', e.target.value)} className="px-3 py-2 rounded-lg border border-gray-200 text-sm font-semibold text-center" />
+                <div className="grid grid-cols-6 gap-4 mt-2">
+                  {[
+                    { key: 'tur', label: 'TÜR' },
+                    { key: 'mat', label: 'MAT' },
+                    { key: 'fen', label: 'FEN' },
+                    { key: 'ink', label: 'İNK' },
+                    { key: 'din', label: 'DİN' },
+                    { key: 'ing', label: 'İNG' },
+                  ].map((s, idx) => (
+                    <div key={s.key} className="flex flex-col gap-2">
+                      <div className="grid grid-cols-3 gap-2 text-[10px] font-semibold text-center" style={{ color: config.secondary_action_color }}>
+                        <div>D</div>
+                        <div>Y</div>
+                        <div>B</div>
+                      </div>
+                      <div className="grid grid-cols-3 gap-2">
+                        <input
+                          ref={idx === 0 ? quickFirstRef : null}
+                          autoFocus={idx === 0}
+                          type="text"
+                          inputMode="numeric"
+                          maxLength={3}
+                          value={quickInputs[`${s.key}_d`]}
+                          onChange={(e) => handleQuickChange(`${s.key}_d`, e.target.value)}
+                          className="px-3 py-2 rounded-lg border border-gray-200 text-sm font-semibold text-center"
+                        />
+                        <input
+                          type="text"
+                          inputMode="numeric"
+                          maxLength={3}
+                          value={quickInputs[`${s.key}_y`]}
+                          onChange={(e) => handleQuickChange(`${s.key}_y`, e.target.value)}
+                          className="px-3 py-2 rounded-lg border border-gray-200 text-sm font-semibold text-center"
+                        />
+                        <input
+                          type="text"
+                          inputMode="numeric"
+                          maxLength={3}
+                          value={quickInputs[`${s.key}_b`]}
+                          onChange={(e) => handleQuickChange(`${s.key}_b`, e.target.value)}
+                          className="px-3 py-2 rounded-lg border border-gray-200 text-sm font-semibold text-center"
+                        />
+                      </div>
+                    </div>
+                  ))}
                 </div>
               </div>
             </div>
