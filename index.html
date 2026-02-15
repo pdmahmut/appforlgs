@@ -2481,12 +2481,12 @@ function DashboardPage({ config, onSelectStudent, onNavigate }) {
   const radarData = useMemo(() => {
     if (!ortakExams || ortakExams.length === 0) return null;
     const subjects = [
-      { key: 'turkce', label: 'T?rk?e' },
+      { key: 'turkce', label: 'Türkçe' },
       { key: 'matematik', label: 'Matematik' },
       { key: 'fen', label: 'Fen Bilimleri' },
       { key: 'ingilizce', label: '?ngilizce' },
-      { key: 'inkilap', label: '?nk?lap Tarihi' },
-      { key: 'din', label: 'Din K?lt?r?' },
+      { key: 'inkilap', label: 'İnkılap Tarihi' },
+      { key: 'din', label: 'Din Kültürü' },
     ];
     const totals = {};
     const counts = {};
