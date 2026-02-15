@@ -2442,36 +2442,50 @@ function DashboardPage({ config, onSelectStudent, onNavigate }) {
   const studentNameById = useMemo(() => {
     const map = {};
     (students || []).forEach(s => {
-      map[s.__backendId] = (s.ad_soyad || `${s.student_name || ''} ${s.student_surname || ''}`.trim() || 'Öğrenci');
+      map[String(s.__backendId)] = (s.ad_soyad || `${s.student_name || ''} ${s.student_surname || ''}`.trim() || 'Öğrenci');
     });
     return map;
   }, [students]);
 
+  const formatAgo = (date) => {
+    const diffMs = now.getTime() - date.getTime();
+    const diffMin = Math.floor(diffMs / (60 * 1000));
+    const diffHr = Math.floor(diffMs / (60 * 60 * 1000));
+    const diffDay = Math.floor(diffMs / dayMs);
+    if (diffMin <= 1) return 'Az önce';
+    if (diffMin < 60) return `${diffMin} dk önce`;
+    if (diffHr < 24) return `${diffHr} saat önce`;
+    if (diffDay === 1) return 'Dün';
+    return `${diffDay} gün önce`;
+  };
+
   const recentActivities = useMemo(() => {
     const items = [];
     (exams || []).forEach(e => {
-      const d = new Date(e.exam_date || e.created_at || '');
-      const sid = e.student_id || e.student_backend_id;
-      const name = studentNameById[sid] || 'Öğrenci';
+      const d = new Date(e.created_at || e.exam_date || '');
+      const sid = String(e.student_id || e.student_backend_id || '');
+      const name = studentNameById[sid] || 'Bilinmeyen öğrenci';
       items.push({
         type: 'exam',
         date: d,
         text: `${name} - Deneme girişi (${e.exam_name || 'Deneme'})`,
+        ago: formatAgo(d)
       });
     });
     (quickStudies || []).forEach(q => {
-      const d = new Date(q.study_date || q.created_at || '');
+      const d = new Date(q.created_at || q.study_date || '');
       const total = (q.tur_d||0)+(q.tur_y||0)+(q.tur_b||0)+
         (q.mat_d||0)+(q.mat_y||0)+(q.mat_b||0)+
         (q.fen_d||0)+(q.fen_y||0)+(q.fen_b||0)+
         (q.ink_d||0)+(q.ink_y||0)+(q.ink_b||0)+
         (q.ing_d||0)+(q.ing_y||0)+(q.ing_b||0)+
         (q.din_d||0)+(q.din_y||0)+(q.din_b||0);
-      const name = studentNameById[q.student_id] || 'Öğrenci';
+      const name = studentNameById[String(q.student_id || '')] || 'Bilinmeyen öğrenci';
       items.push({
         type: 'study',
         date: d,
         text: `${name} - Günlük çalışma (${total} soru)`,
+        ago: formatAgo(d)
       });
     });
     return items.sort((a, b) => b.date - a.date).slice(0, 6);
@@ -3050,8 +3064,7 @@ function DashboardPage({ config, onSelectStudent, onNavigate }) {
               {recentActivities.length === 0 ? (
                 <div className="text-sm" style={{ color: config.secondary_action_color }}>Henüz aktivite yok</div>
               ) : recentActivities.map((a, i) => {
-                const days = diffDays(now, a.date);
-                const timeText = days === 0 ? 'Bugün' : days === 1 ? 'Dün' : `${days} gün önce`;
+                const timeText = a.ago || 'Az önce';
                 return (
                   <div key={i} className="relative">
                     <div className="absolute -left-[18px] top-1.5 w-3 h-3 rounded-full" style={{ background: a.type === 'exam' ? '#3B82F6' : '#10B981' }}></div>
