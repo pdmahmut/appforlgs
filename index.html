@@ -412,6 +412,7 @@ function StudentDetailPage({ config, studentId, onBack }) {
   const [detailModal, setDetailModal] = useState(null);
   const [editModal, setEditModal] = useState(false);
   const [confirmDel, setConfirmDel] = useState(false);
+  const [showAllExams, setShowAllExams] = useState(false);
   const [saving, setSaving] = useState(false);
   const [form, setForm] = useState({ fullName: '', sinif: '8A', okulNo: '' });
   const {
@@ -656,6 +657,13 @@ function StudentDetailPage({ config, studentId, onBack }) {
                       {avgNet}
                     </div>
                   </div>
+                  <button onClick={() => setShowAllExams(true)} className="rounded-xl p-3 border border-gray-100 text-left hover:shadow-md transition" style={{ background: '#EFF6FF' }}>
+                    <div className="text-xs font-semibold" style={{ color: config.text_color }}>Tüm Denemeler</div>
+                    <div className="text-[10px]" style={{ color: config.secondary_action_color }}>Tıklayarak listele</div>
+                    <div className="mt-2 text-lg font-bold" style={{ color: '#1D4ED8' }}>
+                      {studentExams.length}
+                    </div>
+                  </button>
                   {recentExams.slice(-6).reverse().map((e, i) => (
                     <div key={e.__backendId} className="rounded-xl p-3 border border-gray-100" style={{ background: ['#EFF6FF','#ECFDF5','#FEF3C7','#FCE7F3','#F3E8FF','#FFF7ED'][i % 6] }}>
                       <div className="text-xs font-semibold" style={{ color: config.text_color }}>{(e.exam_name || 'Deneme').slice(0, 20)}</div>
@@ -673,39 +681,6 @@ function StudentDetailPage({ config, studentId, onBack }) {
           </div>
         )}
 
-        <div className="mt-6 rounded-2xl p-4 border border-gray-100" style={{ background: config.surface_color }}>
-          <h3 className="text-sm font-semibold mb-3" style={{ color: config.text_color }}>Son Denemeler</h3>
-          {lastExams.length === 0 ? (
-            <div className="text-center py-8" style={{ color: config.secondary_action_color }}>Henüz deneme verisi girilmemiş</div>
-          ) : (
-            <div className="overflow-x-auto">
-              <table className="w-full text-sm">
-                <thead>
-                  <tr className="text-left" style={{ color: config.secondary_action_color }}>
-                    <th className="py-2">Tarih</th>
-                    <th>Deneme Adı</th>
-                    <th>Tip</th>
-                    <th>Toplam Net</th>
-                    <th></th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {lastExams.map(e => (
-                    <tr key={e.__backendId} className="border-t">
-                      <td className="py-2">{new Date(e.exam_date || e.created_at).toLocaleDateString('tr-TR')}</td>
-                      <td>{e.exam_name}</td>
-                      <td>{e.deneme_tipi === 'bireysel' ? 'Bireysel' : 'Ortak'}</td>
-                      <td className="font-semibold">{parseFloat(e.exam_total_net || 0).toFixed(2)}</td>
-                      <td>
-                        <button onClick={() => setDetailModal(e)} className="text-blue-600 text-xs font-semibold">Detay Gör</button>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          )}
-        </div>
       </div>
 
       <div className="mb-8">
@@ -853,6 +828,47 @@ function StudentDetailPage({ config, studentId, onBack }) {
                 );
               })}
             </div>
+          </div>
+        </div>
+      )}
+
+      {showAllExams && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center modal-backdrop" style={{background:'rgba(0,0,0,0.4)'}}>
+          <div className="rounded-2xl shadow-2xl p-6 max-w-2xl w-full mx-4 fade-in max-h-[80vh] overflow-y-auto" style={{background: config.surface_color}}>
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-lg font-bold" style={{ color: config.text_color }}>Tüm Denemeler</h3>
+              <button onClick={() => setShowAllExams(false)} className="p-1.5 rounded-lg hover:bg-gray-100"><Icons.X size={18}/></button>
+            </div>
+            {studentExams.length === 0 ? (
+              <div className="text-center py-8" style={{ color: config.secondary_action_color }}>Henüz deneme verisi girilmemiş</div>
+            ) : (
+              <div className="overflow-x-auto">
+                <table className="w-full text-sm">
+                  <thead>
+                    <tr className="text-left" style={{ color: config.secondary_action_color }}>
+                      <th className="py-2">Tarih</th>
+                      <th>Deneme Adı</th>
+                      <th>Tip</th>
+                      <th>Toplam Net</th>
+                      <th></th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {[...studentExams].reverse().map(e => (
+                      <tr key={e.__backendId} className="border-t">
+                        <td className="py-2">{new Date(e.exam_date || e.created_at).toLocaleDateString('tr-TR')}</td>
+                        <td>{e.exam_name}</td>
+                        <td>{e.deneme_tipi === 'bireysel' ? 'Bireysel' : 'Ortak'}</td>
+                        <td className="font-semibold">{parseFloat(e.exam_total_net || 0).toFixed(2)}</td>
+                        <td>
+                          <button onClick={() => setDetailModal(e)} className="text-blue-600 text-xs font-semibold">Detay Gör</button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
           </div>
         </div>
       )}
