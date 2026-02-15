@@ -621,6 +621,14 @@ function ExamPage({ config }) {
     ingilizce: { bg: '#F3E8FF', text: '#7C3AED', name: 'İngilizce', emoji: '🌍' },
     din: { bg: '#FCE7F3', text: '#BE185D', name: 'Din', emoji: '☪️' },
   };
+  const quickSubjects = [
+    { key: 'turkce', label: 'TÜR', accent: '#EF4444', soft: '#FEE2E2' },
+    { key: 'matematik', label: 'MAT', accent: '#3B82F6', soft: '#DBEAFE' },
+    { key: 'fen', label: 'FEN', accent: '#10B981', soft: '#DCFCE7' },
+    { key: 'inkilap', label: 'İNK', accent: '#F59E0B', soft: '#FEF3C7' },
+    { key: 'din', label: 'DİN', accent: '#EC4899', soft: '#FCE7F3' },
+    { key: 'ingilizce', label: 'İNG', accent: '#8B5CF6', soft: '#F3E8FF' },
+  ];
 
   const toNum = (v) => {
     if (v === '' || v == null) return 0;
@@ -691,7 +699,7 @@ function ExamPage({ config }) {
   };
 
   const handleSubjectChange = (key, field, value) => {
-    const num = normalizeIntInput(value);
+    const num = normalizeIntInput(value).slice(0, 3);
     setSubjects(prev => ({
       ...prev,
       [key]: { ...prev[key], [field]: num }
@@ -973,34 +981,62 @@ function ExamPage({ config }) {
               </div>
             ) : (
               <>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-5 mb-8">
-                  {Object.entries(subjects).map(([key, data]) => {
-                    const color = subjectColors[key];
-                    const net = calculateNet(data.dogru, data.yanlis);
-                    return (
-                      <div key={key} className="rounded-2xl p-5 border border-gray-100 card-hover" style={{ background: config.surface_color }}>
-                        <h3 className="text-lg font-bold mb-4 pb-3 border-b-2 flex items-center gap-2" style={{ color: color.text, borderColor: color.bg }}>{color.emoji} {color.name}</h3>
-                        <div className="space-y-3 mb-4">
-                          <div>
-                            <label htmlFor={`exam-${key}-dogru`} className="text-xs font-semibold mb-1 block" style={{ color: config.secondary_action_color }}>Doğru</label>
-                            <input id={`exam-${key}-dogru`} type="number" min="0" step="1" inputMode="numeric" value={data.dogru} onChange={(e) => handleSubjectChange(key, 'dogru', e.target.value)} className="w-full px-3 py-2 rounded-lg border border-gray-200 text-sm font-semibold text-center" style={{ background: color.bg }} />
+                <div className="overflow-x-auto mb-8">
+                  <div className="min-w-[1100px]">
+                    <div className="grid grid-cols-6 gap-4 items-center text-xs font-semibold uppercase" style={{ color: config.secondary_action_color }}>
+                      {quickSubjects.map(s => (
+                        <div key={s.key} className="text-center">{s.label}</div>
+                      ))}
+                    </div>
+
+                    <div className="grid grid-cols-6 gap-4 mt-3">
+                      {quickSubjects.map((s, idx) => (
+                        <div key={s.key} className="flex flex-col gap-2">
+                          <div className="grid grid-cols-3 gap-2 text-[10px] font-semibold text-center" style={{ color: config.secondary_action_color }}>
+                            <div>D</div>
+                            <div>Y</div>
+                            <div>B</div>
                           </div>
-                          <div>
-                            <label htmlFor={`exam-${key}-yanlis`} className="text-xs font-semibold mb-1 block" style={{ color: config.secondary_action_color }}>Yanlış</label>
-                            <input id={`exam-${key}-yanlis`} type="number" min="0" step="1" inputMode="numeric" value={data.yanlis} onChange={(e) => handleSubjectChange(key, 'yanlis', e.target.value)} className="w-full px-3 py-2 rounded-lg border border-gray-200 text-sm font-semibold text-center" style={{ background: color.bg }} />
+                          <div className="grid grid-cols-3 gap-2">
+                            <input
+                              id={`exam-${s.key}-dogru`}
+                              autoFocus={idx === 0}
+                              type="text"
+                              inputMode="numeric"
+                              maxLength={3}
+                              value={subjects[s.key].dogru}
+                              onChange={(e) => handleSubjectChange(s.key, 'dogru', e.target.value)}
+                              className="px-3 py-2 rounded-lg border text-sm font-semibold text-center"
+                              style={{ background: s.soft, borderColor: s.soft }}
+                            />
+                            <input
+                              id={`exam-${s.key}-yanlis`}
+                              type="text"
+                              inputMode="numeric"
+                              maxLength={3}
+                              value={subjects[s.key].yanlis}
+                              onChange={(e) => handleSubjectChange(s.key, 'yanlis', e.target.value)}
+                              className="px-3 py-2 rounded-lg border text-sm font-semibold text-center"
+                              style={{ background: s.soft, borderColor: s.soft }}
+                            />
+                            <input
+                              id={`exam-${s.key}-bos`}
+                              type="text"
+                              inputMode="numeric"
+                              maxLength={3}
+                              value={subjects[s.key].bos}
+                              onChange={(e) => handleSubjectChange(s.key, 'bos', e.target.value)}
+                              className="px-3 py-2 rounded-lg border text-sm font-semibold text-center"
+                              style={{ background: s.soft, borderColor: s.soft }}
+                            />
                           </div>
-                          <div>
-                            <label htmlFor={`exam-${key}-bos`} className="text-xs font-semibold mb-1 block" style={{ color: config.secondary_action_color }}>Boş</label>
-                            <input id={`exam-${key}-bos`} type="number" min="0" step="1" inputMode="numeric" value={data.bos} onChange={(e) => handleSubjectChange(key, 'bos', e.target.value)} className="w-full px-3 py-2 rounded-lg border border-gray-200 text-sm font-semibold text-center" style={{ background: color.bg }} />
+                          <div className="rounded-lg py-2 text-center text-sm font-bold" style={{ background: s.soft, color: s.accent }}>
+                            Net: {calculateNet(subjects[s.key].dogru, subjects[s.key].yanlis)}
                           </div>
                         </div>
-                        <div className="text-center py-3 rounded-lg" style={{ background: color.bg }}>
-                          <p className="text-xs font-semibold mb-1" style={{ color: config.secondary_action_color }}>NET</p>
-                          <p className="text-2xl font-extrabold" style={{ color: color.text }}>{net}</p>
-                        </div>
-                      </div>
-                    );
-                  })}
+                      ))}
+                    </div>
+                  </div>
                 </div>
 
                 <div className="flex gap-3 mb-12">
