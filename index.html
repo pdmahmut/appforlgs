@@ -423,7 +423,7 @@ function StudentDetailPage({ config, studentId, onBack }) {
   const [showAllExams, setShowAllExams] = useState(false);
   const [saving, setSaving] = useState(false);
   const [form, setForm] = useState({ fullName: '', sinif: '8A', okulNo: '' });
-  const CalendarHeatmap = window.ReactCalendarHeatmap;
+  const CalendarHeatmap = (window.ReactCalendarHeatmap && (window.ReactCalendarHeatmap.default || window.ReactCalendarHeatmap)) || window.CalendarHeatmap;
   const {
     ResponsiveContainer,
     LineChart,
