@@ -422,6 +422,7 @@ function StudentDetailPage({ config, studentId, onBack }) {
   const [confirmDel, setConfirmDel] = useState(false);
   const [showAllExams, setShowAllExams] = useState(false);
   const [showAllStudies, setShowAllStudies] = useState(false);
+  const [showWeekDetail, setShowWeekDetail] = useState(null);
   const [saving, setSaving] = useState(false);
   const [form, setForm] = useState({ fullName: '', sinif: '8A', okulNo: '' });
   const weekdays = ['Paz', 'Pzt', 'Sal', 'Çar', 'Per', 'Cum', 'Cmt'];
@@ -567,13 +568,16 @@ function StudentDetailPage({ config, studentId, onBack }) {
     const start = new Date(end);
     const label = i === 0 ? 'Bu hafta' : i === 1 ? 'Geçen hafta' : `${i} hafta önce`;
     let daysWorked = 0;
+    const days = [];
     for (let d = new Date(start); d < new Date(start.getTime() + 7 * 24 * 60 * 60 * 1000); d.setDate(d.getDate() + 1)) {
       const key = d.toISOString().split('T')[0];
-      if ((dailyTotalsMap[key] || 0) > 0) daysWorked += 1;
+      const worked = (dailyTotalsMap[key] || 0) > 0;
+      if (worked) daysWorked += 1;
+      days.push({ date: new Date(d), worked });
     }
     const pct = ((daysWorked / 7) * 100).toFixed(1);
     const emoji = daysWorked === 7 ? '🔥' : daysWorked >= 5 ? '💪' : daysWorked >= 3 ? '👍' : daysWorked >= 1 ? '⚠️' : '❌';
-    weeklyStats.push({ label, daysWorked, pct, emoji });
+    weeklyStats.push({ label, daysWorked, pct, emoji, days });
   }
 
   const handleEditOpen = () => {
@@ -843,14 +847,14 @@ function StudentDetailPage({ config, studentId, onBack }) {
           <h3 className="text-sm font-semibold mb-3" style={{ color: config.text_color }}>📊 Haftalık Süreklilik Skoru</h3>
           <div className="space-y-2">
             {weeklyStats.map((w, i) => (
-              <div key={i} className="flex items-center justify-between px-3 py-2 rounded-lg" style={{ background: '#F8FAFC' }}>
+              <button key={i} onClick={() => setShowWeekDetail(w)} className="w-full text-left flex items-center justify-between px-3 py-2 rounded-lg hover:shadow-sm transition" style={{ background: '#F8FAFC' }}>
                 <div className="text-sm" style={{ color: config.text_color }}>
                   {w.label}: {w.daysWorked}/7 gün çalıştın! {w.emoji}
                 </div>
                 <div className="text-sm font-bold" style={{ color: config.primary_action_color }}>
                   %{w.pct}
                 </div>
-              </div>
+              </button>
             ))}
           </div>
         </div>
@@ -884,7 +888,7 @@ function StudentDetailPage({ config, studentId, onBack }) {
                     <line x1="40" y1="20" x2="40" y2="200" stroke="#94A3B8" strokeWidth="2" />
                     <line x1="40" y1="200" x2="500" y2="200" stroke="#94A3B8" strokeWidth="2" />
                     <line x1="40" y1={200 - (avg / max) * 160} x2="500" y2={200 - (avg / max) * 160} stroke="#64748B" strokeWidth="1" strokeDasharray="4 4" />
-                    <text x="500" y={200 - (avg / max) * 160 - 6} textAnchor="end" fontSize="10" fill="#64748B">Günlük ortalaman: {avg.toFixed(1)} soru</text>
+                    <text x="6" y={200 - (avg / max) * 160} textAnchor="start" fontSize="10" fill="#64748B">Ort: {avg.toFixed(1)}</text>
                     <defs>
                       <linearGradient id="trendFill" x1="0" y1="0" x2="0" y2="1">
                         <stop offset="0%" stopColor="#10B981" stopOpacity="0.25" />
@@ -905,9 +909,11 @@ function StudentDetailPage({ config, studentId, onBack }) {
                       const x = 40 + (i / 29) * 460;
                       const y = 200 - (d.total / max) * 160;
                       const color = d.total >= avg ? '#10B981' : '#EF4444';
+                      const title = d.date.toLocaleDateString('tr-TR', { day: '2-digit', month: 'long', weekday: 'long' }) + ` - ${d.total} soru`;
                       return (
                         <g key={d.key}>
                           <circle cx={x} cy={y} r="3.5" fill={color} />
+                          <title>{title}</title>
                           {i % 5 === 0 ? (
                             <text x={x} y={220} textAnchor="middle" fontSize="9" fill={config.secondary_action_color}>
                               {d.date.getDate()}/{d.date.getMonth() + 1}
@@ -1090,6 +1096,29 @@ function StudentDetailPage({ config, studentId, onBack }) {
                 </table>
               </div>
             )}
+          </div>
+        </div>
+      )}
+
+      {showWeekDetail && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center modal-backdrop" style={{background:'rgba(0,0,0,0.4)'}}>
+          <div className="rounded-2xl shadow-2xl p-6 max-w-md w-full mx-4 fade-in" style={{background: config.surface_color}}>
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-lg font-bold" style={{ color: config.text_color }}>{showWeekDetail.label}</h3>
+              <button onClick={() => setShowWeekDetail(null)} className="p-1.5 rounded-lg hover:bg-gray-100"><Icons.X size={18}/></button>
+            </div>
+            <div className="space-y-2">
+              {showWeekDetail.days.map((d, i) => (
+                <div key={i} className="flex items-center justify-between px-3 py-2 rounded-lg" style={{ background: '#F8FAFC' }}>
+                  <div className="text-sm" style={{ color: config.text_color }}>
+                    {d.date.toLocaleDateString('tr-TR', { day: '2-digit', month: 'long', weekday: 'long' })}
+                  </div>
+                  <div className="text-sm font-semibold" style={{ color: d.worked ? '#10B981' : '#EF4444' }}>
+                    {d.worked ? '✔️ Çalışıldı' : '✖️ Veri yok'}
+                  </div>
+                </div>
+              ))}
+            </div>
           </div>
         </div>
       )}
