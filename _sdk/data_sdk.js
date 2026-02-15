@@ -69,6 +69,33 @@
         created_at: row.created_at,
       };
     }
+    if (type === 'quick_study') {
+      return {
+        type,
+        __backendId: row.backend_id || String(row.id),
+        student_id: row.student_id,
+        study_date: row.study_date,
+        tur_d: row.tur_d,
+        tur_y: row.tur_y,
+        tur_b: row.tur_b,
+        mat_d: row.mat_d,
+        mat_y: row.mat_y,
+        mat_b: row.mat_b,
+        fen_d: row.fen_d,
+        fen_y: row.fen_y,
+        fen_b: row.fen_b,
+        ink_d: row.ink_d,
+        ink_y: row.ink_y,
+        ink_b: row.ink_b,
+        din_d: row.din_d,
+        din_y: row.din_y,
+        din_b: row.din_b,
+        ing_d: row.ing_d,
+        ing_y: row.ing_y,
+        ing_b: row.ing_b,
+        created_at: row.created_at,
+      };
+    }
     return null;
   }
 
@@ -101,16 +128,17 @@
         const client = this._supabase;
         if (!client) return { isOk: false, error: 'Supabase client missing' };
 
-        const [studentsRes, studiesRes, examsRes, definedRes] = await Promise.all([
+        const [studentsRes, studiesRes, examsRes, definedRes, quickRes] = await Promise.all([
           client.from('students').select('*'),
           client.from('studies').select('*'),
           client.from('exams').select('*'),
           client.from('defined_exams').select('*'),
+          client.from('quick_studies').select('*'),
         ]);
 
-        if (studentsRes.error || studiesRes.error || examsRes.error || definedRes.error) {
+        if (studentsRes.error || studiesRes.error || examsRes.error || definedRes.error || quickRes.error) {
           const error =
-            studentsRes.error || studiesRes.error || examsRes.error || definedRes.error;
+            studentsRes.error || studiesRes.error || examsRes.error || definedRes.error || quickRes.error;
           return { isOk: false, error: error.message };
         }
 
@@ -118,8 +146,9 @@
         const studies = (studiesRes.data || []).map((r) => mapRowToRecord('study', r));
         const exams = (examsRes.data || []).map((r) => mapRowToRecord('exam', r));
         const definedExams = (definedRes.data || []).map((r) => mapRowToRecord('defined_exam', r));
+        const quickStudies = (quickRes.data || []).map((r) => mapRowToRecord('quick_study', r));
 
-        this._store = [...students, ...studies, ...exams, ...definedExams].filter(Boolean);
+        this._store = [...students, ...studies, ...exams, ...definedExams, ...quickStudies].filter(Boolean);
         this._notify();
         return { isOk: true };
       } catch (error) {
@@ -198,6 +227,40 @@
           const res = await client.from('defined_exams').insert(payload).select('*').single();
           if (res.error) throw res.error;
           const record = mapRowToRecord('defined_exam', res.data);
+          this._store.push(record);
+          this._notify();
+          return { isOk: true, data: record };
+        }
+
+        if (data.type === 'quick_study') {
+          const backendId = data.__backendId || createBackendId('quick_study');
+          const payload = {
+            backend_id: backendId,
+            student_id: data.student_id || null,
+            study_date: data.study_date || null,
+            tur_d: data.tur_d || 0,
+            tur_y: data.tur_y || 0,
+            tur_b: data.tur_b || 0,
+            mat_d: data.mat_d || 0,
+            mat_y: data.mat_y || 0,
+            mat_b: data.mat_b || 0,
+            fen_d: data.fen_d || 0,
+            fen_y: data.fen_y || 0,
+            fen_b: data.fen_b || 0,
+            ink_d: data.ink_d || 0,
+            ink_y: data.ink_y || 0,
+            ink_b: data.ink_b || 0,
+            din_d: data.din_d || 0,
+            din_y: data.din_y || 0,
+            din_b: data.din_b || 0,
+            ing_d: data.ing_d || 0,
+            ing_y: data.ing_y || 0,
+            ing_b: data.ing_b || 0,
+            created_at: data.created_at || new Date().toISOString(),
+          };
+          const res = await client.from('quick_studies').insert(payload).select('*').single();
+          if (res.error) throw res.error;
+          const record = mapRowToRecord('quick_study', res.data);
           this._store.push(record);
           this._notify();
           return { isOk: true, data: record };

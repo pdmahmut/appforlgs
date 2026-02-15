@@ -1,0 +1,30 @@
+-- Quick study input table
+
+CREATE TABLE IF NOT EXISTS quick_studies (
+  id SERIAL PRIMARY KEY,
+  backend_id TEXT UNIQUE,
+  student_id TEXT,
+  study_date DATE NOT NULL,
+  tur_d INTEGER NOT NULL DEFAULT 0,
+  tur_y INTEGER NOT NULL DEFAULT 0,
+  tur_b INTEGER NOT NULL DEFAULT 0,
+  mat_d INTEGER NOT NULL DEFAULT 0,
+  mat_y INTEGER NOT NULL DEFAULT 0,
+  mat_b INTEGER NOT NULL DEFAULT 0,
+  fen_d INTEGER NOT NULL DEFAULT 0,
+  fen_y INTEGER NOT NULL DEFAULT 0,
+  fen_b INTEGER NOT NULL DEFAULT 0,
+  ink_d INTEGER NOT NULL DEFAULT 0,
+  ink_y INTEGER NOT NULL DEFAULT 0,
+  ink_b INTEGER NOT NULL DEFAULT 0,
+  din_d INTEGER NOT NULL DEFAULT 0,
+  din_y INTEGER NOT NULL DEFAULT 0,
+  din_b INTEGER NOT NULL DEFAULT 0,
+  ing_d INTEGER NOT NULL DEFAULT 0,
+  ing_y INTEGER NOT NULL DEFAULT 0,
+  ing_b INTEGER NOT NULL DEFAULT 0,
+  created_at TIMESTAMPTZ DEFAULT now(),
+  CONSTRAINT fk_quick_study_student FOREIGN KEY(student_id) REFERENCES students(backend_id) ON DELETE SET NULL
+);
+
+CREATE INDEX IF NOT EXISTS idx_quick_studies_student_id ON quick_studies(student_id);

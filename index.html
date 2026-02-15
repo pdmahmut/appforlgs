@@ -402,6 +402,16 @@ function StudyPage({ config }) {
   });
   const [toast, setToast] = useState(null);
   const [loading, setLoading] = useState(false);
+  const [quickDate, setQuickDate] = useState('');
+  const [quickInputs, setQuickInputs] = useState({
+    tur_d: '', tur_y: '', tur_b: '',
+    mat_d: '', mat_y: '', mat_b: '',
+    fen_d: '', fen_y: '', fen_b: '',
+    ink_d: '', ink_y: '', ink_b: '',
+    din_d: '', din_y: '', din_b: '',
+    ing_d: '', ing_y: '', ing_b: '',
+  });
+  const quickFirstRef = React.useRef(null);
 
   const subjectColors = {
     turkce: { bg: '#FEE2E2', text: '#DC2626', name: 'Türkçe' },
@@ -441,6 +451,56 @@ function StudyPage({ config }) {
       ...prev,
       [key]: { ...prev[key], [field]: num }
     }));
+  };
+
+  const handleQuickChange = (key, value) => {
+    const cleaned = normalizeIntInput(value).slice(0, 3);
+    setQuickInputs(prev => ({ ...prev, [key]: cleaned }));
+  };
+
+  const focusQuickFirst = () => {
+    if (quickFirstRef.current) quickFirstRef.current.focus();
+  };
+
+  const handleQuickSubmit = async (e) => {
+    e.preventDefault();
+    if (!selectedStudentId) {
+      setToast({ msg: 'Lütfen öğrenci seçin', type: 'error' });
+      return;
+    }
+    if (!quickDate) {
+      setToast({ msg: 'Tarih seçmeden kaydetme yapılamaz', type: 'error' });
+      return;
+    }
+
+    const payload = Object.fromEntries(
+      Object.entries(quickInputs).map(([k, v]) => [k, Number(toNum(v))])
+    );
+
+    setLoading(true);
+    const result = await window.dataSdk.create({
+      type: 'quick_study',
+      student_id: selectedStudentId,
+      study_date: quickDate,
+      ...payload,
+      created_at: new Date().toISOString()
+    });
+    setLoading(false);
+
+    if (result.isOk) {
+      setToast({ msg: 'Hızlı giriş kaydedildi! ✅', type: 'success' });
+      setQuickInputs({
+        tur_d: '', tur_y: '', tur_b: '',
+        mat_d: '', mat_y: '', mat_b: '',
+        fen_d: '', fen_y: '', fen_b: '',
+        ink_d: '', ink_y: '', ink_b: '',
+        din_d: '', din_y: '', din_b: '',
+        ing_d: '', ing_y: '', ing_b: '',
+      });
+      focusQuickFirst();
+    } else {
+      setToast({ msg: 'Hata oluştu', type: 'error' });
+    }
   };
 
   const handleSave = async (e) => {
@@ -499,6 +559,78 @@ function StudyPage({ config }) {
   return (
     <div className="max-w-7xl mx-auto px-4 py-8 fade-in">
       {toast && <Toast message={toast.msg} type={toast.type} onClose={() => setToast(null)} />}
+
+      <div className="mb-10">
+        <div className="rounded-2xl p-6 border border-gray-200 bg-white">
+          <div className="flex items-center justify-between flex-wrap gap-3 mb-4">
+            <h2 className="text-xl font-bold" style={{ color: config.text_color }}>Hızlı Giriş</h2>
+            <div className="flex items-center gap-3">
+              <label className="text-sm font-semibold" style={{ color: config.text_color }}>Tarih *</label>
+              <input
+                type="date"
+                value={quickDate}
+                onChange={(e) => setQuickDate(e.target.value)}
+                className="px-3 py-2 rounded-lg border border-gray-200 text-sm font-medium"
+                style={{ background: config.surface_color, color: config.text_color }}
+                required
+              />
+            </div>
+          </div>
+
+          <form onSubmit={handleQuickSubmit}>
+            <div className="overflow-x-auto">
+              <div className="min-w-[760px]">
+                <div className="grid grid-cols-7 gap-3 items-center text-xs font-semibold uppercase" style={{ color: config.secondary_action_color }}>
+                  <div></div>
+                  <div className="text-center">TÜR</div>
+                  <div className="text-center">MAT</div>
+                  <div className="text-center">FEN</div>
+                  <div className="text-center">İNK</div>
+                  <div className="text-center">DİN</div>
+                  <div className="text-center">İNG</div>
+                </div>
+
+                <div className="grid grid-cols-7 gap-3 mt-2">
+                  <div className="flex items-center font-bold" style={{ color: config.text_color }}>D</div>
+                  <input ref={quickFirstRef} autoFocus type="text" inputMode="numeric" maxLength={3} value={quickInputs.tur_d} onChange={(e) => handleQuickChange('tur_d', e.target.value)} className="px-3 py-2 rounded-lg border border-gray-200 text-sm font-semibold text-center" />
+                  <input type="text" inputMode="numeric" maxLength={3} value={quickInputs.mat_d} onChange={(e) => handleQuickChange('mat_d', e.target.value)} className="px-3 py-2 rounded-lg border border-gray-200 text-sm font-semibold text-center" />
+                  <input type="text" inputMode="numeric" maxLength={3} value={quickInputs.fen_d} onChange={(e) => handleQuickChange('fen_d', e.target.value)} className="px-3 py-2 rounded-lg border border-gray-200 text-sm font-semibold text-center" />
+                  <input type="text" inputMode="numeric" maxLength={3} value={quickInputs.ink_d} onChange={(e) => handleQuickChange('ink_d', e.target.value)} className="px-3 py-2 rounded-lg border border-gray-200 text-sm font-semibold text-center" />
+                  <input type="text" inputMode="numeric" maxLength={3} value={quickInputs.din_d} onChange={(e) => handleQuickChange('din_d', e.target.value)} className="px-3 py-2 rounded-lg border border-gray-200 text-sm font-semibold text-center" />
+                  <input type="text" inputMode="numeric" maxLength={3} value={quickInputs.ing_d} onChange={(e) => handleQuickChange('ing_d', e.target.value)} className="px-3 py-2 rounded-lg border border-gray-200 text-sm font-semibold text-center" />
+                </div>
+
+                <div className="grid grid-cols-7 gap-3 mt-3">
+                  <div className="flex items-center font-bold" style={{ color: config.text_color }}>Y</div>
+                  <input type="text" inputMode="numeric" maxLength={3} value={quickInputs.tur_y} onChange={(e) => handleQuickChange('tur_y', e.target.value)} className="px-3 py-2 rounded-lg border border-gray-200 text-sm font-semibold text-center" />
+                  <input type="text" inputMode="numeric" maxLength={3} value={quickInputs.mat_y} onChange={(e) => handleQuickChange('mat_y', e.target.value)} className="px-3 py-2 rounded-lg border border-gray-200 text-sm font-semibold text-center" />
+                  <input type="text" inputMode="numeric" maxLength={3} value={quickInputs.fen_y} onChange={(e) => handleQuickChange('fen_y', e.target.value)} className="px-3 py-2 rounded-lg border border-gray-200 text-sm font-semibold text-center" />
+                  <input type="text" inputMode="numeric" maxLength={3} value={quickInputs.ink_y} onChange={(e) => handleQuickChange('ink_y', e.target.value)} className="px-3 py-2 rounded-lg border border-gray-200 text-sm font-semibold text-center" />
+                  <input type="text" inputMode="numeric" maxLength={3} value={quickInputs.din_y} onChange={(e) => handleQuickChange('din_y', e.target.value)} className="px-3 py-2 rounded-lg border border-gray-200 text-sm font-semibold text-center" />
+                  <input type="text" inputMode="numeric" maxLength={3} value={quickInputs.ing_y} onChange={(e) => handleQuickChange('ing_y', e.target.value)} className="px-3 py-2 rounded-lg border border-gray-200 text-sm font-semibold text-center" />
+                </div>
+
+                <div className="grid grid-cols-7 gap-3 mt-3">
+                  <div className="flex items-center font-bold" style={{ color: config.text_color }}>B</div>
+                  <input type="text" inputMode="numeric" maxLength={3} value={quickInputs.tur_b} onChange={(e) => handleQuickChange('tur_b', e.target.value)} className="px-3 py-2 rounded-lg border border-gray-200 text-sm font-semibold text-center" />
+                  <input type="text" inputMode="numeric" maxLength={3} value={quickInputs.mat_b} onChange={(e) => handleQuickChange('mat_b', e.target.value)} className="px-3 py-2 rounded-lg border border-gray-200 text-sm font-semibold text-center" />
+                  <input type="text" inputMode="numeric" maxLength={3} value={quickInputs.fen_b} onChange={(e) => handleQuickChange('fen_b', e.target.value)} className="px-3 py-2 rounded-lg border border-gray-200 text-sm font-semibold text-center" />
+                  <input type="text" inputMode="numeric" maxLength={3} value={quickInputs.ink_b} onChange={(e) => handleQuickChange('ink_b', e.target.value)} className="px-3 py-2 rounded-lg border border-gray-200 text-sm font-semibold text-center" />
+                  <input type="text" inputMode="numeric" maxLength={3} value={quickInputs.din_b} onChange={(e) => handleQuickChange('din_b', e.target.value)} className="px-3 py-2 rounded-lg border border-gray-200 text-sm font-semibold text-center" />
+                  <input type="text" inputMode="numeric" maxLength={3} value={quickInputs.ing_b} onChange={(e) => handleQuickChange('ing_b', e.target.value)} className="px-3 py-2 rounded-lg border border-gray-200 text-sm font-semibold text-center" />
+                </div>
+              </div>
+            </div>
+
+            <div className="flex justify-end mt-5">
+              <button type="submit" className="px-6 py-2.5 rounded-lg text-white text-sm font-semibold transition-all hover:shadow-lg flex items-center gap-2" style={{ background: config.primary_action_color }}>
+                {loading ? <Spinner size="sm" /> : <Icons.Check size={18} />}
+                {loading ? 'Kaydediliyor...' : 'Kaydet'}
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
 
       <div className="mb-8">
         <h1 className="text-3xl font-extrabold mb-6" style={{ color: config.text_color }}>Günlük Çalışma Girişi</h1>
