@@ -2238,6 +2238,8 @@ function DashboardPage({ config, onSelectStudent, onNavigate }) {
   const [showDropModal, setShowDropModal] = useState(false);
   const chartRef = useRef(null);
   const chartInstanceRef = useRef(null);
+  const radarRef = useRef(null);
+  const radarInstanceRef = useRef(null);
 
   useEffect(() => {
     const t = setTimeout(() => setLoading(false), 400);
@@ -2476,6 +2478,37 @@ function DashboardPage({ config, onSelectStudent, onNavigate }) {
 
   const chartMinWidth = chartData ? Math.max(chartData.rows.length * 40, 700) : 700;
 
+  const radarData = useMemo(() => {
+    if (!ortakExams || ortakExams.length === 0) return null;
+    const subjects = [
+      { key: 'turkce', label: 'T?rk?e' },
+      { key: 'matematik', label: 'Matematik' },
+      { key: 'fen', label: 'Fen Bilimleri' },
+      { key: 'ingilizce', label: '?ngilizce' },
+      { key: 'inkilap', label: '?nk?lap Tarihi' },
+      { key: 'din', label: 'Din K?lt?r?' },
+    ];
+    const totals = {};
+    const counts = {};
+    subjects.forEach(s => { totals[s.key] = 0; counts[s.key] = 0; });
+    ortakExams.forEach(e => {
+      let subj = {};
+      try { subj = typeof e.exam_subjects === 'string' ? JSON.parse(e.exam_subjects) : e.exam_subjects || {}; } catch {}
+      subjects.forEach(s => {
+        if (subj[s.key]) {
+          totals[s.key] += calcNet(subj[s.key]);
+          counts[s.key] += 1;
+        }
+      });
+    });
+    const values = subjects.map(s => counts[s.key] ? (totals[s.key] / counts[s.key]) : 0);
+    const maxVal = Math.max(...values, 0);
+    const minVal = Math.min(...values, 0);
+    const maxIdx = values.indexOf(maxVal);
+    const minIdx = values.indexOf(minVal);
+    return { subjects, values, maxIdx, minIdx, maxVal, minVal };
+  }, [ortakExams]);
+
   useEffect(() => {
     if (!chartRef.current) return;
     if (!chartData || !chartData.rows || chartData.rows.length === 0) {
@@ -2663,6 +2696,76 @@ function DashboardPage({ config, onSelectStudent, onNavigate }) {
     };
   }, [chartData, onSelectStudent]);
 
+  useEffect(() => {
+    if (!radarRef.current) return;
+    if (!radarData) {
+      if (radarInstanceRef.current) {
+        radarInstanceRef.current.destroy();
+        radarInstanceRef.current = null;
+      }
+      return;
+    }
+    const ctx = radarRef.current.getContext('2d');
+    if (radarInstanceRef.current) {
+      radarInstanceRef.current.destroy();
+      radarInstanceRef.current = null;
+    }
+    const labels = radarData.subjects.map(s => s.label);
+    const values = radarData.values;
+    const chart = new window.Chart(ctx, {
+      type: 'radar',
+      data: {
+        labels,
+        datasets: [
+          {
+            data: values,
+            fill: true,
+            backgroundColor: 'rgba(52, 152, 219, 0.3)',
+            borderColor: '#2980b9',
+            borderWidth: 2,
+            pointBackgroundColor: '#2980b9',
+            pointRadius: 4,
+          }
+        ]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: true,
+        scales: {
+          r: {
+            min: 0,
+            max: 20,
+            ticks: { stepSize: 5 },
+            grid: { color: '#e0e0e0' },
+            angleLines: { color: '#e0e0e0' },
+            pointLabels: { color: '#334155', font: { size: 12 } }
+          }
+        },
+        plugins: {
+          legend: { display: false },
+          tooltip: {
+            callbacks: {
+              title: (items) => items[0].label,
+              label: (item) => {
+                const val = item.raw || 0;
+                const pct = ((val / 20) * 100).toFixed(1);
+                return `Ortalama: ${val.toFixed(1)} | Ba?ar?: %${pct}`;
+              }
+            }
+          }
+        },
+        animation: { duration: 1000, easing: 'easeOutQuart' }
+      }
+    });
+    radarInstanceRef.current = chart;
+    return () => {
+      if (radarInstanceRef.current) {
+        radarInstanceRef.current.destroy();
+        radarInstanceRef.current = null;
+      }
+    };
+  }, [radarData]);
+
   return (
     <div className="max-w-7xl mx-auto px-4 py-8 fade-in">
       <div className="mb-8">
@@ -2731,7 +2834,37 @@ function DashboardPage({ config, onSelectStudent, onNavigate }) {
             </div>
           </div>
         )}
+      
+      <div className="mt-8">
+        <div className="rounded-2xl p-8 shadow-lg" style={{ background: config.surface_color, maxWidth: 600, margin: '0 auto' }}>
+          <h3 className="text-lg font-bold" style={{ color: config.text_color }}>🎯 Ders Bazlı Sınıf Ortalaması</h3>
+          <div className="text-sm mt-1" style={{ color: config.secondary_action_color }}>Tüm ortak denemelerin genel ortalaması</div>
+          <div className="mt-5 flex justify-center">
+            {radarData ? (
+              <div className="w-full flex justify-center">
+                <div style={{ width: '100%', maxWidth: 450, height: 450 }}>
+                  <canvas ref={radarRef}></canvas>
+                </div>
+              </div>
+            ) : (
+              <div className="w-full text-center py-10 rounded-xl border border-dashed" style={{ color: config.secondary_action_color }}>Ders analizi için ortak deneme verisi gerekli</div>
+            )}
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-6">
+            <div className="rounded-xl p-4 border" style={{ background: '#d5f4e6', borderColor: '#27ae60' }}>
+              <div className="text-xs font-semibold" style={{ color: '#14532d' }}>🏆 En güçlü</div>
+              <div className="text-sm font-bold mt-1" style={{ color: '#14532d' }}>{radarData ? radarData.subjects[radarData.maxIdx].label : '—'}</div>
+              <div className="text-xs" style={{ color: '#14532d' }}>{radarData ? `${radarData.maxVal.toFixed(1)} net` : ''}</div>
+            </div>
+            <div className="rounded-xl p-4 border" style={{ background: '#fef5e7', borderColor: '#f39c12' }}>
+              <div className="text-xs font-semibold" style={{ color: '#7c2d12' }}>⚠️ Gelişim alanı</div>
+              <div className="text-sm font-bold mt-1" style={{ color: '#7c2d12' }}>{radarData ? radarData.subjects[radarData.minIdx].label : '—'}</div>
+              <div className="text-xs" style={{ color: '#7c2d12' }}>{radarData ? `${radarData.minVal.toFixed(1)} net` : ''}</div>
+            </div>
+          </div>
+        </div>
       </div>
+</div>
 
       {showRiskModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center modal-backdrop" style={{background:'rgba(0,0,0,0.4)'}}>
