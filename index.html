@@ -454,16 +454,11 @@ function StudentDetailPage({ config, studentId, onBack }) {
   const lastNet = totalExams ? parseFloat(studentExams[studentExams.length - 1].exam_total_net || 0).toFixed(2) : '0.00';
 
   const recentExams = studentExams.slice(-10);
-  const netSeries = recentExams.map((e, i) => {
-    const total = parseFloat(e.exam_total_net || 0);
-    const avg = (recentExams.slice(0, i + 1).reduce((s, x) => s + parseFloat(x.exam_total_net || 0), 0) / (i + 1));
-    return {
-      date: (e.exam_date || e.created_at || '').toString().split('T')[0],
-      total,
-      avg,
-      name: e.exam_name || ''
-    };
-  });
+  const netSeries = recentExams.map((e) => ({
+    date: (e.exam_date || e.created_at || '').toString().split('T')[0],
+    total: parseFloat(e.exam_total_net || 0),
+    name: e.exam_name || ''
+  }));
 
   const subjects = ['turkce', 'matematik', 'fen', 'inkilap', 'ingilizce', 'din'];
   const subjectLabels = {
@@ -606,7 +601,7 @@ function StudentDetailPage({ config, studentId, onBack }) {
         ) : (
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             <div className="rounded-2xl p-4 border border-gray-100" style={{ background: config.surface_color }}>
-              <h3 className="text-sm font-semibold mb-3" style={{ color: config.text_color }}>Net İlerleme (Son 10 Deneme Ortalaması)</h3>
+              <h3 className="text-sm font-semibold mb-3" style={{ color: config.text_color }}>Net İlerleme (Son 10 Deneme)</h3>
               {netSeries.length === 0 ? (
                 <div className="text-center py-10 text-sm" style={{ color: config.secondary_action_color }}>Henüz veri yok</div>
               ) : (
@@ -620,8 +615,8 @@ function StudentDetailPage({ config, studentId, onBack }) {
                     <polyline
                       points={netSeries.map((d, i) => {
                         const x = 40 + (i / (netSeries.length - 1)) * 440;
-                        const max = Math.max(...netSeries.map(e => e.avg), 1);
-                        const y = 230 - (d.avg / max) * 180;
+                        const max = Math.max(...netSeries.map(e => e.total), 1);
+                        const y = 230 - (d.total / max) * 180;
                         return `${x},${y}`;
                       }).join(' ')}
                       fill="none"
@@ -631,12 +626,12 @@ function StudentDetailPage({ config, studentId, onBack }) {
                   )}
                   {netSeries.map((d, i) => {
                     const x = 40 + (i / (netSeries.length - 1 || 1)) * 440;
-                    const max = Math.max(...netSeries.map(e => e.avg), 1);
-                    const y = 230 - (d.avg / max) * 180;
+                    const max = Math.max(...netSeries.map(e => e.total), 1);
+                    const y = 230 - (d.total / max) * 180;
                     return (
                       <g key={i}>
                         <circle cx={x} cy={y} r="4" fill="#3B82F6" />
-                        <text x={x} y={y - 8} textAnchor="middle" fontSize="10" fill={config.text_color}>{d.avg.toFixed(1)}</text>
+                        <text x={x} y={y - 8} textAnchor="middle" fontSize="10" fill={config.text_color}>{d.total.toFixed(1)}</text>
                         {d.name ? (
                           <text x={x} y={245} textAnchor="middle" fontSize="9" fill={config.secondary_action_color}>
                             {d.name.slice(0, 6)}
@@ -654,6 +649,13 @@ function StudentDetailPage({ config, studentId, onBack }) {
                 <div className="text-center py-10 text-sm" style={{ color: config.secondary_action_color }}>Henüz veri yok</div>
               ) : (
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div className="rounded-xl p-3 border border-gray-100" style={{ background: '#F1F5F9' }}>
+                    <div className="text-xs font-semibold" style={{ color: config.text_color }}>Ortalama Net</div>
+                    <div className="text-[10px]" style={{ color: config.secondary_action_color }}>Son {recentExams.length} deneme</div>
+                    <div className="mt-2 text-lg font-bold" style={{ color: '#0F172A' }}>
+                      {avgNet}
+                    </div>
+                  </div>
                   {recentExams.slice(-6).reverse().map((e, i) => (
                     <div key={e.__backendId} className="rounded-xl p-3 border border-gray-100" style={{ background: ['#EFF6FF','#ECFDF5','#FEF3C7','#FCE7F3','#F3E8FF','#FFF7ED'][i % 6] }}>
                       <div className="text-xs font-semibold" style={{ color: config.text_color }}>{(e.exam_name || 'Deneme').slice(0, 20)}</div>
