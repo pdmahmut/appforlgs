@@ -484,59 +484,6 @@ function StudyPage({ config }) {
     return calculateNet(d, y);
   };
 
-  const handleSave = async (e) => {
-    e.preventDefault();
-    if (!selectedStudentId) {
-      setToast({ msg: 'Lütfen öğrenci seçin', type: 'error' });
-      return;
-    }
-
-    setLoading(true);
-    const serializeSubjects = (obj) => {
-      return Object.fromEntries(
-        Object.entries(obj).map(([k, v]) => [
-          k,
-          { dogru: toNum(v.dogru), yanlis: toNum(v.yanlis), bos: toNum(v.bos) }
-        ])
-      );
-    };
-
-    const result = await window.dataSdk.create({
-      type: 'study',
-      student_id: selectedStudentId,
-      study_date: selectedDate,
-      study_subjects: JSON.stringify(serializeSubjects(subjects)),
-      study_total_net: getTotalNet(),
-      created_at: new Date().toISOString()
-    });
-    setLoading(false);
-
-    if (result.isOk) {
-      setToast({ msg: 'Günlük çalışma kaydedildi! ✅', type: 'success' });
-      handleReset();
-    } else {
-      setToast({ msg: 'Hata oluştu', type: 'error' });
-    }
-  };
-
-  const handleReset = () => {
-    setSubjects({
-      turkce: { dogru: '', yanlis: '', bos: '' },
-      matematik: { dogru: '', yanlis: '', bos: '' },
-      fen: { dogru: '', yanlis: '', bos: '' },
-      inkilap: { dogru: '', yanlis: '', bos: '' },
-      ingilizce: { dogru: '', yanlis: '', bos: '' },
-      din: { dogru: '', yanlis: '', bos: '' },
-      paragraf: { dogru: '', yanlis: '', bos: '' },
-    });
-    setSelectedDate(new Date().toISOString().split('T')[0]);
-  };
-
-  const recentStudies = studies
-    .filter(s => s.student_id === selectedStudentId)
-    .sort((a, b) => new Date(b.study_date) - new Date(a.study_date))
-    .slice(0, 5);
-
   return (
     <div className="max-w-6xl mx-auto px-4 py-8 fade-in">
       {toast && <Toast message={toast.msg} type={toast.type} onClose={() => setToast(null)} />}
@@ -641,6 +588,7 @@ function StudyPage({ config }) {
             </div>
           </form>
         </div>
+      </div>
     </div>
   );
 }
