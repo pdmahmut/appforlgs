@@ -392,7 +392,7 @@ function StudyPage({ config }) {
   const [selectedStudentId, setSelectedStudentId] = useState('');
   const [toast, setToast] = useState(null);
   const [loading, setLoading] = useState(false);
-  const [quickDate, setQuickDate] = useState('');
+  const [quickDate, setQuickDate] = useState(new Date().toISOString().split('T')[0]);
   const [quickInputs, setQuickInputs] = useState({
     tur_d: '', tur_y: '', tur_b: '',
     mat_d: '', mat_y: '', mat_b: '',
