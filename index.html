@@ -116,7 +116,7 @@ function useConfig() {
 }
 
 function useRouter() {
-  const [route, setRoute] = useState('home');
+  const [route, setRoute] = useState('dashboard');
   const navigate = useCallback((r) => setRoute(r), []);
   return { route, navigate };
 }
@@ -164,7 +164,7 @@ function Header({ route, navigate, config, onLogout }) {
     <header className="sticky top-0 z-40 border-b" style={{ background: config.surface_color, borderColor: '#E2E8F0' }}>
       <div className="max-w-7xl mx-auto px-4 sm:px-6">
         <div className="flex items-center justify-between h-16">
-          <button onClick={() => navigate('home')} className="flex items-center gap-2.5 group">
+          <button onClick={() => navigate('dashboard')} className="flex items-center gap-2.5 group">
             <div className="w-9 h-9 rounded-xl flex items-center justify-center" style={{background: config.primary_action_color}}>
               <Icons.GraduationCap size={20} className="text-white"/>
             </div>
@@ -2230,487 +2230,299 @@ function ExamPage({ config }) {
   );
 }
 
-function DashboardPage({ config }) {
+function DashboardPage({ config, onSelectStudent }) {
   const { students, exams } = useAppData();
-  const [timeFilter, setTimeFilter] = useState('month');
-  const studentData = students || [];
-  const examData = exams || [];
-  const calcSubjectNet = (subject) => {
+  const [loading, setLoading] = useState(true);
+  const [showRiskModal, setShowRiskModal] = useState(false);
+  const [showDropModal, setShowDropModal] = useState(false);
+
+  useEffect(() => {
+    const t = setTimeout(() => setLoading(false), 400);
+    return () => clearTimeout(t);
+  }, [students.length, exams.length]);
+
+  const ortakExams = useMemo(() => (exams || []).filter(e => e.deneme_tipi === 'ortak'), [exams]);
+
+  const groupedExams = useMemo(() => {
+    const map = {};
+    (ortakExams || []).forEach(e => {
+      const dateStr = (e.exam_date || e.created_at || '').toString().split('T')[0];
+      const key = (e.defined_exam_id || '') + '::' + (e.exam_name || 'Deneme') + '::' + dateStr;
+      if (!map[key]) {
+        map[key] = { key, dateStr, name: e.exam_name || 'Ortak Deneme', records: [] };
+      }
+      map[key].records.push(e);
+    });
+    return Object.values(map).sort((a, b) => new Date(a.dateStr) - new Date(b.dateStr));
+  }, [ortakExams]);
+
+  const lastGroup = groupedExams[groupedExams.length - 1] || null;
+  const prevGroup = groupedExams.length > 1 ? groupedExams[groupedExams.length - 2] : null;
+
+  const calcNet = (subject) => {
     if (!subject) return 0;
-    const dogru = parseFloat(subject.dogru || 0);
-    const yanlis = parseFloat(subject.yanlis || 0);
-    return parseFloat((dogru - (yanlis / 3)).toFixed(2));
+    const d = parseFloat(subject.dogru || 0);
+    const y = parseFloat(subject.yanlis || 0);
+    return parseFloat((d - (y / 3)).toFixed(2));
   };
 
-  // Tarih filtresine göre denemeler
-  const filteredExams = useMemo(() => {
-    if (!examData || examData.length === 0) return [];
-    
-    const now = new Date();
-    const exams = examData
-      .map(e => {
-        const dateStr = e.exam_date || e.date || new Date().toISOString().split('T')[0];
-        const date = new Date(dateStr);
-        return { ...e, dateObj: date, date: dateStr };
-      })
-      .sort((a, b) => a.dateObj - b.dateObj);
+  const classAvg = (group) => {
+    if (!group || group.records.length === 0) return 0;
+    const sum = group.records.reduce((s, r) => s + parseFloat(r.exam_total_net || 0), 0);
+    return sum / group.records.length;
+  };
 
-    if (timeFilter === 'week') {
-      const weekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
-      return exams.filter(e => e.dateObj >= weekAgo);
-    } else if (timeFilter === 'month') {
-      const monthAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
-      return exams.filter(e => e.dateObj >= monthAgo);
-    } else {
-      const threeMonthsAgo = new Date(now.getTime() - 90 * 24 * 60 * 60 * 1000);
-      return exams.filter(e => e.dateObj >= threeMonthsAgo);
-    }
-  }, [examData, timeFilter]);
+  const lastAvg = lastGroup ? classAvg(lastGroup) : 0;
+  const prevAvg = prevGroup ? classAvg(prevGroup) : 0;
+  const avgTrend = lastGroup && prevGroup ? (lastAvg - prevAvg) : null;
 
-  // İstatistikler
-  const stats = useMemo(() => {
-    if (!studentData || studentData.length === 0) {
+  const studentMap = useMemo(() => {
+    const map = {};
+    (students || []).forEach(s => { map[s.__backendId] = s; });
+    return map;
+  }, [students]);
+
+  const studentDiffs = useMemo(() => {
+    if (!lastGroup || !prevGroup) return [];
+    const prevByStudent = {};
+    prevGroup.records.forEach(r => { prevByStudent[r.student_id] = r; });
+    return lastGroup.records.map(r => {
+      const prev = prevByStudent[r.student_id];
+      if (!prev) return null;
+      const lastNet = parseFloat(r.exam_total_net || 0);
+      const prevNet = parseFloat(prev.exam_total_net || 0);
       return {
-        totalStudents: 0,
-        lastExamAvg: 0,
-        upCount: 0,
-        downCount: 0,
-        allExams: filteredExams,
-        classAvgByExam: [],
-        lastExamBySubject: {},
-        studentStats: []
-      };
-    }
-
-    const allStudentLastExams = studentData.map(student => {
-      const studentExams = (filteredExams || []).filter(e => e.student_id === student.__backendId).sort((a, b) => new Date(a.date || a.exam_date) - new Date(b.date || b.exam_date));
-      if (studentExams.length === 0) return null;
-
-      const lastExam = studentExams[studentExams.length - 1];
-      const prevExam = studentExams.length > 1 ? studentExams[studentExams.length - 2] : null;
-
-      const lastNet = parseFloat(lastExam.exam_total_net || 0);
-      const prevNet = prevExam ? parseFloat(prevExam.exam_total_net || 0) : lastNet;
-      const change = lastNet - prevNet;
-
-      return {
-        student,
-        lastExam,
-        prevExam,
+        studentId: r.student_id,
+        name: (studentMap[r.student_id]?.ad_soyad || '').trim() || (studentMap[r.student_id]?.student_name || '??renci'),
         lastNet,
-        change,
-        studentExams
+        prevNet,
+        diff: lastNet - prevNet
       };
-    }).filter(s => s !== null);
+    }).filter(Boolean);
+  }, [lastGroup, prevGroup, studentMap]);
 
-    const upCount = allStudentLastExams.filter(s => s.change > 0).length;
-    const downCount = allStudentLastExams.filter(s => s.change < 0).length;
+  const riskStudents = studentDiffs.filter(s => s.diff < 0);
+  const bigDropStudents = studentDiffs.filter(s => s.diff <= -5);
 
-    // Sınıf ortalaması her deneme için
-    const examMap = {};
-    (filteredExams || []).forEach(exam => {
-      const dateKey = exam.exam_date || exam.date;
-      if (!examMap[dateKey]) {
-        examMap[dateKey] = [];
-      }
-      examMap[dateKey].push(parseFloat(exam.exam_total_net || 0));
-    });
+  const bestImprover = studentDiffs.length > 0
+    ? studentDiffs.reduce((a, b) => (b.diff > a.diff ? b : a))
+    : null;
 
-    const classAvgByExam = Object.entries(examMap).map(([date, nets]) => ({
-      date,
-      avg: nets.reduce((a, b) => a + b, 0) / nets.length
-    })).sort((a, b) => new Date(a.date) - new Date(b.date));
-
-    // Son deneme ders ortalamaları
-    const lastExamDates = {};
-    (filteredExams || []).forEach(exam => {
-      if (!lastExamDates[exam.student_id] || new Date(exam.exam_date || exam.date) > new Date(lastExamDates[exam.student_id].exam_date || lastExamDates[exam.student_id].date)) {
-        lastExamDates[exam.student_id] = exam;
-      }
-    });
-
-    const lastExams = Object.values(lastExamDates);
-    const lastExamBySubject = {};
-    ['turkce', 'matematik', 'fen', 'inkilap', 'ingilizce', 'din'].forEach(subject => {
-      const nets = lastExams.map(exam => {
-        let subjects = {};
-        try {
-          subjects = typeof exam.exam_subjects === 'string' ? JSON.parse(exam.exam_subjects) : exam.exam_subjects || {};
-        } catch (e) {}
-        return calcSubjectNet(subjects[subject]) || 0;
-      }).filter(n => n > 0);
-
-      lastExamBySubject[subject] = nets.length > 0 ? (nets.reduce((a, b) => a + b, 0) / nets.length).toFixed(2) : 0;
-    });
-
-    const lastExamAvg = allStudentLastExams.length > 0 ? (allStudentLastExams.reduce((sum, s) => sum + s.lastNet, 0) / allStudentLastExams.length).toFixed(2) : 0;
-
-    return {
-      totalStudents: studentData.length,
-      lastExamAvg,
-      upCount,
-      downCount,
-      allExams: filteredExams,
-      classAvgByExam,
-      lastExamBySubject,
-      studentStats: allStudentLastExams
-    };
-  }, [studentData, filteredExams]);
-
-  // Sıralamalar
-  const rankings = useMemo(() => {
-    const bySubject = {};
-    ['turkce', 'matematik', 'fen', 'inkilap', 'ingilizce', 'din'].forEach(subject => {
-      bySubject[subject] = [];
-    });
-
-    stats.studentStats.forEach(({ student, lastExam }) => {
-      let subjects = {};
-      try {
-        subjects = typeof lastExam.exam_subjects === 'string' ? JSON.parse(lastExam.exam_subjects) : lastExam.exam_subjects || {};
-      } catch (e) {}
-
-      Object.keys(subjects).forEach(subject => {
-        if (bySubject[subject] !== undefined) {
-          bySubject[subject].push({
-            name: student.ad_soyad || student.student_name,
-            net: calcSubjectNet(subjects[subject]) || 0
-          });
+  const weakestSubject = useMemo(() => {
+    if (!ortakExams || ortakExams.length === 0) return null;
+    const subjects = ['turkce', 'matematik', 'fen', 'inkilap', 'ingilizce'];
+    const totals = {};
+    const counts = {};
+    subjects.forEach(s => { totals[s] = 0; counts[s] = 0; });
+    ortakExams.forEach(e => {
+      let subj = {};
+      try { subj = typeof e.exam_subjects === 'string' ? JSON.parse(e.exam_subjects) : e.exam_subjects || {}; } catch {}
+      subjects.forEach(s => {
+        if (subj[s]) {
+          totals[s] += calcNet(subj[s]);
+          counts[s] += 1;
         }
       });
     });
-
-    Object.keys(bySubject).forEach(subject => {
-      bySubject[subject].sort((a, b) => b.net - a.net);
+    let minSubj = null;
+    let minAvg = Infinity;
+    subjects.forEach(s => {
+      if (counts[s] > 0) {
+        const avg = totals[s] / counts[s];
+        if (avg < minAvg) { minAvg = avg; minSubj = s; }
+      }
     });
+    if (!minSubj) return null;
+    const labelMap = { turkce: 'T?rk?e', matematik: 'Matematik', fen: 'Fen', inkilap: 'Sosyal', ingilizce: '?ngilizce' };
+    return { name: labelMap[minSubj], avg: minAvg };
+  }, [ortakExams]);
 
-    return bySubject;
-  }, [stats]);
+  const growthPercent = useMemo(() => {
+    if (groupedExams.length < 6) return null;
+    const first = groupedExams.slice(0, 3);
+    const last = groupedExams.slice(-3);
+    const getAvgByStudent = (groups) => {
+      const map = {};
+      const count = {};
+      groups.forEach(g => {
+        g.records.forEach(r => {
+          const id = r.student_id;
+          map[id] = (map[id] || 0) + parseFloat(r.exam_total_net || 0);
+          count[id] = (count[id] || 0) + 1;
+        });
+      });
+      const avg = {};
+      Object.keys(map).forEach(id => { avg[id] = map[id] / count[id]; });
+      return avg;
+    };
+    const firstAvg = getAvgByStudent(first);
+    const lastAvg = getAvgByStudent(last);
+    const pcts = [];
+    Object.keys(lastAvg).forEach(id => {
+      if (firstAvg[id] && firstAvg[id] > 0) {
+        pcts.push(((lastAvg[id] - firstAvg[id]) / firstAvg[id]) * 100);
+      }
+    });
+    if (pcts.length === 0) return null;
+    return pcts.reduce((s, v) => s + v, 0) / pcts.length;
+  }, [groupedExams]);
 
-  const subjectNames = {
-    turkce: 'Türkçe',
-    matematik: 'Matematik',
-    fen: 'Fen',
-    inkilap: 'İnkılap',
-    ingilizce: 'İngilizce',
-    din: 'Din'
+  const hasStudents = (students || []).length > 0;
+  const hasOrtak = ortakExams.length > 0;
+
+  const renderValue = (val, emptyText) => {
+    if (!hasStudents) return 'Hen?z ??renci eklenmemi?';
+    if (!hasOrtak) return 'Hen?z ortak deneme girilmemi?';
+    return val ?? emptyText;
   };
 
-  if (studentData.length === 0) {
-    return (
-      <div className="max-w-6xl mx-auto px-4 py-12">
-        <div className="text-center py-20">
-          <p className="text-2xl font-bold mb-2" style={{ color: config.text_color }}>Henüz öğrenci eklenmemiş 👥</p>
-          <p className="text-gray-500">Dashboard verilerini görmek için önce öğrenci ve deneme ekleyin.</p>
-        </div>
-      </div>
-    );
-  }
+  const cards = [
+    {
+      title: 'Genel Ortalama Net',
+      icon: '??',
+      color: '#3498db',
+      value: hasOrtak ? lastAvg.toFixed(1) : null,
+      sub: lastGroup && prevGroup
+        ? (avgTrend > 0 ? `? +${avgTrend.toFixed(1)}` : avgTrend < 0 ? `? ${avgTrend.toFixed(1)}` : '? 0.0')
+        : 'Trend i?in daha fazla deneme gerekli',
+      subColor: avgTrend > 0 ? '#16a34a' : avgTrend < 0 ? '#ef4444' : '#64748b',
+      clickable: false
+    },
+    {
+      title: 'Geli?im Trendi',
+      icon: '??',
+      color: growthPercent !== null && growthPercent < 0 ? '#e74c3c' : '#2ecc71',
+      value: growthPercent !== null ? `%${Math.abs(growthPercent).toFixed(1)} ${growthPercent >= 0 ? 'art??' : 'd????'}` : null,
+      sub: '(son 3 deneme ortalamas?)',
+      subColor: '#94a3b8',
+      clickable: false
+    },
+    {
+      title: 'Risk Grubu',
+      icon: '??',
+      color: '#f39c12',
+      value: hasOrtak ? `${riskStudents.length} ??renci` : null,
+      sub: 'son 2 denemede d????',
+      subColor: '#d97706',
+      clickable: true,
+      onClick: () => setShowRiskModal(true)
+    },
+    {
+      title: 'En Zay?f Alan',
+      icon: '??',
+      color: '#9b59b6',
+      value: weakestSubject ? weakestSubject.name : null,
+      sub: weakestSubject ? `Ort: ${weakestSubject.avg.toFixed(1)} net` : 'Veri yok',
+      subColor: '#7c3aed',
+      clickable: false
+    },
+    {
+      title: 'Bu Ay?n Y?kseleni',
+      icon: '??',
+      color: '#27ae60',
+      value: bestImprover ? bestImprover.name : null,
+      sub: bestImprover ? `+${bestImprover.diff.toFixed(1)} net` : 'Veri yok',
+      subColor: '#16a34a',
+      clickable: true,
+      onClick: () => bestImprover && onSelectStudent && onSelectStudent(bestImprover.studentId)
+    },
+    {
+      title: 'B?y?k D????',
+      icon: '??',
+      color: '#e74c3c',
+      value: hasOrtak ? `${bigDropStudents.length} ??renci` : null,
+      sub: 'son denemede -5 net ve ?zeri',
+      subColor: '#ef4444',
+      clickable: true,
+      onClick: () => setShowDropModal(true)
+    }
+  ];
 
   return (
     <div className="max-w-7xl mx-auto px-4 py-8 fade-in">
-      {/* Başlık ve Filtreler */}
       <div className="mb-8">
-        <h1 className="text-4xl font-bold mb-6" style={{ color: config.text_color }}>Kontrol Merkezi</h1>
-        
-        <div className="flex gap-3 flex-wrap">
-          {[
-            { label: 'Bu Hafta', value: 'week' },
-            { label: 'Bu Ay', value: 'month' },
-            { label: 'Son 3 Ay', value: 'threeMonths' }
-          ].map(btn => (
-            <button
-              key={btn.value}
-              onClick={() => setTimeFilter(btn.value)}
-              className={`px-6 py-2 rounded-lg font-semibold transition ${
-                timeFilter === btn.value
-                  ? 'text-white'
-                  : 'border-2'
-              }`}
-              style={{
-                background: timeFilter === btn.value ? config.primary_action_color : 'transparent',
-                borderColor: timeFilter === btn.value ? 'transparent' : config.primary_action_color,
-                color: timeFilter === btn.value ? 'white' : config.primary_action_color
-              }}
+        <h1 className="text-3xl sm:text-4xl font-extrabold" style={{ color: config.text_color }}>Genel Bak??</h1>
+        <p className="text-sm sm:text-base mt-2" style={{ color: config.secondary_action_color }}>??renci performans ?zeti ve trend analizi</p>
+      </div>
+
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+        {loading ? (
+          Array.from({ length: 6 }).map((_, i) => (
+            <div key={i} className="rounded-2xl p-6 border border-gray-100 animate-pulse" style={{ background: config.surface_color }}>
+              <div className="h-4 w-24 rounded bg-gray-200 mb-3"></div>
+              <div className="h-8 w-32 rounded bg-gray-200 mb-2"></div>
+              <div className="h-3 w-28 rounded bg-gray-200"></div>
+            </div>
+          ))
+        ) : (
+          cards.map((c, i) => (
+            <div
+              key={c.title}
+              onClick={c.clickable ? c.onClick : undefined}
+              className={`rounded-2xl p-6 border border-gray-100 transition-all ${c.clickable ? 'cursor-pointer hover:shadow-lg hover:scale-[1.03]' : ''} slide-up`}
+              style={{ background: config.surface_color, animationDelay: `${i * 0.08}s` }}
             >
-              {btn.label}
-            </button>
-          ))}
-        </div>
+              <div className="flex items-start justify-between mb-2">
+                <div className="text-sm font-semibold" style={{ color: '#64748b' }}>{c.title}</div>
+                <div className="text-2xl">{c.icon}</div>
+              </div>
+              <div className="text-3xl font-bold" style={{ color: c.color }}>
+                {renderValue(c.value, '?')}
+              </div>
+              <div className="text-xs mt-2" style={{ color: c.subColor || '#94a3b8' }}>{c.sub}</div>
+            </div>
+          ))
+        )}
       </div>
 
-      {/* Genel Durum Kartları */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-        {/* Toplam Öğrenci */}
-        <div className="rounded-2xl p-6 shadow-lg text-white" style={{ background: '#3B82F6' }}>
-          <div className="flex justify-between items-start mb-4">
-            <h3 className="text-gray-100 font-semibold">Toplam Öğrenci</h3>
-            <span className="text-3xl">👥</span>
-          </div>
-          <p className="text-5xl font-bold">{stats.totalStudents}</p>
-        </div>
-
-        {/* Son Deneme Ortalaması */}
-        <div className="rounded-2xl p-6 shadow-lg text-white" style={{ background: '#10B981' }}>
-          <div className="flex justify-between items-start mb-4">
-            <h3 className="text-green-100 font-semibold">Son Deneme Ort.</h3>
-            <span className="text-3xl">📊</span>
-          </div>
-          <p className="text-5xl font-bold">{stats.lastExamAvg}</p>
-        </div>
-
-        {/* Yükselişte Olanlar */}
-        <div className="rounded-2xl p-6 shadow-lg text-white" style={{ background: '#10B981' }}>
-          <div className="flex justify-between items-start mb-4">
-            <h3 className="text-green-100 font-semibold">Yükselişte</h3>
-            <span className="text-3xl">↗️</span>
-          </div>
-          <p className="text-5xl font-bold">{stats.upCount}</p>
-        </div>
-
-        {/* Düşüşte Olanlar */}
-        <div className="rounded-2xl p-6 shadow-lg text-white" style={{ background: '#F97316' }}>
-          <div className="flex justify-between items-start mb-4">
-            <h3 className="text-orange-100 font-semibold">Düşüşte</h3>
-            <span className="text-3xl">↘️</span>
-          </div>
-          <p className="text-5xl font-bold">{stats.downCount}</p>
-        </div>
-      </div>
-
-      {/* Grafikler */}
-      {stats.classAvgByExam.length > 0 && (
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
-          {/* Sınıf Ortalama Net Gelişimi */}
-          <div className="rounded-2xl p-6 shadow-lg" style={{ background: config.surface_color }}>
-            <h3 className="text-lg font-bold mb-4" style={{ color: config.text_color }}>Sınıf Ortalama Net Gelişimi</h3>
-            <svg width="100%" height="300" viewBox="0 0 500 300" preserveAspectRatio="xMidYMid meet">
-              {/* Grid çizgileri */}
-              {[0, 1, 2, 3, 4].map(i => (
-                <line key={`h-${i}`} x1="40" y1={40 + i * 50} x2="480" y2={40 + i * 50} stroke="#E2E8F0" strokeWidth="1" />
-              ))}
-              <line x1="40" y1="40" x2="40" y2="290" stroke="#94A3B8" strokeWidth="2" />
-              <line x1="40" y1="290" x2="480" y2="290" stroke="#94A3B8" strokeWidth="2" />
-
-              {/* Çizgi */}
-              {stats.classAvgByExam.length > 1 && (
-                <polyline
-                  points={stats.classAvgByExam.map((d, i) => {
-                    const x = 40 + (i / (stats.classAvgByExam.length - 1)) * 440;
-                    const maxAvg = Math.max(...stats.classAvgByExam.map(e => e.avg), 1);
-                    const y = 290 - (d.avg / maxAvg) * 240;
-                    return `${x},${y}`;
-                  }).join(' ')}
-                  fill="none"
-                  stroke="#3B82F6"
-                  strokeWidth="3"
-                />
-              )}
-
-              {/* Noktalar ve değerler */}
-              {stats.classAvgByExam.map((d, i) => {
-                const x = 40 + (i / (stats.classAvgByExam.length - 1 || 1)) * 440;
-                const maxAvg = Math.max(...stats.classAvgByExam.map(e => e.avg), 1);
-                const y = 290 - (d.avg / maxAvg) * 240;
-                return (
-                  <g key={i}>
-                    <circle cx={x} cy={y} r="4" fill="#3B82F6" />
-                    <text x={x} y={310} textAnchor="middle" fontSize="11" fill={config.text_color} style={{fontWeight: 'bold'}}>
-                      {d.avg.toFixed(1)}
-                    </text>
-                  </g>
-                );
-              })}
-            </svg>
-          </div>
-
-          {/* Son Deneme Ders Ortalamaları - Bar Chart */}
-          <div className="rounded-2xl p-6 shadow-lg" style={{ background: config.surface_color }}>
-            <h3 className="text-lg font-bold mb-4" style={{ color: config.text_color }}>Son Deneme Ders Ortalamaları</h3>
-            <svg width="100%" height="300" viewBox="0 0 500 300" preserveAspectRatio="xMidYMid meet">
-              {/* Grid çizgileri */}
-              {[0, 1, 2, 3, 4].map(i => (
-                <line key={`h-${i}`} x1="40" y1={40 + i * 50} x2="480" y2={40 + i * 50} stroke="#E2E8F0" strokeWidth="1" />
-              ))}
-              <line x1="40" y1="40" x2="40" y2="290" stroke="#94A3B8" strokeWidth="2" />
-              <line x1="40" y1="290" x2="480" y2="290" stroke="#94A3B8" strokeWidth="2" />
-
-              {/* Barlar */}
-              {['turkce', 'matematik', 'fen', 'inkilap', 'ingilizce', 'din'].map((subject, i) => {
-                const maxVal = 30;
-                const val = parseFloat(stats.lastExamBySubject[subject]) || 0;
-                const height = (val / maxVal) * 240;
-                const x = 60 + (i * 70);
-                const colorMap = { turkce: '#EF4444', matematik: '#3B82F6', fen: '#10B981', inkilap: '#F59E0B', ingilizce: '#8B5CF6', din: '#EC4899' };
-                
-                return (
-                  <g key={subject}>
-                    <rect x={x} y={290 - height} width="50" height={height} fill={colorMap[subject]} rx="4" />
-                    <text x={x + 25} y={310} textAnchor="middle" fontSize="10" fill={config.text_color} style={{fontWeight: 'bold'}}>
-                      {subjectNames[subject].substring(0, 3)}
-                    </text>
-                    <text x={x + 25} y={290 - height - 8} textAnchor="middle" fontSize="11" fill={config.text_color} style={{fontWeight: 'bold'}}>
-                      {val}
-                    </text>
-                  </g>
-                );
-              })}
-            </svg>
+      {showRiskModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center modal-backdrop" style={{background:'rgba(0,0,0,0.4)'}}>
+          <div className="rounded-2xl shadow-2xl p-6 max-w-lg w-full mx-4 fade-in" style={{background: config.surface_color}}>
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-lg font-bold" style={{ color: config.text_color }}>Riskli ??renciler</h3>
+              <button onClick={() => setShowRiskModal(false)} className="p-1.5 rounded-lg hover:bg-gray-100"><Icons.X size={18}/></button>
+            </div>
+            {riskStudents.length === 0 ? (
+              <div className="text-sm" style={{ color: config.secondary_action_color }}>Riskli ??renci bulunamad?</div>
+            ) : (
+              <div className="space-y-2">
+                {riskStudents.map(s => (
+                  <div key={s.studentId} className="flex items-center justify-between px-3 py-2 rounded-lg" style={{ background: '#F8FAFC' }}>
+                    <div className="text-sm" style={{ color: config.text_color }}>{s.name}</div>
+                    <div className="text-xs" style={{ color: '#ef4444' }}>{s.prevNet.toFixed(1)} ? {s.lastNet.toFixed(1)} ({s.diff.toFixed(1)})</div>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
         </div>
       )}
 
-      {/* En İyi 3 / Dikkat Gereken 3 */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
-        {/* En İyi 3 */}
-        <div className="rounded-2xl p-6 shadow-lg" style={{ background: config.surface_color, borderLeft: '5px solid #10B981' }}>
-          <h3 className="text-lg font-bold mb-4" style={{ color: config.text_color }}>En İyi 3 Öğrenci</h3>
-          <div className="space-y-3">
-            {stats.studentStats
-              .sort((a, b) => b.lastNet - a.lastNet)
-              .slice(0, 3)
-              .map((s, i) => (
-                <div key={i} className="flex items-center gap-3 p-3 rounded-lg" style={{ background: '#F0FDF4' }}>
-                  <div className="w-10 h-10 rounded-full flex items-center justify-center font-bold text-white" style={{ background: '#10B981' }}>
-                    {['🥇', '🥈', '🥉'][i]}
-                  </div>
-                  <div className="flex-1">
-                    <p className="font-bold" style={{ color: config.text_color }}>{s.student.ad_soyad || s.student.student_name}</p>
-                    <p className="text-sm text-gray-500">{s.lastNet.toFixed(2)} net</p>
-                  </div>
-                </div>
-              ))}
-          </div>
-        </div>
-
-        {/* Dikkat Gereken 3 */}
-        <div className="rounded-2xl p-6 shadow-lg" style={{ background: config.surface_color, borderLeft: '5px solid #F97316' }}>
-          <h3 className="text-lg font-bold mb-4" style={{ color: config.text_color }}>Dikkat Gereken 3</h3>
-          <div className="space-y-3">
-            {stats.studentStats
-              .filter(s => s.change < 0)
-              .sort((a, b) => a.change - b.change)
-              .slice(0, 3)
-              .map((s, i) => (
-                <div key={i} className="flex items-center gap-3 p-3 rounded-lg" style={{ background: '#FFF7ED' }}>
-                  <div className="w-10 h-10 rounded-full flex items-center justify-center font-bold text-white" style={{ background: '#F97316' }}>
-                    {i + 1}
-                  </div>
-                  <div className="flex-1">
-                    <p className="font-bold" style={{ color: config.text_color }}>{s.student.ad_soyad || s.student.student_name}</p>
-                    <p className="text-sm text-red-600">{s.change.toFixed(2)} net</p>
-                  </div>
-                </div>
-              ))}
-          </div>
-        </div>
-      </div>
-
-      {/* Ders Bazlı Sıralamalar */}
-      <div className="mb-8">
-        <h3 className="text-xl font-bold mb-4" style={{ color: config.text_color }}>Ders Bazlı Sıralamalar</h3>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {Object.entries(rankings).map(([subject, students]) => (
-            <div key={subject} className="rounded-xl p-4 shadow" style={{ background: config.surface_color }}>
-              <h4 className="font-bold mb-3" style={{ color: config.text_color }}>En İyi {subjectNames[subject]}</h4>
+      {showDropModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center modal-backdrop" style={{background:'rgba(0,0,0,0.4)'}}>
+          <div className="rounded-2xl shadow-2xl p-6 max-w-lg w-full mx-4 fade-in" style={{background: config.surface_color}}>
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-lg font-bold" style={{ color: config.text_color }}>B?y?k D???? Ya?ayanlar</h3>
+              <button onClick={() => setShowDropModal(false)} className="p-1.5 rounded-lg hover:bg-gray-100"><Icons.X size={18}/></button>
+            </div>
+            {bigDropStudents.length === 0 ? (
+              <div className="text-sm" style={{ color: config.secondary_action_color }}>B?y?k d???? ya?ayan ??renci yok</div>
+            ) : (
               <div className="space-y-2">
-                {students.slice(0, 3).map((s, i) => (
-                  <div key={i} className="flex justify-between items-center p-2 text-sm" style={{ background: '#F1F5F9', borderRadius: '6px' }}>
-                    <span style={{ color: config.text_color }}>{i + 1}. {s.name}</span>
-                    <span className="font-bold" style={{ color: config.primary_action_color }}>{s.net.toFixed(1)}</span>
+                {bigDropStudents.map(s => (
+                  <div key={s.studentId} className="flex items-center justify-between px-3 py-2 rounded-lg" style={{ background: '#F8FAFC' }}>
+                    <div className="text-sm" style={{ color: config.text_color }}>{s.name}</div>
+                    <div className="text-xs" style={{ color: '#ef4444' }}>{s.prevNet.toFixed(1)} ? {s.lastNet.toFixed(1)} ({s.diff.toFixed(1)})</div>
                   </div>
                 ))}
               </div>
-            </div>
-          ))}
-        </div>
-      </div>
-    </div>
-  );
-}
-
-function LoginPage({ onLogin, config }) {
-  const [password, setPassword] = useState('');
-  const [error, setError] = useState('');
-  const [loading, setLoading] = useState(false);
-
-  const correctPassword = (window.__APP_CONFIG && window.__APP_CONFIG.LOGIN_PASSWORD) || '1234'; // Şifreyi buraya yazın
-
-  const handleLogin = (e) => {
-    e.preventDefault();
-    setError('');
-    setLoading(true);
-
-    // Şifreyi kontrol et
-    if (password === correctPassword) {
-      localStorage.setItem('appAuthenticated', 'true');
-      onLogin();
-    } else {
-      setError('❌ Şifre hatalı. Lütfen tekrar deneyin.');
-      setPassword('');
-    }
-
-    setLoading(false);
-  };
-
-  return (
-    <div className="h-full w-full flex items-center justify-center" style={{ background: config.background_color }}>
-      <div className="rounded-3xl shadow-2xl p-10 max-w-md w-full mx-4 fade-in border border-gray-100" style={{ background: config.surface_color }}>
-        <div className="text-center mb-8">
-          <div className="text-5xl mb-4">🔐</div>
-          <h1 className="text-3xl font-extrabold mb-2" style={{ color: config.text_color }}>
-            {config.app_title}
-          </h1>
-          <p className="text-sm" style={{ color: config.secondary_action_color }}>
-            Giriş yapmak için şifreyi girin
-          </p>
-        </div>
-
-        <form onSubmit={handleLogin} className="space-y-4">
-          <div>
-            <label className="block text-sm font-semibold mb-2" style={{ color: config.text_color }}>
-              Şifre
-            </label>
-            <input
-              type="password"
-              value={password}
-              onChange={(e) => {
-                setPassword(e.target.value);
-                setError('');
-              }}
-              placeholder="••••••"
-              className="w-full px-4 py-3 rounded-xl border-2 border-gray-200 text-sm font-medium transition-all focus:border-blue-500"
-              style={{ color: config.text_color }}
-              autoFocus
-            />
+            )}
           </div>
-
-          {error && (
-            <div className="p-3 rounded-lg bg-red-50 border border-red-200">
-              <p className="text-sm text-red-600 font-medium">{error}</p>
-            </div>
-          )}
-
-          <button
-            type="submit"
-            disabled={loading}
-            className="w-full px-4 py-3 rounded-xl text-white text-base font-semibold transition-all hover:shadow-lg disabled:opacity-50"
-            style={{ background: config.primary_action_color }}
-          >
-            {loading ? '⏳ Kontrol ediliyor...' : '✓ Giriş Yap'}
-          </button>
-        </form>
-
-        <div className="mt-8 pt-6 border-t border-gray-200 text-center">
-          <p className="text-xs" style={{ color: config.secondary_action_color }}>
-            © 2024 {config.app_title}
-          </p>
         </div>
-      </div>
+      )}
     </div>
   );
 }
-
 function App() {
   const { route, navigate } = useRouter();
   const config = useConfig();
@@ -2741,7 +2553,7 @@ function App() {
       case 'ogrenci-detay': return <StudentDetailPage config={config} studentId={selectedStudentId} onBack={() => navigate('ogrenciler')} />;
       case 'gunluk-calisma': return <StudyPage config={config}/>;
       case 'deneme-girisi': return <ExamPage config={config}/>;
-      case 'dashboard': return <DashboardPage config={config}/>;
+      case 'dashboard': return <DashboardPage config={config} onSelectStudent={(id) => { setSelectedStudentId(id); navigate('ogrenci-detay'); }} />;
       default: return <HomePage navigate={navigate} config={config}/>;
     }
   };
