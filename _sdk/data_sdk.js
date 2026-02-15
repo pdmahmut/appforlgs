@@ -336,6 +336,44 @@
           return { isOk: true, data: record };
         }
 
+        if (data.type === 'quick_study') {
+          const payload = {
+            student_id: data.student_id || null,
+            study_date: data.study_date || null,
+            tur_d: data.tur_d || 0,
+            tur_y: data.tur_y || 0,
+            tur_b: data.tur_b || 0,
+            mat_d: data.mat_d || 0,
+            mat_y: data.mat_y || 0,
+            mat_b: data.mat_b || 0,
+            fen_d: data.fen_d || 0,
+            fen_y: data.fen_y || 0,
+            fen_b: data.fen_b || 0,
+            ink_d: data.ink_d || 0,
+            ink_y: data.ink_y || 0,
+            ink_b: data.ink_b || 0,
+            din_d: data.din_d || 0,
+            din_y: data.din_y || 0,
+            din_b: data.din_b || 0,
+            ing_d: data.ing_d || 0,
+            ing_y: data.ing_y || 0,
+            ing_b: data.ing_b || 0,
+          };
+          const res = await client
+            .from('quick_studies')
+            .update(payload)
+            .eq('backend_id', data.__backendId)
+            .select('*')
+            .single();
+          if (res.error) throw res.error;
+          const record = mapRowToRecord('quick_study', res.data);
+          this._store = this._store.map((r) =>
+            r.__backendId === record.__backendId && r.type === 'quick_study' ? record : r
+          );
+          this._notify();
+          return { isOk: true, data: record };
+        }
+
         if (data.type === 'exam') {
           const payload = {
             student_backend_id: data.student_id || data.student_backend_id || null,

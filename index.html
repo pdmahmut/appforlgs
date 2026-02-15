@@ -423,6 +423,8 @@ function StudentDetailPage({ config, studentId, onBack }) {
   const [showAllExams, setShowAllExams] = useState(false);
   const [showAllStudies, setShowAllStudies] = useState(false);
   const [showWeekDetail, setShowWeekDetail] = useState(null);
+  const [selectedStudyIds, setSelectedStudyIds] = useState([]);
+  const [editingStudy, setEditingStudy] = useState(null);
   const [saving, setSaving] = useState(false);
   const [form, setForm] = useState({ fullName: '', sinif: '8A', okulNo: '' });
   const weekdays = ['Paz', 'Pzt', 'Sal', 'Çar', 'Per', 'Cum', 'Cmt'];
@@ -431,7 +433,7 @@ function StudentDetailPage({ config, studentId, onBack }) {
   const end = new Date(yearEnd);
   const days = [];
   for (let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
-    const dateStr = d.toISOString().split('T')[0];
+    const dateStr = toDateKey(d);
     days.push({
       date: new Date(d),
       dateStr,
@@ -531,8 +533,24 @@ function StudentDetailPage({ config, studentId, onBack }) {
   const today = new Date();
   const yearStart = new Date(today.getFullYear(), 0, 1);
   const yearEnd = new Date(today.getFullYear(), 11, 31);
-  const toDateKey = (d) => {
+  const toLocalDate = (d) => {
+    if (!d) return null;
+    if (typeof d === 'string') {
+      const m = d.match(/^(\d{4})-(\d{2})-(\d{2})/);
+      if (m) return new Date(parseInt(m[1], 10), parseInt(m[2], 10) - 1, parseInt(m[3], 10));
+    }
     const dt = new Date(d);
+    if (Number.isNaN(dt.getTime())) return null;
+    return dt;
+  };
+  const toDateKey = (d) => {
+    if (!d) return '';
+    if (typeof d === 'string') {
+      const m = d.match(/^(\d{4})-(\d{2})-(\d{2})/);
+      if (m) return `${m[1]}-${m[2]}-${m[3]}`;
+    }
+    const dt = toLocalDate(d);
+    if (!dt) return '';
     const y = dt.getFullYear();
     const m = String(dt.getMonth() + 1).padStart(2, '0');
     const day = String(dt.getDate()).padStart(2, '0');
@@ -570,7 +588,7 @@ function StudentDetailPage({ config, studentId, onBack }) {
     let daysWorked = 0;
     const days = [];
     for (let d = new Date(start); d < new Date(start.getTime() + 7 * 24 * 60 * 60 * 1000); d.setDate(d.getDate() + 1)) {
-      const key = d.toISOString().split('T')[0];
+      const key = toDateKey(d);
       const worked = (dailyTotalsMap[key] || 0) > 0;
       if (worked) daysWorked += 1;
       days.push({ date: new Date(d), worked });
@@ -887,8 +905,15 @@ function StudentDetailPage({ config, studentId, onBack }) {
                     ))}
                     <line x1="40" y1="20" x2="40" y2="200" stroke="#94A3B8" strokeWidth="2" />
                     <line x1="40" y1="200" x2="500" y2="200" stroke="#94A3B8" strokeWidth="2" />
-                    <line x1="40" y1={200 - (avg / max) * 160} x2="500" y2={200 - (avg / max) * 160} stroke="#64748B" strokeWidth="1" strokeDasharray="4 4" />
-                    <text x="6" y={200 - (avg / max) * 160} textAnchor="start" fontSize="10" fill="#64748B">Ort: {avg.toFixed(1)}</text>
+                    {(() => {
+                      const avgY = 200 - (avg / max) * 160;
+                      return (
+                        <>
+                          <line x1="40" y1={avgY} x2="500" y2={avgY} stroke="#64748B" strokeWidth="1" strokeDasharray="4 4" />
+                          <text x="4" y={avgY - 2} textAnchor="start" fontSize="10" fill="#64748B">Ort: {avg.toFixed(1)}</text>
+                        </>
+                      );
+                    })()}
                     <defs>
                       <linearGradient id="trendFill" x1="0" y1="0" x2="0" y2="1">
                         <stop offset="0%" stopColor="#10B981" stopOpacity="0.25" />
@@ -911,9 +936,10 @@ function StudentDetailPage({ config, studentId, onBack }) {
                       const color = d.total >= avg ? '#10B981' : '#EF4444';
                       const title = d.date.toLocaleDateString('tr-TR', { day: '2-digit', month: 'long', weekday: 'long' }) + ` - ${d.total} soru`;
                       return (
-                        <g key={d.key}>
-                          <circle cx={x} cy={y} r="3.5" fill={color} />
+                        <g key={d.key} style={{ pointerEvents: 'all' }}>
                           <title>{title}</title>
+                          <circle cx={x} cy={y} r="8" fill="transparent" />
+                          <circle cx={x} cy={y} r="3.5" fill={color} />
                           {i % 5 === 0 ? (
                             <text x={x} y={220} textAnchor="middle" fontSize="9" fill={config.secondary_action_color}>
                               {d.date.getDate()}/{d.date.getMonth() + 1}
@@ -944,7 +970,7 @@ function StudentDetailPage({ config, studentId, onBack }) {
                   const start = new Date(end);
                   let total = 0;
                   for (let d = new Date(start); d < new Date(start.getTime() + 7 * 24 * 60 * 60 * 1000); d.setDate(d.getDate() + 1)) {
-                    const key = d.toISOString().split('T')[0];
+                    const key = toDateKey(d);
                     total += dailyTotalsMap[key] || 0;
                   }
                   weeks.push({ label: `${6 - i}. Hafta`, total });
@@ -1053,6 +1079,28 @@ function StudentDetailPage({ config, studentId, onBack }) {
               <h3 className="text-lg font-bold" style={{ color: config.text_color }}>Tüm Günlük Çalışmalar</h3>
               <button onClick={() => setShowAllStudies(false)} className="p-1.5 rounded-lg hover:bg-gray-100"><Icons.X size={18}/></button>
             </div>
+            <div className="flex items-center justify-between mb-3">
+              <label className="text-xs" style={{ color: config.secondary_action_color }}>
+                <input
+                  type="checkbox"
+                  checked={selectedStudyIds.length === studentQuick.length && studentQuick.length > 0}
+                  onChange={(e) => setSelectedStudyIds(e.target.checked ? studentQuick.map(s => s.__backendId) : [])}
+                /> Tümünü seç
+              </label>
+              <button
+                onClick={async () => {
+                  if (selectedStudyIds.length === 0) return;
+                  for (const id of selectedStudyIds) {
+                    const rec = studentQuick.find(s => s.__backendId === id);
+                    if (rec) await window.dataSdk.delete({ type: 'quick_study', __backendId: rec.__backendId });
+                  }
+                  setSelectedStudyIds([]);
+                }}
+                className="px-3 py-1.5 rounded-lg text-xs font-semibold border border-red-200 text-red-600 hover:bg-red-50"
+              >
+                Seçilileri Sil
+              </button>
+            </div>
             {studentQuick.length === 0 ? (
               <div className="text-center py-8" style={{ color: config.secondary_action_color }}>Henüz çalışma verisi girilmemiş</div>
             ) : (
@@ -1060,6 +1108,7 @@ function StudentDetailPage({ config, studentId, onBack }) {
                 <table className="w-full text-sm">
                   <thead>
                     <tr className="text-left" style={{ color: config.secondary_action_color }}>
+                      <th className="py-2"></th>
                       <th className="py-2">Tarih</th>
                       <th>Türkçe</th>
                       <th>Mat</th>
@@ -1068,10 +1117,15 @@ function StudentDetailPage({ config, studentId, onBack }) {
                       <th>İng</th>
                       <th>Din</th>
                       <th>Toplam</th>
+                      <th></th>
                     </tr>
                   </thead>
                   <tbody>
-                    {[...studentQuick].sort((a,b) => new Date(b.study_date) - new Date(a.study_date)).map((q) => {
+                    {[...studentQuick].sort((a,b) => {
+                      const da = toLocalDate(a.study_date);
+                      const db = toLocalDate(b.study_date);
+                      return (db ? db.getTime() : 0) - (da ? da.getTime() : 0);
+                    }).map((q) => {
                       const total =
                         (q.tur_d||0)+(q.tur_y||0)+(q.tur_b||0)+
                         (q.mat_d||0)+(q.mat_y||0)+(q.mat_b||0)+
@@ -1079,9 +1133,17 @@ function StudentDetailPage({ config, studentId, onBack }) {
                         (q.ink_d||0)+(q.ink_y||0)+(q.ink_b||0)+
                         (q.ing_d||0)+(q.ing_y||0)+(q.ing_b||0)+
                         (q.din_d||0)+(q.din_y||0)+(q.din_b||0);
+                      const displayDate = toLocalDate(q.study_date);
                       return (
                         <tr key={q.__backendId} className="border-t">
-                          <td className="py-2">{new Date(q.study_date).toLocaleDateString('tr-TR')}</td>
+                          <td>
+                            <input
+                              type="checkbox"
+                              checked={selectedStudyIds.includes(q.__backendId)}
+                              onChange={(e) => setSelectedStudyIds(prev => e.target.checked ? [...prev, q.__backendId] : prev.filter(id => id !== q.__backendId))}
+                            />
+                          </td>
+                          <td className="py-2">{displayDate ? displayDate.toLocaleDateString('tr-TR') : ''}</td>
                           <td>{(q.tur_d||0)+(q.tur_y||0)+(q.tur_b||0)}</td>
                           <td>{(q.mat_d||0)+(q.mat_y||0)+(q.mat_b||0)}</td>
                           <td>{(q.fen_d||0)+(q.fen_y||0)+(q.fen_b||0)}</td>
@@ -1089,6 +1151,10 @@ function StudentDetailPage({ config, studentId, onBack }) {
                           <td>{(q.ing_d||0)+(q.ing_y||0)+(q.ing_b||0)}</td>
                           <td>{(q.din_d||0)+(q.din_y||0)+(q.din_b||0)}</td>
                           <td className="font-semibold">{total}</td>
+                          <td className="space-x-2">
+                            <button onClick={() => setEditingStudy(q)} className="text-blue-600 text-xs font-semibold">Düzenle</button>
+                            <button onClick={async () => { await window.dataSdk.delete({ type: 'quick_study', __backendId: q.__backendId }); }} className="text-red-600 text-xs font-semibold">Sil</button>
+                          </td>
                         </tr>
                       );
                     })}
@@ -1096,6 +1162,40 @@ function StudentDetailPage({ config, studentId, onBack }) {
                 </table>
               </div>
             )}
+          </div>
+        </div>
+      )}
+
+      {editingStudy && (
+        <div className="fixed inset-0 z-[60] flex items-center justify-center modal-backdrop" style={{background:'rgba(0,0,0,0.4)'}}>
+          <div className="rounded-2xl shadow-2xl p-6 max-w-lg w-full mx-4 fade-in" style={{background: config.surface_color}}>
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-lg font-bold" style={{ color: config.text_color }}>Günlük Çalışma Düzenle</h3>
+              <button onClick={() => setEditingStudy(null)} className="p-1.5 rounded-lg hover:bg-gray-100"><Icons.X size={18}/></button>
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm">
+              {[
+                ['tur', 'Türkçe'], ['mat', 'Mat'], ['fen', 'Fen'], ['ink', 'Sosyal'], ['ing', 'İng'], ['din', 'Din']
+              ].map(([k, label]) => (
+                <div key={k} className="rounded-lg border border-gray-100 p-2">
+                  <div className="text-xs font-semibold mb-1" style={{ color: config.secondary_action_color }}>{label}</div>
+                  <div className="flex gap-2">
+                    {['d','y','b'].map(t => (
+                      <input key={t} type="number" min="0" value={editingStudy[`${k}_${t}`] || 0}
+                        onChange={(e) => setEditingStudy(prev => ({ ...prev, [`${k}_${t}`]: parseInt(e.target.value || 0, 10) })) }
+                        className="w-1/3 px-2 py-1 rounded border border-gray-200 text-xs text-center" />
+                    ))}
+                  </div>
+                </div>
+              ))}
+            </div>
+            <div className="flex justify-end gap-2 mt-4">
+              <button onClick={() => setEditingStudy(null)} className="px-3 py-2 rounded-lg border border-gray-200 text-sm font-semibold">İptal</button>
+              <button onClick={async () => { await window.dataSdk.update({ ...editingStudy, type: 'quick_study' }); setEditingStudy(null); }}
+                className="px-4 py-2 rounded-lg text-white text-sm font-semibold" style={{ background: config.primary_action_color }}>
+                Kaydet
+              </button>
+            </div>
           </div>
         </div>
       )}
