@@ -2293,7 +2293,7 @@ function DashboardPage({ config, onSelectStudent }) {
       const prevNet = parseFloat(prev.exam_total_net || 0);
       return {
         studentId: r.student_id,
-        name: (studentMap[r.student_id]?.ad_soyad || '').trim() || (studentMap[r.student_id]?.student_name || '?renci'),
+        name: (studentMap[r.student_id]?.ad_soyad || '').trim() || (studentMap[r.student_id]?.student_name || 'Öğrenci'),
         lastNet,
         prevNet,
         diff: lastNet - prevNet
@@ -2333,7 +2333,7 @@ function DashboardPage({ config, onSelectStudent }) {
       }
     });
     if (!minSubj) return null;
-    const labelMap = { turkce: 'T?rk?e', matematik: 'Matematik', fen: 'Fen', inkilap: 'Sosyal', ingilizce: '?ngilizce' };
+    const labelMap = { turkce: 'Türkçe', matematik: 'Matematik', fen: 'Fen', inkilap: 'Sosyal', ingilizce: 'İngilizce' };
     return { name: labelMap[minSubj], avg: minAvg };
   }, [ortakExams]);
 
@@ -2371,45 +2371,45 @@ function DashboardPage({ config, onSelectStudent }) {
   const hasOrtak = ortakExams.length > 0;
 
   const renderValue = (val, emptyText) => {
-    if (!hasStudents) return 'Hen?z ?renci eklenmemi?';
-    if (!hasOrtak) return 'Hen?z ortak deneme girilmemi?';
-    return val ? emptyText;
+    if (!hasStudents) return 'Henüz öğrenci eklenmemiş';
+    if (!hasOrtak) return 'Henüz ortak deneme girilmemiş';
+    return val ?? emptyText;
   };
 
   const cards = [
     {
       title: 'Genel Ortalama Net',
-      icon: '?',
+      icon: '📊',
       color: '#3498db',
       value: hasOrtak ? lastAvg.toFixed(1) : null,
       sub: lastGroup && prevGroup
-        ? (avgTrend > 0 ? `? +${avgTrend.toFixed(1)}` : avgTrend < 0 ? `? ${avgTrend.toFixed(1)}` : '? 0.0')
-        : 'Trend i?in daha fazla deneme gerekli',
+        ? (avgTrend > 0 ? `⬆ +${avgTrend.toFixed(1)}` : avgTrend < 0 ? `⬇ ${avgTrend.toFixed(1)}` : '→ 0.0')
+        : 'Trend için daha fazla deneme gerekli',
       subColor: avgTrend > 0 ? '#16a34a' : avgTrend < 0 ? '#ef4444' : '#64748b',
       clickable: false
     },
     {
-      title: 'Geli?im Trendi',
-      icon: '?',
+      title: 'Gelişim Trendi',
+      icon: '📈',
       color: growthPercent !== null && growthPercent < 0 ? '#e74c3c' : '#2ecc71',
-      value: growthPercent !== null ? `%${Math.abs(growthPercent).toFixed(1)} ${growthPercent >= 0 ? 'art?' : 'd??'}` : null,
-      sub: '(son 3 deneme ortalamas?)',
+      value: growthPercent !== null ? `%${Math.abs(growthPercent).toFixed(1)} ${growthPercent >= 0 ? 'artış' : 'düşüş'}` : null,
+      sub: '(son 3 deneme ortalaması)',
       subColor: '#94a3b8',
       clickable: false
     },
     {
       title: 'Risk Grubu',
-      icon: '?',
+      icon: '⚠️',
       color: '#f39c12',
-      value: hasOrtak ? `${riskStudents.length} ?renci` : null,
-      sub: 'son 2 denemede d??',
+      value: hasOrtak ? `${riskStudents.length} öğrenci` : null,
+      sub: 'son 2 denemede düşüş',
       subColor: '#d97706',
       clickable: true,
       onClick: () => setShowRiskModal(true)
     },
     {
-      title: 'En Zay?f Alan',
-      icon: '?',
+      title: 'En Zayıf Alan',
+      icon: '🧠',
       color: '#9b59b6',
       value: weakestSubject ? weakestSubject.name : null,
       sub: weakestSubject ? `Ort: ${weakestSubject.avg.toFixed(1)} net` : 'Veri yok',
@@ -2417,8 +2417,8 @@ function DashboardPage({ config, onSelectStudent }) {
       clickable: false
     },
     {
-      title: 'Bu Ay?n Y?kseleni',
-      icon: '?',
+      title: 'Bu Ayın Yükseleni',
+      icon: '🔥',
       color: '#27ae60',
       value: bestImprover ? bestImprover.name : null,
       sub: bestImprover ? `+${bestImprover.diff.toFixed(1)} net` : 'Veri yok',
@@ -2427,11 +2427,11 @@ function DashboardPage({ config, onSelectStudent }) {
       onClick: () => bestImprover && onSelectStudent && onSelectStudent(bestImprover.studentId)
     },
     {
-      title: 'B?y?k D??',
-      icon: '?',
+      title: 'Büyük Düşüş',
+      icon: '📉',
       color: '#e74c3c',
-      value: hasOrtak ? `${bigDropStudents.length} ?renci` : null,
-      sub: 'son denemede -5 net ve ?zeri',
+      value: hasOrtak ? `${bigDropStudents.length} öğrenci` : null,
+      sub: 'son denemede -5 net ve üzeri',
       subColor: '#ef4444',
       clickable: true,
       onClick: () => setShowDropModal(true)
@@ -2441,8 +2441,8 @@ function DashboardPage({ config, onSelectStudent }) {
   return (
     <div className="max-w-7xl mx-auto px-4 py-8 fade-in">
       <div className="mb-8">
-        <h1 className="text-3xl sm:text-4xl font-extrabold" style={{ color: config.text_color }}>Genel Bak?</h1>
-        <p className="text-sm sm:text-base mt-2" style={{ color: config.secondary_action_color }}>?renci performans ?zeti ve trend analizi</p>
+        <h1 className="text-3xl sm:text-4xl font-extrabold" style={{ color: config.text_color }}>Genel Bakış</h1>
+        <p className="text-sm sm:text-base mt-2" style={{ color: config.secondary_action_color }}>Öğrenci performans özeti ve trend analizi</p>
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -2479,11 +2479,11 @@ function DashboardPage({ config, onSelectStudent }) {
         <div className="fixed inset-0 z-50 flex items-center justify-center modal-backdrop" style={{background:'rgba(0,0,0,0.4)'}}>
           <div className="rounded-2xl shadow-2xl p-6 max-w-lg w-full mx-4 fade-in" style={{background: config.surface_color}}>
             <div className="flex items-center justify-between mb-4">
-              <h3 className="text-lg font-bold" style={{ color: config.text_color }}>Riskli ?renciler</h3>
+              <h3 className="text-lg font-bold" style={{ color: config.text_color }}>Riskli Öğrenciler</h3>
               <button onClick={() => setShowRiskModal(false)} className="p-1.5 rounded-lg hover:bg-gray-100"><Icons.X size={18}/></button>
             </div>
             {riskStudents.length === 0 ? (
-              <div className="text-sm" style={{ color: config.secondary_action_color }}>Riskli ?renci bulunamad?</div>
+              <div className="text-sm" style={{ color: config.secondary_action_color }}>Riskli öğrenci bulunamadı</div>
             ) : (
               <div className="space-y-2">
                 {riskStudents.map(s => (
@@ -2502,11 +2502,11 @@ function DashboardPage({ config, onSelectStudent }) {
         <div className="fixed inset-0 z-50 flex items-center justify-center modal-backdrop" style={{background:'rgba(0,0,0,0.4)'}}>
           <div className="rounded-2xl shadow-2xl p-6 max-w-lg w-full mx-4 fade-in" style={{background: config.surface_color}}>
             <div className="flex items-center justify-between mb-4">
-              <h3 className="text-lg font-bold" style={{ color: config.text_color }}>B?y?k D?? Ya?ayanlar</h3>
+              <h3 className="text-lg font-bold" style={{ color: config.text_color }}>Büyük Düşüş Yaşayanlar</h3>
               <button onClick={() => setShowDropModal(false)} className="p-1.5 rounded-lg hover:bg-gray-100"><Icons.X size={18}/></button>
             </div>
             {bigDropStudents.length === 0 ? (
-              <div className="text-sm" style={{ color: config.secondary_action_color }}>B?y?k d?? ya?ayan ?renci yok</div>
+              <div className="text-sm" style={{ color: config.secondary_action_color }}>Büyük düşüş yaşayan öğrenci yok</div>
             ) : (
               <div className="space-y-2">
                 {bigDropStudents.map(s => (
