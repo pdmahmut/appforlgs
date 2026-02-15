@@ -544,45 +544,29 @@ function StudentDetailPage({ config, studentId, onBack }) {
     dailyTotalsMap[dateKey] = (dailyTotalsMap[dateKey] || 0) + total;
   });
   const heatmapValues = Object.entries(dailyTotalsMap).map(([date, count]) => ({ date, count }));
-  const dailyTotals = studentQuick
-    .map(q => {
-      const total = [
-        q.tur_d, q.tur_y, q.tur_b,
-        q.mat_d, q.mat_y, q.mat_b,
-        q.fen_d, q.fen_y, q.fen_b,
-        q.ink_d, q.ink_y, q.ink_b,
-        q.din_d, q.din_y, q.din_b,
-        q.ing_d, q.ing_y, q.ing_b,
-      ].reduce((s, v) => s + (parseInt(v || 0, 10)), 0);
-      return { date: q.study_date, total };
-    })
-    .sort((a, b) => new Date(a.date) - new Date(b.date));
-
-  const totalQuestions = dailyTotals.reduce((s, d) => s + d.total, 0);
-  const avgDaily = dailyTotals.length ? (totalQuestions / dailyTotals.length).toFixed(0) : '0';
-  const maxDay = dailyTotals.reduce((acc, d) => d.total > acc.total ? d : acc, { date: '-', total: 0 });
-  const sevenDaysAgo = new Date(); sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
-  const last7Total = dailyTotals.filter(d => new Date(d.date) >= sevenDaysAgo).reduce((s, d) => s + d.total, 0);
-
-  const subjectTotals = {
-    turkce: 0, matematik: 0, fen: 0, inkilap: 0, ingilizce: 0, din: 0
+  const startOfWeek = (d) => {
+    const date = new Date(d);
+    const day = date.getDay();
+    const diff = (day === 0 ? -6 : 1) - day;
+    date.setDate(date.getDate() + diff);
+    date.setHours(0, 0, 0, 0);
+    return date;
   };
-  let correctTotal = 0;
-  let wrongTotal = 0;
-  studentQuick.forEach(q => {
-    subjectTotals.turkce += (q.tur_d || 0) + (q.tur_y || 0) + (q.tur_b || 0);
-    subjectTotals.matematik += (q.mat_d || 0) + (q.mat_y || 0) + (q.mat_b || 0);
-    subjectTotals.fen += (q.fen_d || 0) + (q.fen_y || 0) + (q.fen_b || 0);
-    subjectTotals.inkilap += (q.ink_d || 0) + (q.ink_y || 0) + (q.ink_b || 0);
-    subjectTotals.ingilizce += (q.ing_d || 0) + (q.ing_y || 0) + (q.ing_b || 0);
-    subjectTotals.din += (q.din_d || 0) + (q.din_y || 0) + (q.din_b || 0);
-    correctTotal += (q.tur_d || 0) + (q.mat_d || 0) + (q.fen_d || 0) + (q.ink_d || 0) + (q.din_d || 0) + (q.ing_d || 0);
-    wrongTotal += (q.tur_y || 0) + (q.mat_y || 0) + (q.fen_y || 0) + (q.ink_y || 0) + (q.din_y || 0) + (q.ing_y || 0);
-  });
-  const distData = Object.entries(subjectTotals).map(([k, v]) => ({ name: subjectLabels[k], value: v }));
-  const totalAnswered = correctTotal + wrongTotal + (totalQuestions - correctTotal - wrongTotal);
-  const correctPct = totalAnswered ? Math.round((correctTotal / totalAnswered) * 100) : 0;
-  const wrongPct = totalAnswered ? Math.round((wrongTotal / totalAnswered) * 100) : 0;
+  const weeklyStats = [];
+  for (let i = 0; i < 4; i++) {
+    const end = new Date(startOfWeek(today));
+    end.setDate(end.getDate() - (i * 7));
+    const start = new Date(end);
+    const label = i === 0 ? 'Bu hafta' : i === 1 ? 'Geçen hafta' : `${i} hafta önce`;
+    let daysWorked = 0;
+    for (let d = new Date(start); d < new Date(start.getTime() + 7 * 24 * 60 * 60 * 1000); d.setDate(d.getDate() + 1)) {
+      const key = d.toISOString().split('T')[0];
+      if ((dailyTotalsMap[key] || 0) > 0) daysWorked += 1;
+    }
+    const pct = ((daysWorked / 7) * 100).toFixed(1);
+    const emoji = daysWorked === 7 ? '🔥' : daysWorked >= 5 ? '💪' : daysWorked >= 3 ? '👍' : daysWorked >= 1 ? '⚠️' : '❌';
+    weeklyStats.push({ label, daysWorked, pct, emoji });
+  }
 
   const handleEditOpen = () => {
     setForm({
@@ -840,70 +824,21 @@ function StudentDetailPage({ config, studentId, onBack }) {
           </div>
         </div>
 
-        {studentQuick.length === 0 ? (
-          <div className="text-center py-10 rounded-xl border border-dashed" style={{ color: config.secondary_action_color }}>Henüz çalışma verisi girilmemiş</div>
-        ) : (
-          <>
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
-              {[
-                { label: 'Toplam Soru', value: totalQuestions },
-                { label: 'Günlük Ortalama', value: avgDaily },
-                { label: 'En Çok Çalışılan Gün', value: `${maxDay.date} (${maxDay.total})` },
-                { label: 'Son 7 Gün Toplam', value: last7Total },
-              ].map((card, i) => (
-                <div key={i} className="rounded-xl p-4 border border-gray-100" style={{ background: config.surface_color }}>
-                  <p className="text-xs font-semibold mb-1" style={{ color: config.secondary_action_color }}>{card.label}</p>
-                  <p className="text-lg font-bold" style={{ color: config.text_color }}>{card.value}</p>
+        <div className="rounded-2xl p-4 border border-gray-100" style={{ background: config.surface_color }}>
+          <h3 className="text-sm font-semibold mb-3" style={{ color: config.text_color }}>📊 Haftalık Süreklilik Skoru</h3>
+          <div className="space-y-2">
+            {weeklyStats.map((w, i) => (
+              <div key={i} className="flex items-center justify-between px-3 py-2 rounded-lg" style={{ background: '#F8FAFC' }}>
+                <div className="text-sm" style={{ color: config.text_color }}>
+                  {w.label}: {w.daysWorked}/7 gün çalıştın! {w.emoji}
                 </div>
-              ))}
-            </div>
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              <div className="rounded-2xl p-4 border border-gray-100" style={{ background: config.surface_color }}>
-                <h3 className="text-sm font-semibold mb-3" style={{ color: config.text_color }}>Günlük Soru Trendi</h3>
-                {dailyTotals.length === 0 ? (
-                  <div className="text-center py-10 text-sm" style={{ color: config.secondary_action_color }}>Henüz veri yok</div>
-                ) : (
-                  <svg width="100%" height="260" viewBox="0 0 500 260" preserveAspectRatio="xMidYMid meet">
-                    {[0, 1, 2, 3, 4].map(i => (
-                      <line key={`h-${i}`} x1="40" y1={30 + i * 50} x2="480" y2={30 + i * 50} stroke="#E2E8F0" strokeWidth="1" />
-                    ))}
-                    <line x1="40" y1="30" x2="40" y2="230" stroke="#94A3B8" strokeWidth="2" />
-                    <line x1="40" y1="230" x2="480" y2="230" stroke="#94A3B8" strokeWidth="2" />
-                    {dailyTotals.map((d, i) => {
-                      const max = Math.max(...dailyTotals.map(e => e.total), 1);
-                      const barHeight = (d.total / max) * 180;
-                      const x = 60 + i * 40;
-                      return (
-                        <rect key={d.date} x={x} y={230 - barHeight} width="24" height={barHeight} fill="#3B82F6" rx="3" />
-                      );
-                    })}
-                  </svg>
-                )}
+                <div className="text-sm font-bold" style={{ color: config.primary_action_color }}>
+                  %{w.pct}
+                </div>
               </div>
-              <div className="rounded-2xl p-4 border border-gray-100" style={{ background: config.surface_color }}>
-                <h3 className="text-sm font-semibold mb-3" style={{ color: config.text_color }}>Ders Bazlı Soru Dağılımı</h3>
-                {distData.length === 0 ? (
-                  <div className="text-center py-10 text-sm" style={{ color: config.secondary_action_color }}>Henüz veri yok</div>
-                ) : (
-                  <div className="space-y-2">
-                    {distData.map(d => (
-                      <div key={d.name} className="flex items-center gap-3">
-                        <div className="w-20 text-xs" style={{ color: config.secondary_action_color }}>{d.name}</div>
-                        <div className="flex-1 h-2 rounded-full" style={{ background: '#E2E8F0' }}>
-                          <div className="h-2 rounded-full" style={{ width: `${Math.min(100, (d.value / Math.max(...distData.map(x => x.value), 1)) * 100)}%`, background: '#10B981' }} />
-                        </div>
-                        <div className="w-12 text-xs text-right" style={{ color: config.text_color }}>{d.value}</div>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
-            </div>
-            <div className="mt-4 text-xs" style={{ color: config.secondary_action_color }}>
-              Toplam {totalAnswered} soru çözüldü • {correctTotal} doğru (%{correctPct}) • {wrongTotal} yanlış (%{wrongPct})
-            </div>
-          </>
-        )}
+            ))}
+          </div>
+        </div>
       </div>
 
       {detailModal && (
