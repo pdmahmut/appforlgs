@@ -421,6 +421,7 @@ function StudentDetailPage({ config, studentId, onBack }) {
   const [editModal, setEditModal] = useState(false);
   const [confirmDel, setConfirmDel] = useState(false);
   const [showAllExams, setShowAllExams] = useState(false);
+  const [showAllStudies, setShowAllStudies] = useState(false);
   const [saving, setSaving] = useState(false);
   const [form, setForm] = useState({ fullName: '', sinif: '8A', okulNo: '' });
   const weekdays = ['Paz', 'Pzt', 'Sal', 'Çar', 'Per', 'Cum', 'Cmt'];
@@ -529,9 +530,16 @@ function StudentDetailPage({ config, studentId, onBack }) {
   const today = new Date();
   const yearStart = new Date(today.getFullYear(), 0, 1);
   const yearEnd = new Date(today.getFullYear(), 11, 31);
+  const toDateKey = (d) => {
+    const dt = new Date(d);
+    const y = dt.getFullYear();
+    const m = String(dt.getMonth() + 1).padStart(2, '0');
+    const day = String(dt.getDate()).padStart(2, '0');
+    return `${y}-${m}-${day}`;
+  };
   const dailyTotalsMap = {};
   studentQuick.forEach(q => {
-    const dateKey = (q.study_date || '').toString().split('T')[0];
+    const dateKey = q.study_date ? toDateKey(q.study_date) : '';
     if (!dateKey) return;
     const total = [
       q.tur_d, q.tur_y, q.tur_b,
@@ -705,6 +713,13 @@ function StudentDetailPage({ config, studentId, onBack }) {
                       {studentExams.length}
                     </div>
                   </button>
+                  <button onClick={() => setShowAllStudies(true)} className="rounded-xl p-3 border border-gray-100 text-left hover:shadow-md transition" style={{ background: '#ECFDF5' }}>
+                    <div className="text-xs font-semibold" style={{ color: config.text_color }}>Günlük Çalışmalar</div>
+                    <div className="text-[10px]" style={{ color: config.secondary_action_color }}>Tıklayarak listele</div>
+                    <div className="mt-2 text-lg font-bold" style={{ color: '#059669' }}>
+                      {studentQuick.length}
+                    </div>
+                  </button>
                   {recentExams.slice(-6).reverse().map((e, i) => (
                     <div key={e.__backendId} className="rounded-xl p-3 border border-gray-100" style={{ background: ['#EFF6FF','#ECFDF5','#FEF3C7','#FCE7F3','#F3E8FF','#FFF7ED'][i % 6] }}>
                       <div className="text-xs font-semibold" style={{ color: config.text_color }}>{(e.exam_name || 'Deneme').slice(0, 20)}</div>
@@ -854,7 +869,7 @@ function StudentDetailPage({ config, studentId, onBack }) {
                 for (let i = 0; i < 30; i++) {
                   const d = new Date(start);
                   d.setDate(start.getDate() + i);
-                  const key = d.toISOString().split('T')[0];
+                  const key = toDateKey(d);
                   const total = dailyTotalsMap[key] || 0;
                   days30.push({ date: d, total, key });
                   avgWindow.push(total);
@@ -956,7 +971,7 @@ function StudentDetailPage({ config, studentId, onBack }) {
       </div>
 
       {detailModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center modal-backdrop" style={{background:'rgba(0,0,0,0.4)'}}>
+        <div className="fixed inset-0 z-[60] flex items-center justify-center modal-backdrop" style={{background:'rgba(0,0,0,0.4)'}}>
           <div className="rounded-2xl shadow-2xl p-6 max-w-md w-full mx-4 fade-in" style={{background: config.surface_color}}>
             <div className="flex items-center justify-between mb-4">
               <h3 className="text-lg font-bold" style={{ color: config.text_color }}>{detailModal.exam_name}</h3>
@@ -1017,6 +1032,60 @@ function StudentDetailPage({ config, studentId, onBack }) {
                         </td>
                       </tr>
                     ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
+      {showAllStudies && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center modal-backdrop" style={{background:'rgba(0,0,0,0.4)'}}>
+          <div className="rounded-2xl shadow-2xl p-6 max-w-3xl w-full mx-4 fade-in max-h-[80vh] overflow-y-auto" style={{background: config.surface_color}}>
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-lg font-bold" style={{ color: config.text_color }}>Tüm Günlük Çalışmalar</h3>
+              <button onClick={() => setShowAllStudies(false)} className="p-1.5 rounded-lg hover:bg-gray-100"><Icons.X size={18}/></button>
+            </div>
+            {studentQuick.length === 0 ? (
+              <div className="text-center py-8" style={{ color: config.secondary_action_color }}>Henüz çalışma verisi girilmemiş</div>
+            ) : (
+              <div className="overflow-x-auto">
+                <table className="w-full text-sm">
+                  <thead>
+                    <tr className="text-left" style={{ color: config.secondary_action_color }}>
+                      <th className="py-2">Tarih</th>
+                      <th>Türkçe</th>
+                      <th>Mat</th>
+                      <th>Fen</th>
+                      <th>Sosyal</th>
+                      <th>İng</th>
+                      <th>Din</th>
+                      <th>Toplam</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {[...studentQuick].sort((a,b) => new Date(b.study_date) - new Date(a.study_date)).map((q) => {
+                      const total =
+                        (q.tur_d||0)+(q.tur_y||0)+(q.tur_b||0)+
+                        (q.mat_d||0)+(q.mat_y||0)+(q.mat_b||0)+
+                        (q.fen_d||0)+(q.fen_y||0)+(q.fen_b||0)+
+                        (q.ink_d||0)+(q.ink_y||0)+(q.ink_b||0)+
+                        (q.ing_d||0)+(q.ing_y||0)+(q.ing_b||0)+
+                        (q.din_d||0)+(q.din_y||0)+(q.din_b||0);
+                      return (
+                        <tr key={q.__backendId} className="border-t">
+                          <td className="py-2">{new Date(q.study_date).toLocaleDateString('tr-TR')}</td>
+                          <td>{(q.tur_d||0)+(q.tur_y||0)+(q.tur_b||0)}</td>
+                          <td>{(q.mat_d||0)+(q.mat_y||0)+(q.mat_b||0)}</td>
+                          <td>{(q.fen_d||0)+(q.fen_y||0)+(q.fen_b||0)}</td>
+                          <td>{(q.ink_d||0)+(q.ink_y||0)+(q.ink_b||0)}</td>
+                          <td>{(q.ing_d||0)+(q.ing_y||0)+(q.ing_b||0)}</td>
+                          <td>{(q.din_d||0)+(q.din_y||0)+(q.din_b||0)}</td>
+                          <td className="font-semibold">{total}</td>
+                        </tr>
+                      );
+                    })}
                   </tbody>
                 </table>
               </div>
