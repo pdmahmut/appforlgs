@@ -2851,7 +2851,7 @@ function DashboardPage({ config, onSelectStudent, onNavigate }) {
               <div className="w-full text-center py-10 rounded-xl border border-dashed" style={{ color: config.secondary_action_color }}>Ders analizi için ortak deneme verisi gerekli</div>
             )}
           </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-6">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mt-6">
             <div className="rounded-xl p-4 border" style={{ background: '#d5f4e6', borderColor: '#27ae60' }}>
               <div className="text-xs font-semibold" style={{ color: '#14532d' }}>🏆 En güçlü</div>
               <div className="text-sm font-bold mt-1" style={{ color: '#14532d' }}>
@@ -2860,11 +2860,28 @@ function DashboardPage({ config, onSelectStudent, onNavigate }) {
               <div className="text-xs" style={{ color: '#14532d' }}>{radarData && radarData.hasAny ? `${radarData.maxVal.toFixed(1)} net` : ''}</div>
             </div>
             <div className="rounded-xl p-4 border" style={{ background: '#fef5e7', borderColor: '#f39c12' }}>
-              <div className="text-xs font-semibold" style={{ color: '#7c2d12' }}>⚠️ Gelişim alanı</div>
+              <div className="text-xs font-semibold" style={{ color: '#7c2d12' }}>⚠️ En zayıf</div>
               <div className="text-sm font-bold mt-1" style={{ color: '#7c2d12' }}>
                 {radarData && radarData.hasAny && radarData.subjects[radarData.minIdx] ? radarData.subjects[radarData.minIdx].label : '—'}
               </div>
               <div className="text-xs" style={{ color: '#7c2d12' }}>{radarData && radarData.hasAny ? `${radarData.minVal.toFixed(1)} net` : ''}</div>
+            </div>
+            <div className="rounded-xl p-4 border" style={{ background: '#EEF2FF', borderColor: '#6366F1' }}>
+              <div className="text-xs font-semibold" style={{ color: '#3730A3' }}>📊 Sıralama</div>
+              <div className="mt-2 space-y-1 text-xs" style={{ color: '#3730A3' }}>
+                {radarData && radarData.hasAny ? (
+                  [...radarData.subjects.map((s, i) => ({ label: s.label, val: radarData.values[i] }))]
+                    .sort((a, b) => b.val - a.val)
+                    .map((s, i) => (
+                      <div key={i} className="flex items-center justify-between">
+                        <span>{s.label}</span>
+                        <span className="font-semibold">{s.val.toFixed(1)}</span>
+                      </div>
+                    ))
+                ) : (
+                  <div>—</div>
+                )}
+              </div>
             </div>
           </div>
         </div>
