@@ -2439,15 +2439,24 @@ function DashboardPage({ config, onSelectStudent, onNavigate }) {
     return list.sort((a, b) => a.drop - b.drop);
   }, [ortakExams, students]);
 
+  const studentNameById = useMemo(() => {
+    const map = {};
+    (students || []).forEach(s => {
+      map[s.__backendId] = (s.ad_soyad || `${s.student_name || ''} ${s.student_surname || ''}`.trim() || 'Öğrenci');
+    });
+    return map;
+  }, [students]);
+
   const recentActivities = useMemo(() => {
     const items = [];
-    (ortakExams || []).forEach(e => {
+    (exams || []).forEach(e => {
       const d = new Date(e.exam_date || e.created_at || '');
-      const student = students.find(s => s.__backendId === e.student_id);
+      const sid = e.student_id || e.student_backend_id;
+      const name = studentNameById[sid] || 'Öğrenci';
       items.push({
         type: 'exam',
         date: d,
-        text: `${student?.ad_soyad || 'Öğrenci'} - Deneme girişi (${e.exam_name || 'Deneme'})`,
+        text: `${name} - Deneme girişi (${e.exam_name || 'Deneme'})`,
       });
     });
     (quickStudies || []).forEach(q => {
@@ -2458,15 +2467,15 @@ function DashboardPage({ config, onSelectStudent, onNavigate }) {
         (q.ink_d||0)+(q.ink_y||0)+(q.ink_b||0)+
         (q.ing_d||0)+(q.ing_y||0)+(q.ing_b||0)+
         (q.din_d||0)+(q.din_y||0)+(q.din_b||0);
-      const student = students.find(s => s.__backendId === q.student_id);
+      const name = studentNameById[q.student_id] || 'Öğrenci';
       items.push({
         type: 'study',
         date: d,
-        text: `${student?.ad_soyad || 'Öğrenci'} - Günlük çalışma (${total} soru)`,
+        text: `${name} - Günlük çalışma (${total} soru)`,
       });
     });
     return items.sort((a, b) => b.date - a.date).slice(0, 6);
-  }, [ortakExams, quickStudies, students]);
+  }, [exams, quickStudies, studentNameById]);
 
   const renderValue = (val, emptyText) => {
     if (!hasStudents) return 'Henüz öğrenci eklenmemiş';
