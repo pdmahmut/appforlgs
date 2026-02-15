@@ -2484,7 +2484,7 @@ function DashboardPage({ config, onSelectStudent, onNavigate }) {
       { key: 'turkce', label: 'Türkçe' },
       { key: 'matematik', label: 'Matematik' },
       { key: 'fen', label: 'Fen Bilimleri' },
-      { key: 'ingilizce', label: '?ngilizce' },
+      { key: 'ingilizce', label: 'İngilizce' },
       { key: 'inkilap', label: 'İnkılap Tarihi' },
       { key: 'din', label: 'Din Kültürü' },
     ];
@@ -2504,9 +2504,10 @@ function DashboardPage({ config, onSelectStudent, onNavigate }) {
     const values = subjects.map(s => counts[s.key] ? (totals[s.key] / counts[s.key]) : 0);
     const maxVal = Math.max(...values, 0);
     const minVal = Math.min(...values, 0);
-    const maxIdx = values.indexOf(maxVal);
-    const minIdx = values.indexOf(minVal);
-    return { subjects, values, maxIdx, minIdx, maxVal, minVal };
+    const hasAny = values.some(v => v > 0);
+    const maxIdx = hasAny ? values.indexOf(maxVal) : null;
+    const minIdx = hasAny ? values.indexOf(minVal) : null;
+    return { subjects, values, maxIdx, minIdx, maxVal, minVal, hasAny };
   }, [ortakExams]);
 
   useEffect(() => {
@@ -2749,7 +2750,7 @@ function DashboardPage({ config, onSelectStudent, onNavigate }) {
               label: (item) => {
                 const val = item.raw || 0;
                 const pct = ((val / 20) * 100).toFixed(1);
-                return `Ortalama: ${val.toFixed(1)} | Ba?ar?: %${pct}`;
+                return `Ortalama: ${val.toFixed(1)} | Başarı: %${pct}`;
               }
             }
           }
@@ -2854,14 +2855,14 @@ function DashboardPage({ config, onSelectStudent, onNavigate }) {
             <div className="rounded-xl p-4 border" style={{ background: '#d5f4e6', borderColor: '#27ae60' }}>
               <div className="text-xs font-semibold" style={{ color: '#14532d' }}>🏆 En güçlü</div>
               <div className="text-sm font-bold mt-1" style={{ color: '#14532d' }}>
-                {radarData && radarData.subjects[radarData.maxIdx] ? radarData.subjects[radarData.maxIdx].label : '—'}
+                {radarData && radarData.hasAny && radarData.subjects[radarData.maxIdx] ? radarData.subjects[radarData.maxIdx].label : '—'}
               </div>
               <div className="text-xs" style={{ color: '#14532d' }}>{radarData ? `${radarData.maxVal.toFixed(1)} net` : ''}</div>
             </div>
             <div className="rounded-xl p-4 border" style={{ background: '#fef5e7', borderColor: '#f39c12' }}>
               <div className="text-xs font-semibold" style={{ color: '#7c2d12' }}>⚠️ Gelişim alanı</div>
               <div className="text-sm font-bold mt-1" style={{ color: '#7c2d12' }}>
-                {radarData && radarData.subjects[radarData.minIdx] ? radarData.subjects[radarData.minIdx].label : '—'}
+                {radarData && radarData.hasAny && radarData.subjects[radarData.minIdx] ? radarData.subjects[radarData.minIdx].label : '—'}
               </div>
               <div className="text-xs" style={{ color: '#7c2d12' }}>{radarData ? `${radarData.minVal.toFixed(1)} net` : ''}</div>
             </div>
