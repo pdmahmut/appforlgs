@@ -430,6 +430,7 @@ function StudentDetailPage({ config, studentId, onBack }) {
   const [lessonRange, setLessonRange] = useState(30);
   const [trendRange, setTrendRange] = useState(30);
   const [trendHover, setTrendHover] = useState(null);
+  const [selectedSubjects, setSelectedSubjects] = useState([]);
   const weekdays = ['Paz', 'Pzt', 'Sal', 'Çar', 'Per', 'Cum', 'Cmt'];
   const monthNames = ['Ocak','Şubat','Mart','Nisan','Mayıs','Haziran','Temmuz','Ağustos','Eylül','Ekim','Kasım','Aralık'];
   const start = new Date(yearStart);
@@ -581,6 +582,7 @@ function StudentDetailPage({ config, studentId, onBack }) {
     { key: 'ing', label: 'İngilizce', color: '#9b59b6' },
     { key: 'din', label: 'Din', color: '#16a34a' },
   ];
+  const activeSubjects = selectedSubjects.length ? selectedSubjects : subjectKeys.map(s => s.key);
   const dailySubjectMap = {};
   studentQuick.forEach(q => {
     const dateKey = q.study_date ? toDateKey(q.study_date) : '';
@@ -838,6 +840,35 @@ function StudentDetailPage({ config, studentId, onBack }) {
 
       <div className="mb-8">
         <h2 className="text-xl font-bold mb-4" style={{ color: config.text_color }}>Günlük Çalışma Analizi</h2>
+        <div className="rounded-2xl p-4 border border-gray-100 mb-6" style={{ background: config.surface_color }}>
+          <div className="flex items-center justify-between mb-3">
+            <div className="text-xs font-semibold" style={{ color: config.secondary_action_color }}>Ders Filtreleri</div>
+            <button
+              onClick={() => setSelectedSubjects([])}
+              className="px-3 py-1 rounded-full text-xs font-semibold border border-gray-200"
+            >
+              Tümü
+            </button>
+          </div>
+          <div className="flex flex-wrap gap-2">
+            {subjectKeys.map(s => {
+              const active = activeSubjects.includes(s.key);
+              return (
+                <button
+                  key={s.key}
+                  onClick={() => setSelectedSubjects(prev => {
+                    if (prev.length === 0) return [s.key];
+                    return prev.includes(s.key) ? prev.filter(k => k !== s.key) : [...prev, s.key];
+                  })}
+                  className={`px-3 py-1 rounded-full text-xs font-semibold border ${active ? 'text-white' : 'border-gray-200'}`}
+                  style={{ background: active ? s.color : 'transparent' }}
+                >
+                  {s.label}
+                </button>
+              );
+            })}
+          </div>
+        </div>
         <div className="rounded-2xl p-4 border border-gray-100 mb-6 heatmap-container" style={{ background: config.surface_color }}>
           <h3 className="text-sm font-semibold mb-3" style={{ color: config.text_color }}>📅 Çalışma Takvimi</h3>
           {heatmapValues.length === 0 ? (
@@ -932,7 +963,8 @@ function StudentDetailPage({ config, studentId, onBack }) {
                   const d = new Date(start);
                   d.setDate(start.getDate() + i);
                   const key = toDateKey(d);
-                  const total = dailyTotalsMap[key] || 0;
+                  const subj = dailySubjectMap[key] || {};
+                  const total = activeSubjects.reduce((s, k) => s + (subj[k] || 0), 0);
                   days30.push({ date: d, total, key });
                   avgWindow.push(total);
                 }
@@ -1021,7 +1053,9 @@ function StudentDetailPage({ config, studentId, onBack }) {
                   let total = 0;
                   for (let d = new Date(start); d < new Date(start.getTime() + 7 * 24 * 60 * 60 * 1000); d.setDate(d.getDate() + 1)) {
                     const key = toDateKey(d);
-                    total += dailyTotalsMap[key] || 0;
+                    const subj = dailySubjectMap[key] || {};
+                    const dayTotal = activeSubjects.reduce((s, k) => s + (subj[k] || 0), 0);
+                    total += dayTotal;
                   }
                   weeks.push({ label: `${6 - i}. Hafta`, total });
                 }
@@ -1053,7 +1087,7 @@ function StudentDetailPage({ config, studentId, onBack }) {
 
         <div className="rounded-2xl p-4 border border-gray-100 mt-6" style={{ background: config.surface_color }}>
           <div className="flex items-center justify-between mb-4">
-            <div className="text-xs font-semibold" style={{ color: config.secondary_action_color }}>Ders Bazlı</div>
+            <div className="text-xs font-semibold" style={{ color: config.secondary_action_color }}>Ders Bazlı Analizler</div>
             <div className="flex items-center gap-2">
               <button
                 onClick={() => setLessonRange(7)}
@@ -1084,7 +1118,7 @@ function StudentDetailPage({ config, studentId, onBack }) {
                 d.setDate(start.getDate() + i);
                 const key = toDateKey(d);
                 const subj = dailySubjectMap[key] || { tur: 0, mat: 0, fen: 0, ink: 0, ing: 0, din: 0 };
-                const total = Object.values(subj).reduce((s, v) => s + v, 0);
+                const total = activeSubjects.reduce((s, k) => s + (subj[k] || 0), 0);
                 days.push({ date: d, key, subj, total });
               }
               const totalsBySubject = subjectKeys.reduce((acc, s) => {
@@ -1129,7 +1163,7 @@ function StudentDetailPage({ config, studentId, onBack }) {
                       })}
                     </svg>
                     <div className="flex flex-wrap gap-3 mt-2 text-[11px]" style={{ color: config.secondary_action_color }}>
-                      {subjectKeys.map(s => (
+                      {subjectKeys.filter(s => activeSubjects.includes(s.key)).map(s => (
                         <div key={s.key} className="flex items-center gap-1">
                           <span className="w-3 h-3 rounded-sm inline-block" style={{ background: s.color }}></span>
                           <span>{s.label}</span>
@@ -1179,7 +1213,7 @@ function StudentDetailPage({ config, studentId, onBack }) {
                             </g>
                           </svg>
                           <div className="space-y-2 text-xs">
-                            {subjectKeys.map(s => {
+                            {subjectKeys.filter(s => activeSubjects.includes(s.key)).map(s => {
                               const v = totalsBySubject[s.key] || 0;
                               const pct = totalAll ? ((v / totalAll) * 100).toFixed(1) : '0.0';
                               return (
