@@ -33,6 +33,10 @@
         student_name: row.student_name,
         student_surname: row.student_surname,
         student_number: row.student_number,
+        ad_soyad: row.ad_soyad,
+        sinif: row.sinif,
+        okul_numarasi: row.okul_numarasi,
+        kayit_tarihi: row.kayit_tarihi,
         created_at: row.created_at,
       };
     }
@@ -171,6 +175,10 @@
             student_name: data.student_name,
             student_surname: data.student_surname,
             student_number: data.student_number || null,
+            ad_soyad: data.ad_soyad || null,
+            sinif: data.sinif || null,
+            okul_numarasi: data.okul_numarasi || null,
+            kayit_tarihi: data.kayit_tarihi || null,
             created_at: data.created_at || new Date().toISOString(),
           };
           const res = await client.from('students').insert(payload).select('*').single();
@@ -286,6 +294,10 @@
             student_name: data.student_name,
             student_surname: data.student_surname,
             student_number: data.student_number || null,
+            ad_soyad: data.ad_soyad || null,
+            sinif: data.sinif || null,
+            okul_numarasi: data.okul_numarasi || null,
+            kayit_tarihi: data.kayit_tarihi || null,
           };
           const res = await client
             .from('students')

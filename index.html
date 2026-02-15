@@ -93,7 +93,8 @@ function useAppData() {
   const studies = useMemo(() => data.filter(d => d.type === 'study'), [data]);
   const exams = useMemo(() => data.filter(d => d.type === 'exam'), [data]);
   const definedExams = useMemo(() => data.filter(d => d.type === 'defined_exam'), [data]);
-  return { students, studies, exams, definedExams, allData: data };
+  const quickStudies = useMemo(() => data.filter(d => d.type === 'quick_study'), [data]);
+  return { students, studies, exams, definedExams, quickStudies, allData: data };
 }
 
 let appConfig = { ...defaultConfig };
@@ -239,105 +240,131 @@ function HomePage({ navigate, config }) {
   );
 }
 
-function StudentsPage({ config }) {
-  const { students } = useAppData();
+function StudentsPage({ config, onSelectStudent }) {
+  const { students, exams } = useAppData();
   const [showForm, setShowForm] = useState(false);
   const [loading, setLoading] = useState(false);
   const [toast, setToast] = useState(null);
-  const [confirmDel, setConfirmDel] = useState(null);
   const [editingStudent, setEditingStudent] = useState(null);
-  const [form, setForm] = useState({ name: '', surname: '', number: '' });
+  const [form, setForm] = useState({ fullName: '', sinif: '8A', okulNo: '' });
 
-  const resetForm = () => { setForm({ name: '', surname: '', number: '' }); setEditingStudent(null); };
+  const resetForm = () => { setForm({ fullName: '', sinif: '8A', okulNo: '' }); setEditingStudent(null); };
+
+  const splitName = (full) => {
+    const parts = full.trim().split(/\s+/);
+    const name = parts.shift() || '';
+    const surname = parts.join(' ');
+    return { name, surname };
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!form.name.trim() || !form.surname.trim()) return;
-    
-    if (editingStudent) {
-      setLoading(true);
-      const result = await window.dataSdk.update({ 
-        ...editingStudent, 
-        student_name: form.name, 
-        student_surname: form.surname,
-        student_number: form.number 
-      });
-      setLoading(false);
-      if (result.isOk) { setToast({ msg: 'Öğrenci güncellendi!', type: 'success' }); setShowForm(false); resetForm(); }
-      else setToast({ msg: 'Hata oluştu', type: 'error' });
+    if (!form.fullName.trim() || !form.sinif || !form.okulNo.trim()) {
+      setToast({ msg: 'Lütfen tüm alanları doldurun', type: 'error' });
+      return;
+    }
+    if (students.length >= 999 && !editingStudent) {
+      setToast({ msg: 'Maksimum kayıt limitine ulaşıldı (999)', type: 'error' });
+      return;
+    }
+
+    const { name, surname } = splitName(form.fullName);
+    setLoading(true);
+    const payload = {
+      type: 'student',
+      ad_soyad: form.fullName.trim(),
+      sinif: form.sinif,
+      okul_numarasi: form.okulNo.trim(),
+      student_name: name,
+      student_surname: surname,
+      student_number: form.okulNo.trim(),
+      kayit_tarihi: new Date().toISOString().split('T')[0],
+      created_at: new Date().toISOString(),
+    };
+    const result = editingStudent
+      ? await window.dataSdk.update({ ...editingStudent, ...payload })
+      : await window.dataSdk.create(payload);
+    setLoading(false);
+
+    if (result.isOk) {
+      setToast({ msg: editingStudent ? 'Öğrenci güncellendi!' : 'Öğrenci eklendi!', type: 'success' });
+      setShowForm(false);
+      resetForm();
     } else {
-      if (students.length >= 999) { setToast({ msg: 'Maksimum kayıt limitine ulaşıldı (999)', type: 'error' }); return; }
-      setLoading(true);
-      const result = await window.dataSdk.create({ 
-        type: 'student', 
-        student_name: form.name, 
-        student_surname: form.surname,
-        student_number: form.number,
-        created_at: new Date().toISOString() 
-      });
-      setLoading(false);
-      if (result.isOk) { setToast({ msg: 'Öğrenci eklendi!', type: 'success' }); setShowForm(false); resetForm(); }
-      else setToast({ msg: 'Hata oluştu', type: 'error' });
+      setToast({ msg: 'Hata oluştu', type: 'error' });
     }
   };
 
-  const handleDelete = async () => {
-    if (!confirmDel) return;
-    setLoading(true);
-    const result = await window.dataSdk.delete(confirmDel);
-    setLoading(false);
-    setConfirmDel(null);
-    if (result.isOk) setToast({ msg: 'Öğrenci silindi', type: 'success' });
-    else setToast({ msg: 'Silme hatası', type: 'error' });
-  };
-
   const startEdit = (s) => {
-    setForm({ name: s.student_name || '', surname: s.student_surname || '', number: s.student_number || '' });
+    setForm({
+      fullName: s.ad_soyad || `${s.student_name || ''} ${s.student_surname || ''}`.trim(),
+      sinif: s.sinif || '8A',
+      okulNo: s.okul_numarasi || s.student_number || ''
+    });
     setEditingStudent(s);
     setShowForm(true);
   };
 
+  const getStudentSummary = (s) => {
+    const studentExams = exams.filter(e => e.student_id === s.__backendId);
+    if (studentExams.length === 0) return 'Henüz deneme yok';
+    const sorted = [...studentExams].sort((a, b) => new Date(b.exam_date || b.created_at) - new Date(a.exam_date || a.created_at));
+    const last = sorted[0];
+    return `${studentExams.length} deneme • Son deneme: ${parseFloat(last.exam_total_net || 0).toFixed(1)} net`;
+  };
+
   return (
-    <div className="max-w-5xl mx-auto px-4 py-8 fade-in">
+    <div className="max-w-6xl mx-auto px-4 py-8 fade-in">
       {toast && <Toast message={toast.msg} type={toast.type} onClose={() => setToast(null)}/>}
-      {confirmDel && <ConfirmModal message="Bu öğrenciyi silmek istediğinize emin misiniz?" onConfirm={handleDelete} onCancel={() => setConfirmDel(null)}/>}
-      
+
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-8">
         <div>
-          <h1 className="text-3xl font-extrabold" style={{color: config.text_color}}>Öğrenci Yönetimi</h1>
+          <h1 className="text-3xl font-extrabold" style={{color: config.text_color}}>Öğrenciler</h1>
           <p className="text-sm mt-1" style={{color: config.secondary_action_color}}>{students.length} öğrenci kayıtlı</p>
         </div>
         <button onClick={() => { resetForm(); setShowForm(true); }}
           className="flex items-center gap-2 px-5 py-2.5 rounded-xl text-white text-sm font-semibold transition-all hover:shadow-lg"
-          style={{background: config.primary_action_color}}>
-          <Icons.Plus size={18}/> Yeni Öğrenci Ekle
+          style={{ background: config.primary_action_color }}>
+          <Icons.Plus size={18}/> Öğrenci Ekle
         </button>
       </div>
 
       {showForm && (
         <div className="fixed inset-0 z-50 flex items-center justify-center modal-backdrop" style={{background:'rgba(0,0,0,0.4)'}}>
-          <div className="rounded-2xl shadow-2xl p-8 max-w-md w-full mx-4 fade-in" style={{background: config.surface_color}}>
-            <div className="flex items-center justify-between mb-6">
-              <h2 className="text-xl font-bold" style={{color: config.text_color}}>{editingStudent ? 'Öğrenci Düzenle' : 'Yeni Öğrenci Ekle'}</h2>
-              <button onClick={() => { setShowForm(false); resetForm(); }} className="p-1.5 rounded-lg hover:bg-gray-100"><Icons.X size={20} className="text-gray-500"/></button>
+          <div className="bg-white rounded-2xl shadow-2xl p-6 max-w-lg w-full mx-4 fade-in">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-lg font-bold" style={{color: config.text_color}}>
+                {editingStudent ? 'Öğrenciyi Düzenle' : 'Yeni Öğrenci Ekle'}
+              </h2>
+              <button onClick={() => { setShowForm(false); resetForm(); }} className="p-1.5 rounded-lg hover:bg-gray-100"><Icons.X size={18}/></button>
             </div>
             <form onSubmit={handleSubmit} className="space-y-4">
               <div>
-                <label htmlFor="s-name" className="block text-sm font-semibold mb-2" style={{color: config.text_color}}>Ad *</label>
-                <input id="s-name" required value={form.name} onChange={e => setForm({...form, name: e.target.value})} className="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-sm" placeholder="Öğrenci adı" style={{background: config.surface_color}}/>
+                <label className="block text-sm font-semibold mb-2" style={{ color: config.text_color }}>Ad Soyad *</label>
+                <input value={form.fullName} onChange={(e) => setForm({...form, fullName: e.target.value})}
+                  className="w-full px-4 py-2.5 rounded-lg border border-gray-200 text-sm font-medium" placeholder="Örn: Ahmet Yılmaz"/>
               </div>
-              <div>
-                <label htmlFor="s-surname" className="block text-sm font-semibold mb-2" style={{color: config.text_color}}>Soyad *</label>
-                <input id="s-surname" required value={form.surname} onChange={e => setForm({...form, surname: e.target.value})} className="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-sm" placeholder="Öğrenci soyadı" style={{background: config.surface_color}}/>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-semibold mb-2" style={{ color: config.text_color }}>Sınıf *</label>
+                  <select value={form.sinif} onChange={(e) => setForm({...form, sinif: e.target.value})}
+                    className="w-full px-4 py-2.5 rounded-lg border border-gray-200 text-sm font-medium">
+                    {['8A','8B','8C','8D','8E','8F'].map(c => <option key={c} value={c}>{c}</option>)}
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-sm font-semibold mb-2" style={{ color: config.text_color }}>Okul Numarası *</label>
+                  <input value={form.okulNo} onChange={(e) => setForm({...form, okulNo: e.target.value})}
+                    className="w-full px-4 py-2.5 rounded-lg border border-gray-200 text-sm font-medium" placeholder="Örn: 1254"/>
+                </div>
               </div>
-              <div>
-                <label htmlFor="s-number" className="block text-sm font-semibold mb-2" style={{color: config.text_color}}>Numara (Opsiyonel)</label>
-                <input id="s-number" value={form.number} onChange={e => setForm({...form, number: e.target.value})} className="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-sm" placeholder="Öğrenci numarası" style={{background: config.surface_color}}/>
-              </div>
-              <div className="flex gap-3 mt-6 pt-4 border-t border-gray-100">
-                <button type="button" onClick={() => { setShowForm(false); resetForm(); }} className="flex-1 px-4 py-2.5 rounded-xl border border-gray-200 text-sm font-semibold hover:bg-gray-50 transition-colors" style={{color: config.secondary_action_color}}>İptal</button>
-                <button type="submit" disabled={loading} className="flex-1 px-4 py-2.5 rounded-xl text-white text-sm font-semibold flex items-center justify-center gap-2 transition-all hover:shadow-lg" style={{background: config.primary_action_color}}>
-                  {loading ? <Spinner size="sm"/> : editingStudent ? 'Güncelle' : 'Kaydet'}
+              <div className="flex gap-3 justify-end pt-2">
+                <button type="button" onClick={() => { setShowForm(false); resetForm(); }}
+                  className="px-4 py-2 rounded-lg border border-gray-200 text-sm font-semibold">İptal</button>
+                <button type="submit" disabled={loading}
+                  className="px-5 py-2 rounded-lg text-white text-sm font-semibold transition-all hover:shadow-lg"
+                  style={{ background: config.primary_action_color }}>
+                  {loading ? 'Kaydediliyor...' : 'Kaydet'}
                 </button>
               </div>
             </form>
@@ -346,42 +373,416 @@ function StudentsPage({ config }) {
       )}
 
       {students.length === 0 ? (
-        <div className="flex flex-col items-center justify-center py-16 fade-in">
-          <div className="w-20 h-20 rounded-2xl flex items-center justify-center mb-4" style={{background: '#EFF6FF'}}>
-            <Icons.Users size={40} style={{color: config.primary_action_color}}/>
-          </div>
-          <h3 className="text-xl font-semibold mb-2" style={{color: config.text_color}}>Henüz öğrenci eklenmemiş 📚</h3>
-          <p className="text-sm mb-6" style={{color: config.secondary_action_color}}>İlk öğrencinizi ekleyerek başlayın</p>
-          <button onClick={() => { resetForm(); setShowForm(true); }}
-            className="px-5 py-2.5 rounded-xl text-white text-sm font-semibold transition-all hover:shadow-lg"
-            style={{background: config.primary_action_color}}>
-            İlk Öğrenciyi Ekle
-          </button>
+        <div className="text-center py-12 rounded-2xl border-2 border-dashed border-gray-300">
+          <p className="text-lg font-medium" style={{ color: config.secondary_action_color }}>Henüz öğrenci yok</p>
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
           {students.map((s, idx) => (
-            <div key={s.__backendId} className="rounded-2xl border border-gray-100 p-6 card-hover transition-all" style={{background: config.surface_color}}>
+            <button key={s.__backendId} onClick={() => onSelectStudent(s.__backendId)}
+              className="rounded-2xl border border-gray-100 p-6 text-left card-hover transition-all"
+              style={{background: config.surface_color}}>
               <div className="flex items-start justify-between mb-4">
                 <div className="w-14 h-14 rounded-full flex items-center justify-center text-white font-bold text-lg" style={{background: studentColors[idx % studentColors.length]}}>
-                  {((s.student_name || '?')[0] + (s.student_surname || '?')[0]).toUpperCase()}
+                  {((s.ad_soyad || `${s.student_name || ''} ${s.student_surname || ''}`.trim() || '?')[0] || '?').toUpperCase()}
                 </div>
-                <div className="flex gap-2">
-                  <button onClick={() => startEdit(s)} className="p-2 rounded-lg hover:bg-blue-50 transition-colors" title="Düzenle">
-                    <Icons.Edit size={18} style={{color: config.primary_action_color}}/>
-                  </button>
-                  <button onClick={() => setConfirmDel(s)} className="p-2 rounded-lg hover:bg-red-50 transition-colors" title="Sil">
-                    <Icons.Trash2 size={18} className="text-red-400"/>
-                  </button>
+                <div className="text-xs px-2 py-1 rounded-full" style={{ background: '#F1F5F9', color: config.secondary_action_color }}>
+                  {s.sinif || 'Sınıf?'}
                 </div>
               </div>
-              <h3 className="text-lg font-bold mb-1" style={{color: config.text_color}}>{s.student_name} {s.student_surname}</h3>
-              {s.student_number && (
-                <p className="text-sm" style={{color: config.secondary_action_color}}>Numara: {s.student_number}</p>
-              )}
+              <h3 className="text-lg font-bold mb-1" style={{color: config.text_color}}>
+                {s.ad_soyad || `${s.student_name || ''} ${s.student_surname || ''}`.trim()}
+              </h3>
+              <p className="text-sm" style={{color: config.secondary_action_color}}>
+                {s.sinif || 'Sınıf?'} • No: {s.okul_numarasi || s.student_number || '-'}
+              </p>
+              <p className="text-xs mt-3" style={{color: config.secondary_action_color}}>
+                {getStudentSummary(s)}
+              </p>
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function StudentDetailPage({ config, studentId, onBack }) {
+  const { students, exams, quickStudies } = useAppData();
+  const [detailModal, setDetailModal] = useState(null);
+  const [editModal, setEditModal] = useState(false);
+  const [confirmDel, setConfirmDel] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [form, setForm] = useState({ fullName: '', sinif: '8A', okulNo: '' });
+
+  const student = students.find(s => s.__backendId === studentId);
+  if (!student) {
+    return (
+      <div className="max-w-6xl mx-auto px-4 py-8">
+        <button onClick={onBack} className="px-4 py-2 rounded-lg border border-gray-200 text-sm font-semibold">Geri</button>
+        <div className="mt-6 text-center text-sm" style={{ color: config.secondary_action_color }}>Öğrenci bulunamadı</div>
+      </div>
+    );
+  }
+
+  const displayName = student.ad_soyad || `${student.student_name || ''} ${student.student_surname || ''}`.trim();
+  const displayClass = student.sinif || 'Sınıf?';
+  const displayNo = student.okul_numarasi || student.student_number || '-';
+
+  const studentExams = exams
+    .filter(e => e.student_id === studentId)
+    .sort((a, b) => new Date(a.exam_date || a.created_at) - new Date(b.exam_date || b.created_at));
+
+  const totalExams = studentExams.length;
+  const totalNetSum = studentExams.reduce((sum, e) => sum + parseFloat(e.exam_total_net || 0), 0);
+  const avgNet = totalExams ? (totalNetSum / totalExams).toFixed(2) : '0.00';
+  const maxNet = totalExams ? Math.max(...studentExams.map(e => parseFloat(e.exam_total_net || 0))).toFixed(2) : '0.00';
+  const minNet = totalExams ? Math.min(...studentExams.map(e => parseFloat(e.exam_total_net || 0))).toFixed(2) : '0.00';
+  const lastNet = totalExams ? parseFloat(studentExams[studentExams.length - 1].exam_total_net || 0).toFixed(2) : '0.00';
+
+  const netSeries = studentExams.map(e => ({
+    date: (e.exam_date || e.created_at || '').toString().split('T')[0],
+    total: parseFloat(e.exam_total_net || 0),
+    deneme_tipi: e.deneme_tipi || (e.defined_exam_id ? 'ortak' : 'bireysel')
+  }));
+
+  const subjects = ['turkce', 'matematik', 'fen', 'inkilap', 'ingilizce', 'din'];
+  const subjectLabels = {
+    turkce: 'Türkçe',
+    matematik: 'Matematik',
+    fen: 'Fen',
+    inkilap: 'Sosyal',
+    ingilizce: 'İngilizce',
+    din: 'Din'
+  };
+  const subjectAverages = subjects.map(key => {
+    let sum = 0;
+    let count = 0;
+    studentExams.forEach(e => {
+      let subj = {};
+      try {
+        subj = typeof e.exam_subjects === 'string' ? JSON.parse(e.exam_subjects) : e.exam_subjects || {};
+      } catch {}
+      if (subj[key]) {
+        const net = (parseFloat(subj[key].dogru || 0) - (parseFloat(subj[key].yanlis || 0) / 3));
+        sum += net;
+        count += 1;
+      }
+    });
+    return { name: subjectLabels[key], value: count ? parseFloat((sum / count).toFixed(2)) : 0 };
+  });
+
+  const lastExams = [...studentExams].reverse().slice(0, 10);
+
+  const studentQuick = (quickStudies || []).filter(q => q.student_id === studentId);
+  const dailyTotals = studentQuick
+    .map(q => {
+      const total = [
+        q.tur_d, q.tur_y, q.tur_b,
+        q.mat_d, q.mat_y, q.mat_b,
+        q.fen_d, q.fen_y, q.fen_b,
+        q.ink_d, q.ink_y, q.ink_b,
+        q.din_d, q.din_y, q.din_b,
+        q.ing_d, q.ing_y, q.ing_b,
+      ].reduce((s, v) => s + (parseInt(v || 0, 10)), 0);
+      return { date: q.study_date, total };
+    })
+    .sort((a, b) => new Date(a.date) - new Date(b.date));
+
+  const totalQuestions = dailyTotals.reduce((s, d) => s + d.total, 0);
+  const avgDaily = dailyTotals.length ? (totalQuestions / dailyTotals.length).toFixed(0) : '0';
+  const maxDay = dailyTotals.reduce((acc, d) => d.total > acc.total ? d : acc, { date: '-', total: 0 });
+  const sevenDaysAgo = new Date(); sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+  const last7Total = dailyTotals.filter(d => new Date(d.date) >= sevenDaysAgo).reduce((s, d) => s + d.total, 0);
+
+  const subjectTotals = {
+    turkce: 0, matematik: 0, fen: 0, inkilap: 0, ingilizce: 0, din: 0
+  };
+  let correctTotal = 0;
+  let wrongTotal = 0;
+  studentQuick.forEach(q => {
+    subjectTotals.turkce += (q.tur_d || 0) + (q.tur_y || 0) + (q.tur_b || 0);
+    subjectTotals.matematik += (q.mat_d || 0) + (q.mat_y || 0) + (q.mat_b || 0);
+    subjectTotals.fen += (q.fen_d || 0) + (q.fen_y || 0) + (q.fen_b || 0);
+    subjectTotals.inkilap += (q.ink_d || 0) + (q.ink_y || 0) + (q.ink_b || 0);
+    subjectTotals.ingilizce += (q.ing_d || 0) + (q.ing_y || 0) + (q.ing_b || 0);
+    subjectTotals.din += (q.din_d || 0) + (q.din_y || 0) + (q.din_b || 0);
+    correctTotal += (q.tur_d || 0) + (q.mat_d || 0) + (q.fen_d || 0) + (q.ink_d || 0) + (q.din_d || 0) + (q.ing_d || 0);
+    wrongTotal += (q.tur_y || 0) + (q.mat_y || 0) + (q.fen_y || 0) + (q.ink_y || 0) + (q.din_y || 0) + (q.ing_y || 0);
+  });
+  const distData = Object.entries(subjectTotals).map(([k, v]) => ({ name: subjectLabels[k], value: v }));
+  const totalAnswered = correctTotal + wrongTotal + (totalQuestions - correctTotal - wrongTotal);
+  const correctPct = totalAnswered ? Math.round((correctTotal / totalAnswered) * 100) : 0;
+  const wrongPct = totalAnswered ? Math.round((wrongTotal / totalAnswered) * 100) : 0;
+
+  const handleEditOpen = () => {
+    setForm({
+      fullName: displayName,
+      sinif: displayClass,
+      okulNo: displayNo === '-' ? '' : displayNo
+    });
+    setEditModal(true);
+  };
+
+  const handleUpdate = async (e) => {
+    e.preventDefault();
+    if (!form.fullName.trim() || !form.sinif || !form.okulNo.trim()) return;
+    const parts = form.fullName.trim().split(/\s+/);
+    const name = parts.shift() || '';
+    const surname = parts.join(' ');
+    setSaving(true);
+    const result = await window.dataSdk.update({
+      ...student,
+      type: 'student',
+      ad_soyad: form.fullName.trim(),
+      sinif: form.sinif,
+      okul_numarasi: form.okulNo.trim(),
+      student_name: name,
+      student_surname: surname,
+      student_number: form.okulNo.trim(),
+    });
+    setSaving(false);
+    if (result.isOk) setEditModal(false);
+  };
+
+  const handleDelete = async () => {
+    setSaving(true);
+    const result = await window.dataSdk.delete(student);
+    setSaving(false);
+    setConfirmDel(false);
+    if (result.isOk) onBack();
+  };
+
+  return (
+    <div className="max-w-6xl mx-auto px-4 py-8 fade-in">
+      <div className="flex items-center justify-between mb-6">
+        <button onClick={onBack} className="px-4 py-2 rounded-lg border border-gray-200 text-sm font-semibold">Geri</button>
+        <div className="flex gap-2">
+          <button onClick={handleEditOpen} className="px-4 py-2 rounded-lg border border-gray-200 text-sm font-semibold">Düzenle</button>
+          <button onClick={() => setConfirmDel(true)} className="px-4 py-2 rounded-lg bg-red-500 text-white text-sm font-semibold">Sil</button>
+        </div>
+      </div>
+
+      <div className="rounded-2xl p-6 border border-gray-100 mb-6" style={{ background: config.surface_color }}>
+        <h1 className="text-2xl font-bold mb-2" style={{ color: config.text_color }}>{displayName}</h1>
+        <p className="text-sm" style={{ color: config.secondary_action_color }}>{displayClass} • No: {displayNo}</p>
+      </div>
+
+      <div className="mb-8">
+        <h2 className="text-xl font-bold mb-4" style={{ color: config.text_color }}>Deneme Analizi</h2>
+        <div className="grid grid-cols-1 md:grid-cols-5 gap-4 mb-6">
+          {[
+            { label: 'Toplam Deneme', value: totalExams },
+            { label: 'Ortalama Net', value: avgNet },
+            { label: 'En Yüksek Net', value: maxNet },
+            { label: 'En Düşük Net', value: minNet },
+            { label: 'Son Deneme', value: lastNet },
+          ].map((card, i) => (
+            <div key={i} className="rounded-xl p-4 border border-gray-100" style={{ background: config.surface_color }}>
+              <p className="text-xs font-semibold mb-1" style={{ color: config.secondary_action_color }}>{card.label}</p>
+              <p className="text-2xl font-bold" style={{ color: config.text_color }}>{card.value}</p>
             </div>
           ))}
         </div>
+
+        {totalExams === 0 ? (
+          <div className="text-center py-10 rounded-xl border border-dashed" style={{ color: config.secondary_action_color }}>Henüz deneme verisi girilmemiş</div>
+        ) : (
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <div className="rounded-2xl p-4 border border-gray-100" style={{ background: config.surface_color }}>
+              <h3 className="text-sm font-semibold mb-3" style={{ color: config.text_color }}>Net İlerleme</h3>
+              <Recharts.ResponsiveContainer width="100%" height={260}>
+                <Recharts.LineChart data={netSeries}>
+                  <Recharts.CartesianGrid strokeDasharray="3 3" />
+                  <Recharts.XAxis dataKey="date" />
+                  <Recharts.YAxis />
+                  <Recharts.Tooltip />
+                  <Recharts.Line
+                    type="monotone"
+                    dataKey="total"
+                    stroke="#3B82F6"
+                    dot={({ cx, cy, payload }) => (
+                      <circle cx={cx} cy={cy} r={4} fill={payload.deneme_tipi === 'bireysel' ? '#F59E0B' : '#3B82F6'} />
+                    )}
+                  />
+                </Recharts.LineChart>
+              </Recharts.ResponsiveContainer>
+              <div className="flex gap-4 text-xs mt-2" style={{ color: config.secondary_action_color }}>
+                <span>● Ortak</span>
+                <span style={{ color: '#F59E0B' }}>● Bireysel</span>
+              </div>
+            </div>
+            <div className="rounded-2xl p-4 border border-gray-100" style={{ background: config.surface_color }}>
+              <h3 className="text-sm font-semibold mb-3" style={{ color: config.text_color }}>Ders Bazlı Net Ortalaması</h3>
+              <Recharts.ResponsiveContainer width="100%" height={260}>
+                <Recharts.BarChart data={subjectAverages}>
+                  <Recharts.CartesianGrid strokeDasharray="3 3" />
+                  <Recharts.XAxis dataKey="name" />
+                  <Recharts.YAxis />
+                  <Recharts.Tooltip />
+                  <Recharts.Bar dataKey="value" fill="#10B981" />
+                </Recharts.BarChart>
+              </Recharts.ResponsiveContainer>
+            </div>
+          </div>
+        )}
+
+        <div className="mt-6 rounded-2xl p-4 border border-gray-100" style={{ background: config.surface_color }}>
+          <h3 className="text-sm font-semibold mb-3" style={{ color: config.text_color }}>Son Denemeler</h3>
+          {lastExams.length === 0 ? (
+            <div className="text-center py-8" style={{ color: config.secondary_action_color }}>Henüz deneme verisi girilmemiş</div>
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="text-left" style={{ color: config.secondary_action_color }}>
+                    <th className="py-2">Tarih</th>
+                    <th>Deneme Adı</th>
+                    <th>Tip</th>
+                    <th>Toplam Net</th>
+                    <th></th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {lastExams.map(e => (
+                    <tr key={e.__backendId} className="border-t">
+                      <td className="py-2">{new Date(e.exam_date || e.created_at).toLocaleDateString('tr-TR')}</td>
+                      <td>{e.exam_name}</td>
+                      <td>{e.deneme_tipi === 'bireysel' ? 'Bireysel' : 'Ortak'}</td>
+                      <td className="font-semibold">{parseFloat(e.exam_total_net || 0).toFixed(2)}</td>
+                      <td>
+                        <button onClick={() => setDetailModal(e)} className="text-blue-600 text-xs font-semibold">Detay Gör</button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </div>
+      </div>
+
+      <div className="mb-8">
+        <h2 className="text-xl font-bold mb-4" style={{ color: config.text_color }}>Günlük Çalışma Analizi</h2>
+        {studentQuick.length === 0 ? (
+          <div className="text-center py-10 rounded-xl border border-dashed" style={{ color: config.secondary_action_color }}>Henüz çalışma verisi girilmemiş</div>
+        ) : (
+          <>
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+              {[
+                { label: 'Toplam Soru', value: totalQuestions },
+                { label: 'Günlük Ortalama', value: avgDaily },
+                { label: 'En Çok Çalışılan Gün', value: `${maxDay.date} (${maxDay.total})` },
+                { label: 'Son 7 Gün Toplam', value: last7Total },
+              ].map((card, i) => (
+                <div key={i} className="rounded-xl p-4 border border-gray-100" style={{ background: config.surface_color }}>
+                  <p className="text-xs font-semibold mb-1" style={{ color: config.secondary_action_color }}>{card.label}</p>
+                  <p className="text-lg font-bold" style={{ color: config.text_color }}>{card.value}</p>
+                </div>
+              ))}
+            </div>
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              <div className="rounded-2xl p-4 border border-gray-100" style={{ background: config.surface_color }}>
+                <h3 className="text-sm font-semibold mb-3" style={{ color: config.text_color }}>Günlük Soru Trendi</h3>
+                <Recharts.ResponsiveContainer width="100%" height={260}>
+                  <Recharts.BarChart data={dailyTotals}>
+                    <Recharts.CartesianGrid strokeDasharray="3 3" />
+                    <Recharts.XAxis dataKey="date" />
+                    <Recharts.YAxis />
+                    <Recharts.Tooltip />
+                    <Recharts.Bar dataKey="total" fill="#3B82F6" />
+                  </Recharts.BarChart>
+                </Recharts.ResponsiveContainer>
+              </div>
+              <div className="rounded-2xl p-4 border border-gray-100" style={{ background: config.surface_color }}>
+                <h3 className="text-sm font-semibold mb-3" style={{ color: config.text_color }}>Ders Bazlı Soru Dağılımı</h3>
+                <Recharts.ResponsiveContainer width="100%" height={260}>
+                  <Recharts.PieChart>
+                    <Recharts.Pie data={distData} dataKey="value" nameKey="name" outerRadius={90} fill="#10B981" label />
+                    <Recharts.Tooltip />
+                  </Recharts.PieChart>
+                </Recharts.ResponsiveContainer>
+              </div>
+            </div>
+            <div className="mt-4 text-xs" style={{ color: config.secondary_action_color }}>
+              Toplam {totalAnswered} soru çözüldü • {correctTotal} doğru (%{correctPct}) • {wrongTotal} yanlış (%{wrongPct})
+            </div>
+          </>
+        )}
+      </div>
+
+      {detailModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center modal-backdrop" style={{background:'rgba(0,0,0,0.4)'}}>
+          <div className="rounded-2xl shadow-2xl p-6 max-w-md w-full mx-4 fade-in" style={{background: config.surface_color}}>
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-lg font-bold" style={{ color: config.text_color }}>{detailModal.exam_name}</h3>
+              <button onClick={() => setDetailModal(null)} className="p-1.5 rounded-lg hover:bg-gray-100"><Icons.X size={18}/></button>
+            </div>
+            <div className="text-sm mb-4" style={{ color: config.secondary_action_color }}>
+              {new Date(detailModal.exam_date || detailModal.created_at).toLocaleDateString('tr-TR')}
+            </div>
+            <div className="space-y-2">
+              {subjects.map(key => {
+                let subj = {};
+                try { subj = typeof detailModal.exam_subjects === 'string' ? JSON.parse(detailModal.exam_subjects) : detailModal.exam_subjects || {}; } catch {}
+                const s = subj[key];
+                if (!s) return null;
+                const net = (parseFloat(s.dogru || 0) - (parseFloat(s.yanlis || 0) / 3)).toFixed(2);
+                return (
+                  <div key={key} className="flex justify-between text-sm">
+                    <span>{subjectLabels[key]}</span>
+                    <span className="font-semibold">{net}</span>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {editModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center modal-backdrop" style={{background:'rgba(0,0,0,0.4)'}}>
+          <div className="bg-white rounded-2xl shadow-2xl p-6 max-w-lg w-full mx-4 fade-in">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-lg font-bold" style={{color: config.text_color}}>Öğrenciyi Düzenle</h2>
+              <button onClick={() => setEditModal(false)} className="p-1.5 rounded-lg hover:bg-gray-100"><Icons.X size={18}/></button>
+            </div>
+            <form onSubmit={handleUpdate} className="space-y-4">
+              <div>
+                <label className="block text-sm font-semibold mb-2" style={{ color: config.text_color }}>Ad Soyad *</label>
+                <input value={form.fullName} onChange={(e) => setForm({...form, fullName: e.target.value})}
+                  className="w-full px-4 py-2.5 rounded-lg border border-gray-200 text-sm font-medium"/>
+              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-semibold mb-2" style={{ color: config.text_color }}>Sınıf *</label>
+                  <select value={form.sinif} onChange={(e) => setForm({...form, sinif: e.target.value})}
+                    className="w-full px-4 py-2.5 rounded-lg border border-gray-200 text-sm font-medium">
+                    {['8A','8B','8C','8D','8E','8F'].map(c => <option key={c} value={c}>{c}</option>)}
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-sm font-semibold mb-2" style={{ color: config.text_color }}>Okul Numarası *</label>
+                  <input value={form.okulNo} onChange={(e) => setForm({...form, okulNo: e.target.value})}
+                    className="w-full px-4 py-2.5 rounded-lg border border-gray-200 text-sm font-medium"/>
+                </div>
+              </div>
+              <div className="flex gap-3 justify-end pt-2">
+                <button type="button" onClick={() => setEditModal(false)}
+                  className="px-4 py-2 rounded-lg border border-gray-200 text-sm font-semibold">İptal</button>
+                <button type="submit" disabled={saving}
+                  className="px-5 py-2 rounded-lg text-white text-sm font-semibold transition-all hover:shadow-lg"
+                  style={{ background: config.primary_action_color }}>
+                  {saving ? 'Kaydediliyor...' : 'Kaydet'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {confirmDel && (
+        <ConfirmModal message="Bu öğrenciyi silmek istediğinize emin misiniz?" onConfirm={handleDelete} onCancel={() => setConfirmDel(false)}/>
       )}
     </div>
   );
@@ -515,7 +916,7 @@ function StudyPage({ config }) {
                   <option value="">-- Öğrenci Seçin --</option>
                   {students.map(s => (
                     <option key={s.__backendId} value={s.__backendId}>
-                      {s.student_name} {s.student_surname}
+                      {s.ad_soyad || `${s.student_name || ''} ${s.student_surname || ''}`.trim()}
                     </option>
                   ))}
                 </select>
@@ -934,7 +1335,7 @@ function ExamPage({ config }) {
                     <option value="">-- Öğrenci Seçin --</option>
                     {students.map(s => (
                       <option key={s.__backendId} value={s.__backendId}>
-                        {s.student_name} {s.student_surname}
+                        {s.ad_soyad || `${s.student_name || ''} ${s.student_surname || ''}`.trim()}
                       </option>
                     ))}
                   </select>
@@ -1286,7 +1687,9 @@ function AnalysisPage({ config }) {
             >
               <option value="">-- Öğrenci Seçin --</option>
               {students.map(s => (
-                <option key={s.__backendId} value={s.__backendId}>{s.student_name} {s.student_surname}</option>
+                <option key={s.__backendId} value={s.__backendId}>
+                  {s.ad_soyad || `${s.student_name || ''} ${s.student_surname || ''}`.trim()}
+                </option>
               ))}
             </select>
           </div>
@@ -1760,7 +2163,7 @@ function DashboardPage({ config }) {
       Object.keys(subjects).forEach(subject => {
         if (bySubject[subject] !== undefined) {
           bySubject[subject].push({
-            name: student.student_name,
+            name: student.ad_soyad || student.student_name,
             net: calcSubjectNet(subjects[subject]) || 0
           });
         }
@@ -1962,7 +2365,7 @@ function DashboardPage({ config }) {
                     {['🥇', '🥈', '🥉'][i]}
                   </div>
                   <div className="flex-1">
-                    <p className="font-bold" style={{ color: config.text_color }}>{s.student.student_name}</p>
+                    <p className="font-bold" style={{ color: config.text_color }}>{s.student.ad_soyad || s.student.student_name}</p>
                     <p className="text-sm text-gray-500">{s.lastNet.toFixed(2)} net</p>
                   </div>
                 </div>
@@ -1984,7 +2387,7 @@ function DashboardPage({ config }) {
                     {i + 1}
                   </div>
                   <div className="flex-1">
-                    <p className="font-bold" style={{ color: config.text_color }}>{s.student.student_name}</p>
+                    <p className="font-bold" style={{ color: config.text_color }}>{s.student.ad_soyad || s.student.student_name}</p>
                     <p className="text-sm text-red-600">{s.change.toFixed(2)} net</p>
                   </div>
                 </div>
@@ -2101,6 +2504,7 @@ function LoginPage({ onLogin, config }) {
 function App() {
   const { route, navigate } = useRouter();
   const config = useConfig();
+  const [selectedStudentId, setSelectedStudentId] = useState(null);
   const [isAuthenticated, setIsAuthenticated] = useState(() => {
     return localStorage.getItem('appAuthenticated') === 'true';
   });
@@ -2123,7 +2527,8 @@ function App() {
 
   const renderPage = () => {
     switch(route) {
-      case 'ogrenciler': return <StudentsPage config={config}/>;
+      case 'ogrenciler': return <StudentsPage config={config} onSelectStudent={(id) => { setSelectedStudentId(id); navigate('ogrenci-detay'); }} />;
+      case 'ogrenci-detay': return <StudentDetailPage config={config} studentId={selectedStudentId} onBack={() => navigate('ogrenciler')} />;
       case 'gunluk-calisma': return <StudyPage config={config}/>;
       case 'deneme-girisi': return <ExamPage config={config}/>;
       case 'analiz': return <AnalysisPage config={config}/>;
