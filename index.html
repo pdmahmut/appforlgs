@@ -2922,15 +2922,15 @@ function DashboardPage({ config, onSelectStudent, onNavigate }) {
 
   return (
     <div className="max-w-7xl mx-auto px-4 py-8 fade-in">
-      <div className="mb-8 grid grid-cols-1 lg:grid-cols-[1fr,320px] gap-4 items-center">
+      <div className="mb-8 grid grid-cols-1 lg:grid-cols-2 gap-6 items-center">
         <div>
           <h1 className="text-3xl sm:text-4xl font-extrabold" style={{ color: config.text_color }}>Genel Bakış</h1>
           <p className="text-sm sm:text-base mt-2" style={{ color: config.secondary_action_color }}>Öğrenci performans özeti ve trend analizi</p>
         </div>
-        <div className="rounded-2xl p-8 border border-gray-100 shadow-sm w-full text-center justify-self-center" style={{ background: 'linear-gradient(135deg, #EFF6FF 0%, #F5F3FF 100%)' }}>
-          <div className="text-base font-semibold" style={{ color: '#3B82F6' }}>LGS 2026</div>
-          <div className="text-lg font-bold" style={{ color: '#0F172A' }}>14 Haziran 2026</div>
-          <div className="text-base mt-2" style={{ color: '#64748B' }}>{lgsDaysLeft} gün kaldı</div>
+        <div className="rounded-2xl p-10 border border-gray-100 shadow-sm w-full text-center justify-self-center max-w-md" style={{ background: 'linear-gradient(135deg, #EFF6FF 0%, #F5F3FF 100%)' }}>
+          <div className="text-lg font-semibold" style={{ color: '#3B82F6' }}>LGS 2026</div>
+          <div className="text-xl font-bold" style={{ color: '#0F172A' }}>14 Haziran 2026</div>
+          <div className="text-lg mt-2" style={{ color: '#64748B' }}>{lgsDaysLeft} gün kaldı</div>
         </div>
       </div>
 
@@ -3217,6 +3217,37 @@ function App() {
       <footer className="text-center py-4 border-t border-gray-100" style={{background: config.surface_color}}>
         <p className="text-xs" style={{color: config.secondary_action_color}}>© 2024 {config.app_title}</p>
       </footer>
+    </div>
+  );
+}
+function LoginPage({ onLogin, config }) {
+  const [password, setPassword] = useState('');
+  const [err, setErr] = useState('');
+
+  const handleSubmit = (e) => {
+    if (e && e.preventDefault) e.preventDefault();
+    const real = (window.__APP_CONFIG && window.__APP_CONFIG.LOGIN_PASSWORD) || '';
+    if (password === real) {
+      localStorage.setItem('appAuthenticated', 'true');
+      onLogin();
+    } else {
+      setErr('Hatalı şifre');
+    }
+  };
+
+  return (
+    <div className="h-full flex items-center justify-center" style={{ background: config.background_color }}>
+      <div className="w-full max-w-md p-6 rounded-2xl" style={{ background: config.surface_color }}>
+        <h2 className="text-xl font-bold mb-2" style={{ color: config.text_color }}>{config.welcome_title}</h2>
+        <p className="text-sm mb-4" style={{ color: config.secondary_action_color }}>{config.welcome_subtitle}</p>
+        <form onSubmit={handleSubmit} className="space-y-3">
+          <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="Şifre" className="w-full px-4 py-3 rounded-lg border" style={{ borderColor: '#E2E8F0', color: config.text_color }} />
+          {err ? <div className="text-sm text-red-500">{err}</div> : null}
+          <div className="flex justify-end">
+            <button type="submit" className="px-4 py-2 rounded-lg text-white" style={{ background: config.primary_action_color }}>Giriş</button>
+          </div>
+        </form>
+      </div>
     </div>
   );
 }
