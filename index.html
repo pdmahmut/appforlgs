@@ -1195,7 +1195,7 @@ function StudentDetailPage({ config, studentId, onBack }) {
                             </g>
                           </svg>
                           <div className="space-y-2 text-xs">
-                            {subjectKeys.filter(s => activeSubjects.includes(s.key)).map(s => {
+                            {subjectKeys.filter(s => activeLessonSubjects.includes(s.key)).map(s => {
                               const v = totalsBySubject[s.key] || 0;
                               const pct = totalAll ? ((v / totalAll) * 100).toFixed(1) : '0.0';
                               return (
