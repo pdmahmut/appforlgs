@@ -2502,11 +2502,12 @@ function DashboardPage({ config, onSelectStudent, onNavigate }) {
       });
     });
     const values = subjects.map(s => counts[s.key] ? (totals[s.key] / counts[s.key]) : 0);
-    const maxVal = Math.max(...values, 0);
-    const minVal = Math.min(...values, 0);
-    const hasAny = values.some(v => v > 0);
-    const maxIdx = hasAny ? values.indexOf(maxVal) : null;
-    const minIdx = hasAny ? values.indexOf(minVal) : null;
+    const validIndexes = subjects.map((s, i) => (counts[s.key] ? i : -1)).filter(i => i >= 0);
+    const hasAny = validIndexes.length > 0;
+    const maxIdx = hasAny ? validIndexes.reduce((best, i) => (values[i] > values[best] ? i : best), validIndexes[0]) : null;
+    const minIdx = hasAny ? validIndexes.reduce((best, i) => (values[i] < values[best] ? i : best), validIndexes[0]) : null;
+    const maxVal = hasAny ? values[maxIdx] : 0;
+    const minVal = hasAny ? values[minIdx] : 0;
     return { subjects, values, maxIdx, minIdx, maxVal, minVal, hasAny };
   }, [ortakExams]);
 
@@ -2749,8 +2750,7 @@ function DashboardPage({ config, onSelectStudent, onNavigate }) {
               title: (items) => items[0].label,
               label: (item) => {
                 const val = item.raw || 0;
-                const pct = ((val / 20) * 100).toFixed(1);
-                return `Ortalama: ${val.toFixed(1)} | Başarı: %${pct}`;
+                return `Ortalama: ${val.toFixed(1)}`;
               }
             }
           }
