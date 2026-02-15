@@ -423,7 +423,37 @@ function StudentDetailPage({ config, studentId, onBack }) {
   const [showAllExams, setShowAllExams] = useState(false);
   const [saving, setSaving] = useState(false);
   const [form, setForm] = useState({ fullName: '', sinif: '8A', okulNo: '' });
-  const CalendarHeatmap = (window.ReactCalendarHeatmap && (window.ReactCalendarHeatmap.default || window.ReactCalendarHeatmap)) || window.CalendarHeatmap;
+  const weekdays = ['Paz', 'Pzt', 'Sal', 'Çar', 'Per', 'Cum', 'Cmt'];
+  const monthNames = ['Ocak','Şubat','Mart','Nisan','Mayıs','Haziran','Temmuz','Ağustos','Eylül','Ekim','Kasım','Aralık'];
+  const start = new Date(yearStart);
+  const end = new Date(yearEnd);
+  const days = [];
+  for (let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
+    const dateStr = d.toISOString().split('T')[0];
+    days.push({
+      date: new Date(d),
+      dateStr,
+      count: dailyTotalsMap[dateStr] || 0
+    });
+  }
+  const weeks = [];
+  let week = new Array(7).fill(null);
+  days.forEach(day => {
+    const dayOfWeek = day.date.getDay();
+    week[dayOfWeek] = day;
+    if (dayOfWeek === 6) {
+      weeks.push(week);
+      week = new Array(7).fill(null);
+    }
+  });
+  if (week.some(Boolean)) weeks.push(week);
+  const monthPositions = {};
+  weeks.forEach((w, idx) => {
+    const firstDay = w.find(d => d && d.date.getDate() === 1);
+    if (firstDay) {
+      monthPositions[idx] = monthNames[firstDay.date.getMonth()];
+    }
+  });
   const {
     ResponsiveContainer,
     LineChart,
@@ -768,28 +798,37 @@ function StudentDetailPage({ config, studentId, onBack }) {
           <h3 className="text-sm font-semibold mb-3" style={{ color: config.text_color }}>📅 Çalışma Takvimi</h3>
           {heatmapValues.length === 0 ? (
             <div className="text-center py-8 text-sm" style={{ color: config.secondary_action_color }}>Henüz çalışma verisi girilmemiş</div>
-          ) : CalendarHeatmap ? (
-            <CalendarHeatmap
-              startDate={yearStart}
-              endDate={yearEnd}
-              values={heatmapValues}
-              classForValue={(value) => {
-                if (!value || !value.count) return 'color-empty';
-                if (value.count >= 100) return 'color-high';
-                if (value.count >= 50) return 'color-mid';
-                return 'color-low';
-              }}
-              tooltipDataAttrs={(value) => {
-                if (!value || !value.date) return { 'data-tip': 'Veri yok' };
-                const d = new Date(value.date);
-                const tr = d.toLocaleDateString('tr-TR', { day: '2-digit', month: 'long', year: 'numeric' });
-                return { 'data-tip': `${tr} - ${value.count} soru` };
-              }}
-              showWeekdayLabels
-              gutterSize={2}
-            />
           ) : (
-            <div className="text-center py-8 text-sm" style={{ color: config.secondary_action_color }}>Grafik yüklenemedi</div>
+            <div className="flex items-start gap-3">
+              <div className="flex flex-col gap-1 pt-5 text-[10px]" style={{ color: config.secondary_action_color }}>
+                {weekdays.map((d, i) => (
+                  <div key={i} style={{ height: 12, lineHeight: '12px' }}>{d}</div>
+                ))}
+              </div>
+              <div>
+                <div className="flex gap-2 text-[10px] mb-1" style={{ color: config.secondary_action_color }}>
+                  {weeks.map((_, idx) => (
+                    <div key={idx} style={{ width: 12 }}>{monthPositions[idx] || ''}</div>
+                  ))}
+                </div>
+                <div className="flex gap-2">
+                  {weeks.map((w, wi) => (
+                    <div key={wi} className="flex flex-col gap-1">
+                      {w.map((day, di) => {
+                        const count = day ? day.count : 0;
+                        const color = count >= 100 ? '#196127' : count >= 50 ? '#239a3b' : count >= 1 ? '#7bc96f' : '#ebedf0';
+                        const title = day
+                          ? `${day.date.toLocaleDateString('tr-TR', { day: '2-digit', month: 'long', year: 'numeric' })} - ${count} soru`
+                          : '';
+                        return (
+                          <div key={di} title={title} style={{ width: 12, height: 12, background: color, borderRadius: 2 }} />
+                        );
+                      })}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
           )}
           <div className="flex items-center gap-2 text-xs mt-3" style={{ color: config.secondary_action_color }}>
             <span>0</span>
