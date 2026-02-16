@@ -465,6 +465,9 @@ function StudentDetailPage({ config, studentId, onBack }) {
   const [trendHover, setTrendHover] = useState(null);
   const [selectedTrendSubjects, setSelectedTrendSubjects] = useState(null);
   const [selectedLessonSubjects, setSelectedLessonSubjects] = useState(null);
+  const [editingExam, setEditingExam] = useState(null);
+  const [editExamSubjects, setEditExamSubjects] = useState({});
+  const [editExamErrors, setEditExamErrors] = useState({});
   const weekdays = ['Paz', 'Pzt', 'Sal', 'Çar', 'Per', 'Cum', 'Cmt'];
   const monthNames = ['Ocak','Şubat','Mart','Nisan','Mayıs','Haziran','Temmuz','Ağustos','Eylül','Ekim','Kasım','Aralık'];
   const start = new Date(yearStart);
@@ -1315,8 +1318,10 @@ function StudentDetailPage({ config, studentId, onBack }) {
                         <td>{e.exam_name}</td>
                         <td>{e.deneme_tipi === 'bireysel' ? 'Bireysel' : 'Ortak'}</td>
                         <td className="font-semibold">{parseFloat(e.exam_total_net || 0).toFixed(2)}</td>
-                        <td>
-                          <button onClick={() => setDetailModal(e)} className="text-blue-600 text-xs font-semibold">Detay Gör</button>
+                        <td className="flex gap-2">
+                          <button onClick={() => handleOpenEditExam(e)} className="text-blue-600 text-xs font-semibold hover:underline">✏️</button>
+                          <button onClick={() => setDetailModal(e)} className="text-blue-600 text-xs font-semibold hover:underline">👁️</button>
+                          <button onClick={() => handleDeleteExam(e)} disabled={saving} className="text-red-600 text-xs font-semibold hover:underline disabled:opacity-50">🗑️</button>
                         </td>
                       </tr>
                     ))}
@@ -1418,6 +1423,78 @@ function StudentDetailPage({ config, studentId, onBack }) {
                 </table>
               </div>
             )}
+          </div>
+        </div>
+      )}
+
+      {editingExam && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center modal-backdrop" style={{background:'rgba(0,0,0,0.4)'}}>
+          <div className="rounded-2xl shadow-2xl p-6 max-w-2xl w-full mx-4 fade-in max-h-[80vh] overflow-y-auto" style={{background: config.surface_color}}>
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-lg font-bold" style={{ color: config.text_color }}>Deneme Düzenle</h3>
+              <button onClick={() => setEditingExam(null)} className="p-1.5 rounded-lg hover:bg-gray-100"><Icons.X size={18}/></button>
+            </div>
+            <div className="grid grid-cols-2 gap-4 mb-6">
+              {quickSubjects.map(s => (
+                <div key={s.key} className="rounded-xl p-4" style={{ background: s.soft }}>
+                  <div className="text-xs font-bold mb-3" style={{ color: s.accent }}>{s.label}</div>
+                  <div className="space-y-2">
+                    <div>
+                      <label className="text-xs font-semibold" style={{ color: s.accent }}>Doğru</label>
+                      <input
+                        type="text"
+                        inputMode="numeric"
+                        maxLength={3}
+                        value={editExamSubjects[s.key]?.dogru || ''}
+                        onChange={(e) => handleEditExamSubjectChange(s.key, 'dogru', e.target.value)}
+                        className="w-full px-2 py-1.5 rounded border text-sm font-semibold text-center"
+                        style={{ background: 'white', borderColor: editExamErrors[s.key] ? '#EF4444' : s.soft }}
+                      />
+                    </div>
+                    <div>
+                      <label className="text-xs font-semibold" style={{ color: s.accent }}>Yanlış</label>
+                      <input
+                        type="text"
+                        inputMode="numeric"
+                        maxLength={3}
+                        value={editExamSubjects[s.key]?.yanlis || ''}
+                        onChange={(e) => handleEditExamSubjectChange(s.key, 'yanlis', e.target.value)}
+                        className="w-full px-2 py-1.5 rounded border text-sm font-semibold text-center"
+                        style={{ background: 'white', borderColor: editExamErrors[s.key] ? '#EF4444' : s.soft }}
+                      />
+                    </div>
+                    {editExamErrors[s.key] && (
+                      <div className="text-xs font-semibold text-red-600 text-center">
+                        {editExamErrors[s.key]}
+                      </div>
+                    )}
+                    <div className="rounded py-1.5 text-center text-xs font-bold" style={{ background: s.soft, color: s.accent }}>
+                      Net: {calculateNet(editExamSubjects[s.key]?.dogru, editExamSubjects[s.key]?.yanlis)}
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+            <div className="rounded-xl p-4 mb-6 text-center" style={{ background: '#ECFDF5', border: '1px solid #BBF7D0' }}>
+              <span className="text-sm font-semibold" style={{ color: '#059669' }}>Toplam Net: </span>
+              <span className="text-lg font-bold" style={{ color: '#047857' }}>{calculateEditExamNet()}</span>
+            </div>
+            <div className="flex gap-3">
+              <button
+                onClick={handleSaveEditExam}
+                disabled={saving || Object.keys(editExamErrors).length > 0}
+                className="flex-1 px-4 py-2 rounded-lg bg-green-600 text-white text-sm font-bold hover:bg-green-700 transition disabled:opacity-60"
+              >
+                {saving ? 'Kaydediliyor...' : '✓ Kaydet'}
+              </button>
+              <button
+                onClick={() => setEditingExam(null)}
+                disabled={saving}
+                className="flex-1 px-4 py-2 rounded-lg border border-gray-300 text-gray-700 text-sm font-bold hover:bg-gray-50 transition disabled:opacity-60"
+              >
+                İptal
+              </button>
+            </div>
           </div>
         </div>
       )}
@@ -1566,6 +1643,87 @@ function StudyPage({ config }) {
 
   const calculateNet = (dogru, yanlis) => {
     return (toNum(dogru) - (toNum(yanlis) / 3)).toFixed(2);
+  };
+
+  const subjectMaxLimits = {
+    turkce: 20,
+    matematik: 20,
+    fen: 20,
+    ingilizce: 10,
+    inkilap: 10,
+    din: 10,
+  };
+
+  const handleOpenEditExam = (exam) => {
+    let subj = {};
+    try {
+      subj = typeof exam.exam_subjects === 'string' ? JSON.parse(exam.exam_subjects) : exam.exam_subjects || {};
+    } catch {}
+    setEditingExam(exam);
+    setEditExamSubjects(subj);
+    setEditExamErrors({});
+  };
+
+  const handleEditExamSubjectChange = (key, field, value) => {
+    const num = normalizeIntInput(value).slice(0, 3);
+    const updatedSubj = { ...editExamSubjects[key], [field]: num };
+    const total = toNum(updatedSubj.dogru) + toNum(updatedSubj.yanlis);
+    const maxLimit = subjectMaxLimits[key];
+    
+    setEditExamSubjects(prev => ({
+      ...prev,
+      [key]: updatedSubj
+    }));
+    
+    if (total > maxLimit) {
+      setEditExamErrors(prev => ({
+        ...prev,
+        [key]: `Maksimum ${maxLimit} soru girilebilir`
+      }));
+    } else {
+      setEditExamErrors(prev => {
+        const newErrors = { ...prev };
+        delete newErrors[key];
+        return newErrors;
+      });
+    }
+  };
+
+  const calculateEditExamNet = () => {
+    return Object.values(editExamSubjects)
+      .reduce((sum, s) => sum + parseFloat(calculateNet(s.dogru, s.yanlis)), 0)
+      .toFixed(2);
+  };
+
+  const handleSaveEditExam = async () => {
+    if (Object.keys(editExamErrors).length > 0) {
+      return;
+    }
+    setSaving(true);
+    const result = await window.dataSdk.update({
+      type: 'exam',
+      __backendId: editingExam.__backendId,
+      exam_subjects: JSON.stringify(editExamSubjects),
+      exam_total_net: calculateEditExamNet()
+    });
+    setSaving(false);
+    if (result.isOk) {
+      setEditingExam(null);
+      setEditExamSubjects({});
+      setEditExamErrors({});
+    }
+  };
+
+  const handleDeleteExam = async (exam) => {
+    setSaving(true);
+    const result = await window.dataSdk.delete({
+      type: 'exam',
+      __backendId: exam.__backendId
+    });
+    setSaving(false);
+    if (result.isOk) {
+      // Başarılı silindi
+    }
   };
 
   const handleQuickChange = (key, value) => {
