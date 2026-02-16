@@ -3024,10 +3024,14 @@ function DashboardPage({ config, onSelectStudent, onNavigate }) {
   }, [lastGroup, students.length]);
 
   const chartData = useMemo(() => {
-    if (!lastGroup) return null;
-    // Filter out records where student doesn't exist in studentMap (deleted students)
+    if (!lastGroup) {
+      console.log('DEBUG chartData: lastGroup is null', { ortakExamsCount: ortakExams.length, groupedExamsCount: groupedExams.length, examsCount: exams.length, lastExamMeta });
+      return null;
+    }
+    // Safe filtering: only exclude records if studentMap has data AND student doesn't exist
+    const hasStudentData = Object.keys(studentMap).length > 0;
     const rows = lastGroup.records
-      .filter(r => studentMap[r.student_id]) // Only include records where student exists
+      .filter(r => !hasStudentData || studentMap[r.student_id]) // Only filter if we have student data loaded
       .map(r => {
         let subj = {};
         try { subj = typeof r.exam_subjects === 'string' ? JSON.parse(r.exam_subjects) : r.exam_subjects || {}; } catch {}
