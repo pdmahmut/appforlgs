@@ -1742,11 +1742,11 @@ function ExamPage({ config }) {
   const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0]);
   const [subjects, setSubjects] = useState({
     turkce: { dogru: '', yanlis: '', bos: '' },
+    inkilap: { dogru: '', yanlis: '', bos: '' },
+    din: { dogru: '', yanlis: '', bos: '' },
+    ingilizce: { dogru: '', yanlis: '', bos: '' },
     matematik: { dogru: '', yanlis: '', bos: '' },
     fen: { dogru: '', yanlis: '', bos: '' },
-    inkilap: { dogru: '', yanlis: '', bos: '' },
-    ingilizce: { dogru: '', yanlis: '', bos: '' },
-    din: { dogru: '', yanlis: '', bos: '' },
   });
   const [isSaving, setIsSaving] = useState(false);
   const [newDefineExamName, setNewDefineExamName] = useState('');
@@ -1764,11 +1764,11 @@ function ExamPage({ config }) {
   };
   const quickSubjects = [
     { key: 'turkce', label: 'TÜR', accent: '#EF4444', soft: '#FEE2E2' },
-    { key: 'matematik', label: 'MAT', accent: '#3B82F6', soft: '#DBEAFE' },
-    { key: 'fen', label: 'FEN', accent: '#10B981', soft: '#DCFCE7' },
     { key: 'inkilap', label: 'İNK', accent: '#F59E0B', soft: '#FEF3C7' },
     { key: 'din', label: 'DİN', accent: '#EC4899', soft: '#FCE7F3' },
     { key: 'ingilizce', label: 'İNG', accent: '#8B5CF6', soft: '#F3E8FF' },
+    { key: 'matematik', label: 'MAT', accent: '#3B82F6', soft: '#DBEAFE' },
+    { key: 'fen', label: 'FEN', accent: '#10B981', soft: '#DCFCE7' },
   ];
 
   const toNum = (v) => {
@@ -1903,11 +1903,11 @@ function ExamPage({ config }) {
     setSelectedDate(new Date().toISOString().split('T')[0]);
     setSubjects({
       turkce: { dogru: '', yanlis: '', bos: '' },
+      inkilap: { dogru: '', yanlis: '', bos: '' },
+      din: { dogru: '', yanlis: '', bos: '' },
+      ingilizce: { dogru: '', yanlis: '', bos: '' },
       matematik: { dogru: '', yanlis: '', bos: '' },
       fen: { dogru: '', yanlis: '', bos: '' },
-      inkilap: { dogru: '', yanlis: '', bos: '' },
-      ingilizce: { dogru: '', yanlis: '', bos: '' },
-      din: { dogru: '', yanlis: '', bos: '' },
     });
   };
 
