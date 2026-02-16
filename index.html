@@ -1741,12 +1741,12 @@ function ExamPage({ config }) {
   const [examName, setExamName] = useState('');
   const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0]);
   const [subjects, setSubjects] = useState({
-    turkce: { dogru: '', yanlis: '', bos: '' },
-    inkilap: { dogru: '', yanlis: '', bos: '' },
-    din: { dogru: '', yanlis: '', bos: '' },
-    ingilizce: { dogru: '', yanlis: '', bos: '' },
-    matematik: { dogru: '', yanlis: '', bos: '' },
-    fen: { dogru: '', yanlis: '', bos: '' },
+    turkce: { dogru: '', yanlis: '' },
+    inkilap: { dogru: '', yanlis: '' },
+    din: { dogru: '', yanlis: '' },
+    ingilizce: { dogru: '', yanlis: '' },
+    matematik: { dogru: '', yanlis: '' },
+    fen: { dogru: '', yanlis: '' },
   });
   const [isSaving, setIsSaving] = useState(false);
   const [newDefineExamName, setNewDefineExamName] = useState('');
@@ -1871,7 +1871,7 @@ function ExamPage({ config }) {
       return Object.fromEntries(
         Object.entries(obj).map(([k, v]) => [
           k,
-          { dogru: toNum(v.dogru), yanlis: toNum(v.yanlis), bos: toNum(v.bos) }
+          { dogru: toNum(v.dogru), yanlis: toNum(v.yanlis) }
         ])
       );
     };
@@ -1902,12 +1902,12 @@ function ExamPage({ config }) {
     setSelectedDefinedExamId('');
     setSelectedDate(new Date().toISOString().split('T')[0]);
     setSubjects({
-      turkce: { dogru: '', yanlis: '', bos: '' },
-      inkilap: { dogru: '', yanlis: '', bos: '' },
-      din: { dogru: '', yanlis: '', bos: '' },
-      ingilizce: { dogru: '', yanlis: '', bos: '' },
-      matematik: { dogru: '', yanlis: '', bos: '' },
-      fen: { dogru: '', yanlis: '', bos: '' },
+      turkce: { dogru: '', yanlis: '' },
+      inkilap: { dogru: '', yanlis: '' },
+      din: { dogru: '', yanlis: '' },
+      ingilizce: { dogru: '', yanlis: '' },
+      matematik: { dogru: '', yanlis: '' },
+      fen: { dogru: '', yanlis: '' },
     });
   };
 
@@ -2168,9 +2168,9 @@ function ExamPage({ config }) {
                           <div key={s.key} className="rounded-2xl p-4 border border-gray-200" style={{ background: '#FFFFFF' }}>
                             <div className="flex items-center justify-between mb-3">
                               <span className="text-sm font-bold" style={{ color: s.accent }}>{s.label}</span>
-                              <span className="text-[10px] font-semibold uppercase" style={{ color: config.secondary_action_color }}>D / Y / B</span>
+                              <span className="text-[10px] font-semibold uppercase" style={{ color: config.secondary_action_color }}>D / Y</span>
                             </div>
-                            <div className="grid grid-cols-3 gap-2">
+                            <div className="grid grid-cols-2 gap-2">
                               <input
                                 id={`exam-${s.key}-dogru`}
                                 autoFocus={focusFirst}
@@ -2189,16 +2189,6 @@ function ExamPage({ config }) {
                                 maxLength={3}
                                 value={subjects[s.key].yanlis}
                                 onChange={(e) => handleSubjectChange(s.key, 'yanlis', e.target.value)}
-                                className="px-3 py-2 rounded-lg border text-sm font-semibold text-center"
-                                style={{ background: s.soft, borderColor: s.soft }}
-                              />
-                              <input
-                                id={`exam-${s.key}-bos`}
-                                type="text"
-                                inputMode="numeric"
-                                maxLength={3}
-                                value={subjects[s.key].bos}
-                                onChange={(e) => handleSubjectChange(s.key, 'bos', e.target.value)}
                                 className="px-3 py-2 rounded-lg border text-sm font-semibold text-center"
                                 style={{ background: s.soft, borderColor: s.soft }}
                               />
