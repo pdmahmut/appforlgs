@@ -216,7 +216,7 @@
             exam_date: data.exam_date || null,
             exam_subjects: safeJson(data.exam_subjects),
             exam_total_net: data.exam_total_net || null,
-            defined_exam_id: data.defined_exam_id || null,
+            defined_exam_id: data.defined_exam_id ? Number(data.defined_exam_id) : null,
             deneme_tipi: data.deneme_tipi || null,
             created_at: data.created_at || new Date().toISOString(),
           };
@@ -381,7 +381,7 @@
             exam_date: data.exam_date || null,
             exam_subjects: safeJson(data.exam_subjects),
             exam_total_net: data.exam_total_net || null,
-            defined_exam_id: data.defined_exam_id || null,
+            defined_exam_id: data.defined_exam_id ? Number(data.defined_exam_id) : null,
             deneme_tipi: data.deneme_tipi || null,
           };
           const res = await client

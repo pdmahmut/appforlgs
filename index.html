@@ -1754,6 +1754,9 @@ function ExamPage({ config }) {
   const [newDefineExamDate, setNewDefineExamDate] = useState(new Date().toISOString().split('T')[0]);
   const [toast, setToast] = useState(null);
   const [detailModal, setDetailModal] = useState(null);
+  const [editingDefinedExam, setEditingDefinedExam] = useState(null);
+  const [editName, setEditName] = useState('');
+  const [editDate, setEditDate] = useState('');
 
   const subjectColors = {
     turkce: { bg: '#FEE2E2', text: '#DC2626', name: 'Türkçe', emoji: '📘' },
@@ -1827,6 +1830,39 @@ function ExamPage({ config }) {
     setIsSaving(false);
     if (result.isOk) setToast({ msg: 'Deneme silindi', type: 'success' });
     else setToast({ msg: 'Silme hatası', type: 'error' });
+  };
+
+  const handleOpenEditModal = (exam) => {
+    setEditingDefinedExam(exam);
+    setEditName(exam.name);
+    setEditDate(exam.exam_date);
+  };
+
+  const handleEditDefinedExam = async () => {
+    if (!editName.trim()) {
+      setToast({ msg: 'Deneme adı boş olamaz', type: 'error' });
+      return;
+    }
+    if (!editDate) {
+      setToast({ msg: 'Tarih seçin', type: 'error' });
+      return;
+    }
+    setIsSaving(true);
+    const result = await window.dataSdk.update({
+      type: 'defined_exam',
+      __backendId: editingDefinedExam.__backendId,
+      name: editName,
+      exam_date: editDate
+    });
+    setIsSaving(false);
+    if (result.isOk) {
+      setToast({ msg: 'Deneme güncellendi! 🎉', type: 'success' });
+      setEditingDefinedExam(null);
+      setEditName('');
+      setEditDate('');
+    } else {
+      setToast({ msg: 'Güncelleme hatası', type: 'error' });
+    }
   };
 
   const handleSelectDefinedExam = (examId) => {
@@ -2069,13 +2105,24 @@ function ExamPage({ config }) {
                         <p className="text-xs font-bold text-blue-900">{exam.name}</p>
                         <p className="text-xs text-blue-600">{new Date(exam.exam_date).toLocaleDateString('tr-TR')}</p>
                       </div>
-                      <button
-                        onClick={() => handleDeleteDefinedExam(exam.__backendId)}
-                        className="text-red-500 hover:text-red-700 p-1"
-                        disabled={isSaving}
-                      >
-                        🗑️
-                      </button>
+                      <div className="flex gap-1">
+                        <button
+                          onClick={() => handleOpenEditModal(exam)}
+                          className="text-blue-500 hover:text-blue-700 p-1"
+                          disabled={isSaving}
+                          title="Düzenle"
+                        >
+                          ✏️
+                        </button>
+                        <button
+                          onClick={() => handleDeleteDefinedExam(exam.__backendId)}
+                          className="text-red-500 hover:text-red-700 p-1"
+                          disabled={isSaving}
+                          title="Sil"
+                        >
+                          🗑️
+                        </button>
+                      </div>
                     </div>
                   ))}
                 </div>
@@ -2264,24 +2311,81 @@ function ExamPage({ config }) {
             </div>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
-              {studentExams.map((exam) => (
-                <div key={exam.__backendId} className="rounded-2xl border border-gray-100 p-6 card-hover" style={{ background: config.surface_color }}>
-                  <h3 className="text-xl font-bold mb-2" style={{ color: config.text_color }}>{exam.exam_name}</h3>
-                  <p className="text-sm mb-4" style={{ color: config.secondary_action_color }}>📅 {new Date(exam.exam_date || exam.created_at).toLocaleDateString('tr-TR')}</p>
-                  
-                  <div className="rounded-lg p-4 bg-emerald-50 text-center mb-5">
-                    <p className="text-xs font-semibold mb-1" style={{ color: '#059669' }}>TOPLAM NET</p>
-                    <p className="text-2xl font-extrabold text-emerald-600">{exam.exam_total_net}</p>
-                  </div>
+              {studentExams.map((exam) => {
+                const definedExam = exam.defined_exam_id ? definedExams.find(d => Number(d.__backendId) === Number(exam.defined_exam_id)) : null;
+                const displayDate = definedExam ? definedExam.exam_date : (exam.exam_date || exam.created_at);
+                return (
+                  <div key={exam.__backendId} className="rounded-2xl border border-gray-100 p-6 card-hover" style={{ background: config.surface_color }}>
+                    <h3 className="text-xl font-bold mb-2" style={{ color: config.text_color }}>{exam.exam_name}</h3>
+                    <p className="text-sm mb-4" style={{ color: config.secondary_action_color }}>📅 {new Date(displayDate).toLocaleDateString('tr-TR')}</p>
+                    
+                    <div className="rounded-lg p-4 bg-emerald-50 text-center mb-5">
+                      <p className="text-xs font-semibold mb-1" style={{ color: '#059669' }}>TOPLAM NET</p>
+                      <p className="text-2xl font-extrabold text-emerald-600">{exam.exam_total_net}</p>
+                    </div>
 
-                  <div className="flex gap-2">
-                    <button onClick={() => openExamDetail(exam)} className="flex-1 px-3 py-2.5 rounded-lg text-white text-sm font-semibold transition-all" style={{background: config.primary_action_color}}>Detaylar</button>
-                    <button onClick={() => handleDelete(exam.__backendId)} className="px-3 py-2.5 rounded-lg border border-red-200 text-red-600 hover:bg-red-50 font-semibold text-sm transition-colors">🗑️</button>
+                    <div className="flex gap-2">
+                      <button onClick={() => openExamDetail(exam)} className="flex-1 px-3 py-2.5 rounded-lg text-white text-sm font-semibold transition-all" style={{background: config.primary_action_color}}>Detaylar</button>
+                      <button onClick={() => handleDelete(exam.__backendId)} className="px-3 py-2.5 rounded-lg border border-red-200 text-red-600 hover:bg-red-50 font-semibold text-sm transition-colors">🗑️</button>
+                    </div>
                   </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           )}
+        </div>
+      )}
+
+      {/* Edit Modal */}
+      {editingDefinedExam && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-lg shadow-lg max-w-sm w-full p-6">
+            <h2 className="text-lg font-bold text-gray-900 mb-4">Deneme Düzenle</h2>
+            <div className="space-y-4 mb-6">
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-1.5">Deneme Adı</label>
+                <input
+                  type="text"
+                  value={editName}
+                  onChange={(e) => setEditName(e.target.value)}
+                  className="w-full px-3 py-2 rounded-lg border border-gray-300 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  placeholder="Deneme adı"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-1.5">Tarih</label>
+                <input
+                  type="date"
+                  value={editDate}
+                  onChange={(e) => setEditDate(e.target.value)}
+                  className="w-full px-3 py-2 rounded-lg border border-gray-300 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-blue-500"
+                />
+              </div>
+            </div>
+            <div className="flex gap-3">
+              <button
+                onClick={handleEditDefinedExam}
+                disabled={isSaving}
+                className="flex-1 px-4 py-2 rounded-lg bg-blue-600 text-white text-sm font-bold hover:bg-blue-700 transition disabled:opacity-60"
+              >
+                {isSaving ? 'Kaydediliyor...' : 'Kaydet'}
+              </button>
+              <button
+                onClick={() => setEditingDefinedExam(null)}
+                disabled={isSaving}
+                className="flex-1 px-4 py-2 rounded-lg border border-gray-300 text-gray-700 text-sm font-bold hover:bg-gray-50 transition disabled:opacity-60"
+              >
+                İptal
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Toast Notification */}
+      {toast && (
+        <div className={`fixed bottom-4 right-4 px-4 py-3 rounded-lg text-white font-semibold text-sm z-40 ${toast.type === 'success' ? 'bg-green-500' : 'bg-red-500'}`}>
+          {toast.msg}
         </div>
       )}
     </div>
@@ -2308,7 +2412,8 @@ function DashboardPage({ config, onSelectStudent, onNavigate }) {
   const groupedExams = useMemo(() => {
     const map = {};
     (ortakExams || []).forEach(e => {
-      const dateStr = (e.exam_date || e.created_at || '').toString().split('T')[0];
+      const definedExam = e.defined_exam_id ? (definedExams || []).find(d => Number(d.__backendId) === Number(e.defined_exam_id)) : null;
+      const dateStr = definedExam ? definedExam.exam_date : (e.exam_date || e.created_at || '').toString().split('T')[0];
       const key = (e.defined_exam_id || '') + '::' + (e.exam_name || 'Deneme') + '::' + dateStr;
       if (!map[key]) {
         map[key] = { key, dateStr, name: e.exam_name || 'Ortak Deneme', records: [] };
@@ -2316,7 +2421,7 @@ function DashboardPage({ config, onSelectStudent, onNavigate }) {
       map[key].records.push(e);
     });
     return Object.values(map).sort((a, b) => new Date(a.dateStr) - new Date(b.dateStr));
-  }, [ortakExams]);
+  }, [ortakExams, definedExams]);
 
   const lastGroup = groupedExams[groupedExams.length - 1] || null;
   const prevGroup = groupedExams.length > 1 ? groupedExams[groupedExams.length - 2] : null;

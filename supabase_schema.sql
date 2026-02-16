@@ -32,12 +32,15 @@ CREATE TABLE IF NOT EXISTS exams (
   exam_date DATE,
   exam_subjects JSONB,
   exam_total_net NUMERIC,
-  defined_exam_id TEXT,
+  defined_exam_id INTEGER,
+  deneme_tipi TEXT,
   created_at TIMESTAMPTZ DEFAULT now(),
-  CONSTRAINT fk_exam_student FOREIGN KEY(student_backend_id) REFERENCES students(backend_id) ON DELETE SET NULL
+  CONSTRAINT fk_exam_student FOREIGN KEY(student_backend_id) REFERENCES students(backend_id) ON DELETE SET NULL,
+  CONSTRAINT fk_exam_defined_exam FOREIGN KEY(defined_exam_id) REFERENCES defined_exams(id) ON DELETE SET NULL
 );
 
 CREATE INDEX IF NOT EXISTS idx_exams_student_backend_id ON exams(student_backend_id);
+CREATE INDEX IF NOT EXISTS idx_exams_defined_exam_id ON exams(defined_exam_id);
 
 CREATE TABLE IF NOT EXISTS defined_exams (
   id SERIAL PRIMARY KEY,
