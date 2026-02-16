@@ -2921,6 +2921,7 @@ function DashboardPage({ config, onSelectStudent, onNavigate }) {
       try { subj = typeof r.exam_subjects === 'string' ? JSON.parse(r.exam_subjects) : r.exam_subjects || {}; } catch {}
       const net = parseFloat(r.exam_total_net || 0);
       const student = studentMap[r.student_id];
+      console.log('DEBUG chartData:', { record: r, student_id: r.student_id, found_student: !!student, student_name: student?.ad_soyad || student?.student_name });
       const name = (student?.ad_soyad || '').trim() || (student?.student_name || '') + ' ' + (student?.student_surname || '');
       const trimmedName = name.trim() || 'Bilinmeyen Öğrenci';
       const parts = trimmedName.split(' ');
