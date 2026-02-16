@@ -1659,8 +1659,18 @@ function StudyPage({ config }) {
     try {
       subj = typeof exam.exam_subjects === 'string' ? JSON.parse(exam.exam_subjects) : exam.exam_subjects || {};
     } catch {}
+    // 6 konuya default boş obje ekle
+    const fullSubjects = {
+      turkce: { dogru: '', yanlis: '' },
+      inkilap: { dogru: '', yanlis: '' },
+      din: { dogru: '', yanlis: '' },
+      ingilizce: { dogru: '', yanlis: '' },
+      matematik: { dogru: '', yanlis: '' },
+      fen: { dogru: '', yanlis: '' },
+      ...subj
+    };
     setEditingExam(exam);
-    setEditExamSubjects(subj);
+    setEditExamSubjects(fullSubjects);
     setEditExamErrors({});
   };
 
