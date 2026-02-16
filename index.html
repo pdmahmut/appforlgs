@@ -97,12 +97,24 @@ window.notifyDataChange = notifyDataChange;
 
 function useAppData() {
   const [data, setData] = useState(allData);
-  useEffect(() => subscribeData(setData), []);
+  console.log('[useAppData] Initial state, data length:', data?.length);
+  
+  useEffect(() => {
+    console.log('[useAppData] Setting up subscription');
+    const unsub = subscribeData((newData) => {
+      console.log('[useAppData] Subscription callback received, newData length:', newData?.length);
+      setData(newData);
+    });
+    return unsub;
+  }, []);
+  
   const students = useMemo(() => data.filter(d => d.type === 'student'), [data]);
   const studies = useMemo(() => data.filter(d => d.type === 'study'), [data]);
   const exams = useMemo(() => data.filter(d => d.type === 'exam'), [data]);
   const definedExams = useMemo(() => data.filter(d => d.type === 'defined_exam'), [data]);
   const quickStudies = useMemo(() => data.filter(d => d.type === 'quick_study'), [data]);
+  
+  console.log('[useAppData] Returning: students:', students?.length, 'exams:', exams?.length, 'quickStudies:', quickStudies?.length);
   return { students, studies, exams, definedExams, quickStudies, allData: data };
 }
 
@@ -2690,9 +2702,14 @@ function DashboardPage({ config, onSelectStudent, onNavigate }) {
 
   // Refresh data on mount to ensure latest exams are displayed
   useEffect(() => {
-    console.log('DashboardPage mounted, exams:', exams?.length || 0, 'students:', students?.length || 0);
+    console.log('[DashboardPage] MOUNTED - exams:', exams?.length || 0, 'students:', students?.length || 0, 'quickStudies:', quickStudies?.length || 0);
     if (window.dataSdk && window.dataSdk.initialize) {
-      window.dataSdk.initialize().catch(e => console.error('Dashboard data refresh failed:', e));
+      console.log('[DashboardPage] Calling dataSdk.initialize()');
+      window.dataSdk.initialize()
+        .then((result) => console.log('[DashboardPage] dataSdk.initialize() completed:', result))
+        .catch(e => console.error('[DashboardPage] dataSdk.initialize() failed:', e));
+    } else {
+      console.log('[DashboardPage] window.dataSdk not available');
     }
   }, []);
 
@@ -3612,6 +3629,8 @@ function App() {
     return localStorage.getItem('appAuthenticated') === 'true';
   });
 
+  console.log('[APP RENDER] route:', route, 'authenticated:', isAuthenticated);
+
   const handleLogin = () => {
     setIsAuthenticated(true);
   };
@@ -3622,6 +3641,7 @@ function App() {
   };
 
   if (!isAuthenticated) {
+    console.log('[APP RENDER] Not authenticated, showing LoginPage');
     return <LoginPage onLogin={handleLogin} config={config} />;
   }
 
@@ -3684,14 +3704,23 @@ function LoginPage({ onLogin, config }) {
 }
 
 (async function init() {
+  console.log('[APP INIT] Starting initialization');
+  
   const dataHandler = {
     onDataChanged(data) {
+      console.log('[DATA HANDLER] onDataChanged called with data length:', data?.length);
       notifyDataChange(data);
     }
   };
+  
+  console.log('[APP INIT] Calling dataSdk.init()');
   const dataResult = await window.dataSdk.init(dataHandler);
+  console.log('[APP INIT] dataSdk.init() returned:', dataResult);
+  
   if (!dataResult.isOk) {
-    console.error('Data SDK init failed');
+    console.error('[APP INIT] Data SDK init failed:', dataResult.error);
+  } else {
+    console.log('[APP INIT] Data SDK init successful');
   }
 
   if (window.elementSdk) {
@@ -3732,7 +3761,9 @@ function LoginPage({ onLogin, config }) {
     });
   }
 
+  console.log('[APP INIT] Rendering React App');
   ReactDOM.createRoot(document.getElementById('root')).render(React.createElement(App));
+  console.log('[APP INIT] React App rendered');
 })();
 </script>
 </body>

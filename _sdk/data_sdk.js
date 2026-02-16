@@ -111,11 +111,16 @@
 
     _notify() {
       const snapshot = [...this._store];
+      console.log('[dataSdk._notify] Called with store size:', snapshot.length);
       if (this._dataHandler && typeof this._dataHandler.onDataChanged === 'function') {
+        console.log('[dataSdk._notify] Calling dataHandler.onDataChanged');
         this._dataHandler.onDataChanged(snapshot);
       }
       if (typeof window.notifyDataChange === 'function') {
+        console.log('[dataSdk._notify] Calling window.notifyDataChange');
         window.notifyDataChange(snapshot);
+      } else {
+        console.log('[dataSdk._notify] window.notifyDataChange not available');
       }
     },
 
@@ -130,9 +135,14 @@
 
     async initialize() {
       try {
+        console.log('[dataSdk.initialize] Starting');
         const client = this._supabase;
-        if (!client) return { isOk: false, error: 'Supabase client missing' };
+        if (!client) {
+          console.log('[dataSdk.initialize] No Supabase client');
+          return { isOk: false, error: 'Supabase client missing' };
+        }
 
+        console.log('[dataSdk.initialize] Fetching all tables');
         const [studentsRes, studiesRes, examsRes, definedRes, quickRes] = await Promise.all([
           client.from('students').select('*'),
           client.from('studies').select('*'),
@@ -141,9 +151,18 @@
           client.from('quick_studies').select('*'),
         ]);
 
+        console.log('[dataSdk.initialize] Fetch results:', {
+          students: studentsRes.data?.length || 0,
+          studies: studiesRes.data?.length || 0,
+          exams: examsRes.data?.length || 0,
+          defined_exams: definedRes.data?.length || 0,
+          quick_studies: quickRes.data?.length || 0
+        });
+
         if (studentsRes.error || studiesRes.error || examsRes.error || definedRes.error || quickRes.error) {
           const error =
             studentsRes.error || studiesRes.error || examsRes.error || definedRes.error || quickRes.error;
+          console.log('[dataSdk.initialize] Error:', error);
           return { isOk: false, error: error.message };
         }
 
@@ -154,10 +173,11 @@
         const quickStudies = (quickRes.data || []).map((r) => mapRowToRecord('quick_study', r));
 
         this._store = [...students, ...studies, ...exams, ...definedExams, ...quickStudies].filter(Boolean);
+        console.log('[dataSdk.initialize] Store updated with', this._store.length, 'records');
         this._notify();
         return { isOk: true };
       } catch (error) {
-        console.error('Initialize error:', error);
+        console.error('[dataSdk.initialize] Caught error:', error);
         return { isOk: false, error: error.message };
       }
     },
