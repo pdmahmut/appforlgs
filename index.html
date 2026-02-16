@@ -2393,7 +2393,7 @@ function ExamPage({ config }) {
 }
 
 function DashboardPage({ config, onSelectStudent, onNavigate }) {
-  const { students, exams, quickStudies } = useAppData();
+  const { students, exams, quickStudies, definedExams } = useAppData();
   const [loading, setLoading] = useState(true);
   const [showRiskModal, setShowRiskModal] = useState(false);
   const [showDropModal, setShowDropModal] = useState(false);
