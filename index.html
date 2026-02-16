@@ -2903,8 +2903,10 @@ function DashboardPage({ config, onSelectStudent, onNavigate }) {
       let subj = {};
       try { subj = typeof r.exam_subjects === 'string' ? JSON.parse(r.exam_subjects) : r.exam_subjects || {}; } catch {}
       const net = parseFloat(r.exam_total_net || 0);
-      const name = (studentMap[r.student_id]?.ad_soyad || '').trim() || (studentMap[r.student_id]?.student_name || 'Öğrenci');
-      const parts = name.split(' ');
+      const student = studentMap[r.student_id];
+      const name = (student?.ad_soyad || '').trim() || (student?.student_name || '') + ' ' + (student?.student_surname || '');
+      const trimmedName = name.trim() || 'Bilinmeyen Öğrenci';
+      const parts = trimmedName.split(' ');
       const shortName = parts.length > 1 ? `${parts[0]} ${parts[1][0]}.` : parts[0];
       const details = {
         turkce: calcNet(subj.turkce),
@@ -2913,7 +2915,7 @@ function DashboardPage({ config, onSelectStudent, onNavigate }) {
         inkilap: calcNet(subj.inkilap),
         ingilizce: calcNet(subj.ingilizce),
       };
-      return { studentId: r.student_id, name, shortName, net, details };
+      return { studentId: r.student_id, name: trimmedName, shortName, net, details };
     }).sort((a, b) => b.net - a.net);
 
     const avg = classAvg(lastGroup);
