@@ -2575,6 +2575,13 @@ function DashboardPage({ config, onSelectStudent, onNavigate }) {
     return () => clearTimeout(t);
   }, [students.length, exams.length]);
 
+  // Refresh data on mount to ensure latest exams are displayed
+  useEffect(() => {
+    if (window.dataSdk && window.dataSdk.initialize) {
+      window.dataSdk.initialize().catch(e => console.error('Dashboard data refresh failed:', e));
+    }
+  }, []);
+
   const ortakExams = useMemo(() => (exams || []).filter(e => e.deneme_tipi === 'ortak'), [exams]);
 
   const groupedExams = useMemo(() => {
