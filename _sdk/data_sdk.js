@@ -433,11 +433,7 @@
         if (!record || !record.type) return { isOk: false, error: 'Missing type' };
 
         if (record.type === 'student') {
-          // First delete all related exams and studies (cascade)
-          await client.from('exams').delete().eq('student_backend_id', record.__backendId);
-          await client.from('studies').delete().eq('student_backend_id', record.__backendId);
-          await client.from('quick_studies').delete().eq('student_backend_id', record.__backendId);
-          // Then delete the student
+          // Delete student only - frontend filtering handles orphan records
           const res = await client.from('students').delete().eq('backend_id', record.__backendId);
           if (res.error) throw res.error;
         } else if (record.type === 'study') {

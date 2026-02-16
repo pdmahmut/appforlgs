@@ -3024,10 +3024,7 @@ function DashboardPage({ config, onSelectStudent, onNavigate }) {
   }, [lastGroup, students.length]);
 
   const chartData = useMemo(() => {
-    if (!lastGroup) {
-      console.log('DEBUG chartData: lastGroup is null', { ortakExamsCount: ortakExams.length, groupedExamsCount: groupedExams.length, examsCount: exams.length, lastExamMeta });
-      return null;
-    }
+    if (!lastGroup) return null;
     // Safe filtering: only exclude records if studentMap has data AND student doesn't exist
     const hasStudentData = Object.keys(studentMap).length > 0;
     const rows = lastGroup.records
