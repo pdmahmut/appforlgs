@@ -2741,19 +2741,21 @@ function DashboardPage({ config, onSelectStudent, onNavigate }) {
     if (!lastGroup || !prevGroup) return [];
     const prevByStudent = {};
     prevGroup.records.forEach(r => { prevByStudent[r.student_id] = r; });
-    return lastGroup.records.map(r => {
-      const prev = prevByStudent[r.student_id];
-      if (!prev) return null;
-      const lastNet = parseFloat(r.exam_total_net || 0);
-      const prevNet = parseFloat(prev.exam_total_net || 0);
-      return {
-        studentId: r.student_id,
-        name: (studentMap[r.student_id]?.ad_soyad || '').trim() || (studentMap[r.student_id]?.student_name || 'Öğrenci'),
-        lastNet,
-        prevNet,
-        diff: lastNet - prevNet
-      };
-    }).filter(Boolean);
+    return lastGroup.records
+      .filter(r => studentMap[r.student_id]) // Only include records where student exists
+      .map(r => {
+        const prev = prevByStudent[r.student_id];
+        if (!prev) return null;
+        const lastNet = parseFloat(r.exam_total_net || 0);
+        const prevNet = parseFloat(prev.exam_total_net || 0);
+        return {
+          studentId: r.student_id,
+          name: (studentMap[r.student_id]?.ad_soyad || '').trim() || (studentMap[r.student_id]?.student_name || 'Öğrenci'),
+          lastNet,
+          prevNet,
+          diff: lastNet - prevNet
+        };
+      }).filter(Boolean);
   }, [lastGroup, prevGroup, studentMap]);
 
   const riskStudents = studentDiffs.filter(s => s.diff < 0);
@@ -2770,6 +2772,8 @@ function DashboardPage({ config, onSelectStudent, onNavigate }) {
     const counts = {};
     subjects.forEach(s => { totals[s] = 0; counts[s] = 0; });
     ortakExams.forEach(e => {
+      // Filter: only include if student exists
+      if (!studentMap[e.student_id]) return;
       let subj = {};
       try { subj = typeof e.exam_subjects === 'string' ? JSON.parse(e.exam_subjects) : e.exam_subjects || {}; } catch {}
       subjects.forEach(s => {
@@ -2790,7 +2794,7 @@ function DashboardPage({ config, onSelectStudent, onNavigate }) {
     if (!minSubj) return null;
     const labelMap = { turkce: 'Türkçe', matematik: 'Matematik', fen: 'Fen', inkilap: 'Sosyal', ingilizce: 'İngilizce' };
     return { name: labelMap[minSubj], avg: minAvg };
-  }, [ortakExams]);
+  }, [ortakExams, studentMap]);
 
   const growthPercent = useMemo(() => {
     if (groupedExams.length < 6) return null;
@@ -2801,6 +2805,8 @@ function DashboardPage({ config, onSelectStudent, onNavigate }) {
       const count = {};
       groups.forEach(g => {
         g.records.forEach(r => {
+          // Filter: only include if student exists
+          if (!studentMap[r.student_id]) return;
           const id = r.student_id;
           map[id] = (map[id] || 0) + parseFloat(r.exam_total_net || 0);
           count[id] = (count[id] || 0) + 1;
@@ -3019,25 +3025,27 @@ function DashboardPage({ config, onSelectStudent, onNavigate }) {
 
   const chartData = useMemo(() => {
     if (!lastGroup) return null;
-    const rows = lastGroup.records.map(r => {
-      let subj = {};
-      try { subj = typeof r.exam_subjects === 'string' ? JSON.parse(r.exam_subjects) : r.exam_subjects || {}; } catch {}
-      const net = parseFloat(r.exam_total_net || 0);
-      const student = studentMap[r.student_id];
-      console.log('DEBUG chartData:', { record: r, student_id: r.student_id, found_student: !!student, student_name: student?.ad_soyad || student?.student_name });
-      const name = (student?.ad_soyad || '').trim() || (student?.student_name || '') + ' ' + (student?.student_surname || '');
-      const trimmedName = name.trim() || 'Bilinmeyen Öğrenci';
-      const parts = trimmedName.split(' ');
-      const shortName = parts.length > 1 ? `${parts[0]} ${parts[1][0]}.` : parts[0];
-      const details = {
-        turkce: calcNet(subj.turkce),
-        matematik: calcNet(subj.matematik),
-        fen: calcNet(subj.fen),
-        inkilap: calcNet(subj.inkilap),
-        ingilizce: calcNet(subj.ingilizce),
-      };
-      return { studentId: r.student_id, name: trimmedName, shortName, net, details };
-    }).sort((a, b) => b.net - a.net);
+    // Filter out records where student doesn't exist in studentMap (deleted students)
+    const rows = lastGroup.records
+      .filter(r => studentMap[r.student_id]) // Only include records where student exists
+      .map(r => {
+        let subj = {};
+        try { subj = typeof r.exam_subjects === 'string' ? JSON.parse(r.exam_subjects) : r.exam_subjects || {}; } catch {}
+        const net = parseFloat(r.exam_total_net || 0);
+        const student = studentMap[r.student_id];
+        const name = (student?.ad_soyad || '').trim() || (student?.student_name || '') + ' ' + (student?.student_surname || '');
+        const trimmedName = name.trim() || 'Bilinmeyen Öğrenci';
+        const parts = trimmedName.split(' ');
+        const shortName = parts.length > 1 ? `${parts[0]} ${parts[1][0]}.` : parts[0];
+        const details = {
+          turkce: calcNet(subj.turkce),
+          matematik: calcNet(subj.matematik),
+          fen: calcNet(subj.fen),
+          inkilap: calcNet(subj.inkilap),
+          ingilizce: calcNet(subj.ingilizce),
+        };
+        return { studentId: r.student_id, name: trimmedName, shortName, net, details };
+      }).sort((a, b) => b.net - a.net);
 
     const avg = classAvg(lastGroup);
     const maxNet = rows.length ? Math.max(...rows.map(r => r.net)) : 0;
@@ -3061,6 +3069,8 @@ function DashboardPage({ config, onSelectStudent, onNavigate }) {
     const counts = {};
     subjects.forEach(s => { totals[s.key] = 0; counts[s.key] = 0; });
     ortakExams.forEach(e => {
+      // Filter: only include if student exists
+      if (!studentMap[e.student_id]) return;
       let subj = {};
       try { subj = typeof e.exam_subjects === 'string' ? JSON.parse(e.exam_subjects) : e.exam_subjects || {}; } catch {}
       subjects.forEach(s => {
@@ -3078,7 +3088,7 @@ function DashboardPage({ config, onSelectStudent, onNavigate }) {
     const maxVal = hasAny ? values[maxIdx] : 0;
     const minVal = hasAny ? values[minIdx] : 0;
     return { subjects, values, maxIdx, minIdx, maxVal, minVal, hasAny };
-  }, [ortakExams]);
+  }, [ortakExams, studentMap]);
 
   useEffect(() => {
     if (!chartRef.current) return;
