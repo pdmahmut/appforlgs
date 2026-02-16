@@ -2690,6 +2690,7 @@ function DashboardPage({ config, onSelectStudent, onNavigate }) {
 
   // Refresh data on mount to ensure latest exams are displayed
   useEffect(() => {
+    console.log('DashboardPage mounted, exams:', exams?.length || 0, 'students:', students?.length || 0);
     if (window.dataSdk && window.dataSdk.initialize) {
       window.dataSdk.initialize().catch(e => console.error('Dashboard data refresh failed:', e));
     }
