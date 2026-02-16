@@ -1713,14 +1713,24 @@ function StudyPage({ config }) {
     const result = await window.dataSdk.update({
       type: 'exam',
       __backendId: editingExam.__backendId,
+      exam_name: editingExam.exam_name,
+      exam_date: editingExam.exam_date,
       exam_subjects: JSON.stringify(editExamSubjects),
-      exam_total_net: calculateEditExamNet()
+      exam_total_net: calculateEditExamNet(),
+      deneme_tipi: editingExam.deneme_tipi,
+      student_backend_id: editingExam.student_backend_id
     });
     setSaving(false);
     if (result.isOk) {
       setEditingExam(null);
       setEditExamSubjects({});
       setEditExamErrors({});
+      // Refresh data and show success message
+      setTimeout(() => {
+        if (window.dataSdk && window.dataSdk.initialize) {
+          window.dataSdk.initialize().catch(e => console.error('Data refresh failed:', e));
+        }
+      }, 300);
     }
   };
 
