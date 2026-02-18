@@ -2700,7 +2700,12 @@ function SchoolNetTrendChart({ config }) {
 
   useEffect(() => {
     const buildTrendFromLocal = () => {
-      const ortakExams = (exams || []).filter((e) => e.deneme_tipi === 'ortak');
+      const activeDefinedExamIds = new Set((definedExams || []).map((d) => Number(d.__backendId)));
+      const ortakExams = (exams || []).filter((e) => {
+        if (e.deneme_tipi !== 'ortak') return false;
+        if (!e.defined_exam_id) return true;
+        return activeDefinedExamIds.has(Number(e.defined_exam_id));
+      });
       const grouped = {};
       ortakExams.forEach((e) => {
         const definedExam = e.defined_exam_id
@@ -2825,7 +2830,14 @@ function DashboardPage({ config, onSelectStudent, onNavigate }) {
   const radarInstanceRef = useRef(null);
   const loading = !allData || allData.length === 0;
 
-  const ortakExams = useMemo(() => (exams || []).filter(e => e.deneme_tipi === 'ortak'), [exams]);
+  const ortakExams = useMemo(() => {
+    const activeDefinedExamIds = new Set((definedExams || []).map((d) => Number(d.__backendId)));
+    return (exams || []).filter((e) => {
+      if (e.deneme_tipi !== 'ortak') return false;
+      if (!e.defined_exam_id) return true;
+      return activeDefinedExamIds.has(Number(e.defined_exam_id));
+    });
+  }, [exams, definedExams]);
 
   const groupedExams = useMemo(() => {
     const map = {};
