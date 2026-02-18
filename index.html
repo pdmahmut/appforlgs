@@ -3287,7 +3287,6 @@ function SchoolNetTrendChart({ config }) {
 function DashboardPage({ config, onSelectStudent, onNavigate }) {
   const { students, exams, quickStudies, definedExams, allData } = useAppData();
   const [showRiskModal, setShowRiskModal] = useState(false);
-  const [showDropModal, setShowDropModal] = useState(false);
   const [showTopImproversModal, setShowTopImproversModal] = useState(false);
   const [showSubjectModal, setShowSubjectModal] = useState(false);
   const [dashboardApiData, setDashboardApiData] = useState(null);
@@ -3390,11 +3389,58 @@ function DashboardPage({ config, onSelectStudent, onNavigate }) {
       .sort((a, b) => a.diff - b.diff); // most negative first
   }, [studentDiffs]);
 
-  const bigDropStudents = useMemo(() => {
-    return studentDiffs
-      .filter((s) => Number.isFinite(s?.diff) && s.diff <= -5)
-      .sort((a, b) => a.diff - b.diff); // most negative first
-  }, [studentDiffs]);
+  const branchChangeFromLastTwoExams = useMemo(() => {
+    if (!lastGroup || !prevGroup) return [];
+    const hasStudentData = Object.keys(studentMap).length > 0;
+    const labelMap = {
+      turkce: 'Turkce',
+      matematik: 'Matematik',
+      fen: 'Fen',
+      inkilap: 'Inkilap',
+      ingilizce: 'Ingilizce',
+      din: 'Din',
+      paragraf: 'Paragraf'
+    };
+    const buildAverages = (group) => {
+      const totals = {};
+      const counts = {};
+      (group.records || []).forEach((r) => {
+        if (hasStudentData && !studentMap[String(r.student_id)]) return;
+        let subj = {};
+        try { subj = typeof r.exam_subjects === 'string' ? JSON.parse(r.exam_subjects) : (r.exam_subjects || {}); } catch {}
+        Object.keys(subj || {}).forEach((key) => {
+          const net = calcNet(subj[key]);
+          if (!Number.isFinite(net)) return;
+          totals[key] = (totals[key] || 0) + net;
+          counts[key] = (counts[key] || 0) + 1;
+        });
+      });
+      const avgMap = {};
+      Object.keys(totals).forEach((key) => {
+        if (counts[key] > 0) avgMap[key] = totals[key] / counts[key];
+      });
+      return avgMap;
+    };
+
+    const prevAverages = buildAverages(prevGroup);
+    const lastAverages = buildAverages(lastGroup);
+    const keys = Array.from(new Set([...Object.keys(prevAverages), ...Object.keys(lastAverages)]));
+    const rows = keys
+      .filter((key) => Number.isFinite(prevAverages[key]) && Number.isFinite(lastAverages[key]))
+      .map((key) => {
+        const diff = lastAverages[key] - prevAverages[key];
+        return {
+          key,
+          label: labelMap[key] || key,
+          diff: Number(diff.toFixed(2))
+        };
+      })
+      .filter((x) => Number.isFinite(x.diff));
+
+    const positives = rows.filter((x) => x.diff > 0).sort((a, b) => b.diff - a.diff);
+    const negatives = rows.filter((x) => x.diff < 0).sort((a, b) => b.diff - a.diff);
+    return [...positives, ...negatives];
+  }, [lastGroup, prevGroup, studentMap]);
 
   const lastExamSubjectPerformance = useMemo(() => {
     if (!lastGroup || !lastGroup.records || lastGroup.records.length === 0) return null;
@@ -3468,9 +3514,6 @@ function DashboardPage({ config, onSelectStudent, onNavigate }) {
   const effectiveRiskStudents = Array.isArray(dashboardApiData?.riskliOgrenciler) && dashboardApiData.riskliOgrenciler.length
     ? dashboardApiData.riskliOgrenciler
     : riskStudents;
-  const effectiveBigDropStudents = Array.isArray(dashboardApiData?.buyukDususler) && dashboardApiData.buyukDususler.length
-    ? dashboardApiData.buyukDususler
-    : bigDropStudents;
   const effectiveTopImprovers = Array.isArray(dashboardApiData?.topYukselenler) && dashboardApiData.topYukselenler.length
     ? dashboardApiData.topYukselenler
     : topImprovers;
@@ -4071,20 +4114,30 @@ function DashboardPage({ config, onSelectStudent, onNavigate }) {
                 <button className="text-xs mt-2 underline" style={{ color: '#047857' }} onClick={() => setShowTopImproversModal(true)}>Tumunu Gor</button>
               )}
             </div>
-
             <div
-              onClick={() => setShowDropModal(true)}
-              className="rounded-2xl p-6 border border-rose-100 shadow-sm hover:shadow-lg hover:scale-[1.02] transition-all slide-up cursor-pointer"
-              style={{ background: 'linear-gradient(135deg, #fef2f2 0%, #fee2e2 100%)', animationDelay: '0.4s' }}
+              className="rounded-2xl p-6 border border-cyan-100 shadow-sm hover:shadow-lg hover:scale-[1.02] transition-all slide-up"
+              style={{ background: 'linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%)', animationDelay: '0.4s' }}
             >
               <div className="flex items-start justify-between mb-2">
-                <div className="text-sm font-bold" style={{ color: '#991b1b' }}>Buyuk Dusus</div>
-                <div className="text-2xl">📉</div>
+                <div className="text-sm font-bold" style={{ color: '#0c4a6e' }}>Brans Performans Degisimi (Son Deneme)</div>
+                <div className="text-2xl">B</div>
               </div>
-              <div className="text-3xl font-extrabold" style={{ color: '#dc2626' }}>
-                {emptyMessage ? '-' : `${effectiveBigDropStudents.length} ogrenci`}
+              <div className="space-y-1 min-h-[88px]">
+                {emptyMessage ? (
+                  <div className="text-sm" style={{ color: '#64748b' }}>{emptyMessage}</div>
+                ) : branchChangeFromLastTwoExams.length === 0 ? (
+                  <div className="text-sm" style={{ color: '#64748b' }}>Karsilastirma icin en az 2 deneme gerekli</div>
+                ) : (
+                  branchChangeFromLastTwoExams.map((row) => (
+                    <div key={row.key} className="flex items-center justify-between text-sm">
+                      <span style={{ color: '#0f172a' }}>{row.label}</span>
+                      <span className="font-semibold" style={{ color: row.diff > 0 ? '#16a34a' : '#dc2626' }}>
+                        {row.diff > 0 ? `+${row.diff.toFixed(2)}` : row.diff.toFixed(2)} {row.diff > 0 ? 'UP' : 'DOWN'}
+                      </span>
+                    </div>
+                  ))
+                )}
               </div>
-              <div className="text-xs mt-2" style={{ color: '#991b1b' }}>Son denemede -5 net ve uzeri</div>
             </div>
           </>
         )}
@@ -4250,26 +4303,6 @@ function DashboardPage({ config, onSelectStudent, onNavigate }) {
           </div>
         </div>
       )}
-
-      {showDropModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center modal-backdrop" style={{background:'rgba(0,0,0,0.4)'}}>
-          <div className="rounded-2xl shadow-2xl p-6 max-w-lg w-full mx-4 fade-in" style={{background: config.surface_color}}>
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="text-lg font-bold" style={{ color: config.text_color }}>Buyuk Dusus Yasayanlar</h3>
-              <button onClick={() => setShowDropModal(false)} className="p-1.5 rounded-lg hover:bg-gray-100"><Icons.X size={18}/></button>
-            </div>
-            {effectiveBigDropStudents.length === 0 ? (
-              <div className="text-sm" style={{ color: config.secondary_action_color }}>Buyuk dusus yasayan ogrenci yok</div>
-            ) : (
-              <div className="space-y-2">
-                {effectiveBigDropStudents.map(s => (
-                  <div key={s.studentId} className="flex items-center justify-between px-3 py-2 rounded-lg" style={{ background: '#F8FAFC' }}>
-                    <div className="text-sm" style={{ color: config.text_color }}>{s.name}</div>
-                    <div className="text-xs" style={{ color: '#ef4444' }}>{s.prevNet.toFixed(1)} -> {s.lastNet.toFixed(1)} ({s.diff.toFixed(1)})</div>
-                  </div>
-                ))}
-              </div>
-            )}
           </div>
         </div>
       )}
