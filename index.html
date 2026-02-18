@@ -2685,6 +2685,7 @@ function SchoolNetTrendChart({ config }) {
   const [trendData, setTrendData] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const { exams, definedExams } = useAppData();
 
   const {
     ResponsiveContainer,
@@ -2697,42 +2698,46 @@ function SchoolNetTrendChart({ config }) {
   } = window.Recharts || {};
 
   useEffect(() => {
-    const controller = new AbortController();
+    const buildTrendFromLocal = () => {
+      const ortakExams = (exams || []).filter((e) => e.deneme_tipi === 'ortak');
+      const grouped = {};
+      ortakExams.forEach((e) => {
+        const definedExam = e.defined_exam_id
+          ? (definedExams || []).find((d) => Number(d.__backendId) === Number(e.defined_exam_id))
+          : null;
+        const dateStr = definedExam
+          ? definedExam.exam_date
+          : (e.exam_date || e.created_at || '').toString().split('T')[0];
+        const key = `${e.defined_exam_id || ''}::${e.exam_name || 'Ortak Deneme'}::${dateStr}`;
+        if (!grouped[key]) grouped[key] = { examId: key, examName: e.exam_name || 'Ortak Deneme', date: dateStr, rows: [] };
+        grouped[key].rows.push(e);
+      });
 
-    async function fetchAnalytics() {
-      try {
-        setLoading(true);
-        setError('');
-        const response = await fetch('/dashboard/school-analytics', { signal: controller.signal });
-        if (!response.ok) throw new Error(`Request failed: ${response.status}`);
-        const payload = await response.json();
-        const trend = Array.isArray(payload?.data?.netTrend) ? payload.data.netTrend : [];
+      return Object.values(grouped)
+        .sort((a, b) => new Date(a.date) - new Date(b.date))
+        .map((g) => {
+          const total = g.rows.reduce((sum, r) => sum + Number(r.exam_total_net || 0), 0);
+          const count = g.rows.length;
+          return {
+            examId: g.examId,
+            examName: g.examName,
+            date: g.date,
+            averageNet: count ? Number((total / count).toFixed(2)) : 0,
+            katilanOgrenciSayisi: count,
+            dateLabel: g.date ? new Date(g.date).toLocaleDateString('tr-TR') : '-'
+          };
+        });
+    };
 
-        const mapped = trend.map((item) => ({
-          examId: item.examId,
-          examName: item.examName || 'Sinav',
-          date: item.date,
-          averageNet: Number(item.averageNet || 0),
-          katilanOgrenciSayisi: Number(item.katilanOgrenciSayisi || 0),
-          dateLabel: item.date
-            ? new Date(item.date).toLocaleDateString('tr-TR')
-            : '-'
-        }));
-
-        setTrendData(mapped);
-      } catch (err) {
-        if (err.name !== 'AbortError') {
-          setError('Trend verisi alinamadi');
-          setTrendData([]);
-        }
-      } finally {
-        setLoading(false);
-      }
+    setLoading(true);
+    setError('');
+    const mapped = buildTrendFromLocal();
+    setTrendData(mapped);
+    if (!mapped.length) {
+      setError('Trend verisi alinamadi');
     }
-
-    fetchAnalytics();
-    return () => controller.abort();
-  }, []);
+    setLoading(false);
+  }, [exams, definedExams]);
 
   const canRenderChart = Boolean(
     ResponsiveContainer && LineChart && CartesianGrid && XAxis && YAxis && Tooltip && Line
@@ -2818,26 +2823,6 @@ function DashboardPage({ config, onSelectStudent, onNavigate }) {
   const radarRef = useRef(null);
   const radarInstanceRef = useRef(null);
   const loading = !allData || allData.length === 0;
-
-  useEffect(() => {
-    async function fetchData() {
-      try {
-        console.log('[DashboardPage] Fetching latest exam data...');
-        const latestExamData = await window.dataSdk.fetchLatestOrtakExam();
-        if (!latestExamData) {
-          console.log('[DashboardPage] No latest exam data found.');
-          return;
-        }
-
-        console.log('[DashboardPage] Latest Exam:', latestExamData.exam);
-        console.log('[DashboardPage] Students Data:', latestExamData.students);
-      } catch (error) {
-        console.error('[DashboardPage] Error fetching latest exam data:', error);
-      }
-    }
-
-    fetchData();
-  }, []);
 
   const ortakExams = useMemo(() => (exams || []).filter(e => e.deneme_tipi === 'ortak'), [exams]);
 
