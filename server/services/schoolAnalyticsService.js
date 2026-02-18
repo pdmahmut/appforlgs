@@ -103,6 +103,12 @@ function emptyPayload() {
 }
 
 async function getSchoolAnalytics() {
+  if (!prisma) {
+    const error = new Error("Prisma client is not initialized. Run prisma generate and verify schema.");
+    error.statusCode = 500;
+    throw error;
+  }
+
   const studentDelegate = getDelegate(["student", "students"]);
   const examDelegate = getDelegate(["exam", "exams"]);
   const resultDelegate = getDelegate(["examResult", "examResults", "exam_result", "exam_results"]);
@@ -176,4 +182,3 @@ async function getSchoolAnalytics() {
 module.exports = {
   getSchoolAnalytics,
 };
-
