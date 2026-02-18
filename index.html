@@ -532,13 +532,35 @@ function StudentDetailPage({ config, studentId, onBack }) {
     });
   };
 
+  const getExamDateText = (exam) => {
+    const raw = String(exam?.exam_date || exam?.created_at || '');
+    const m = raw.match(/^(\d{4})-(\d{2})-(\d{2})/);
+    if (m) return `${m[1]}-${m[2]}-${m[3]}`;
+    const dt = new Date(raw);
+    if (Number.isNaN(dt.getTime())) return '';
+    const y = dt.getFullYear();
+    const mo = String(dt.getMonth() + 1).padStart(2, '0');
+    const d = String(dt.getDate()).padStart(2, '0');
+    return `${y}-${mo}-${d}`;
+  };
+
+  const getExamSortTime = (exam) => {
+    const dateText = getExamDateText(exam);
+    if (dateText) {
+      const dt = new Date(`${dateText}T00:00:00`);
+      if (!Number.isNaN(dt.getTime())) return dt.getTime();
+    }
+    const fallback = new Date(exam?.created_at || exam?.updated_at || 0).getTime();
+    return Number.isFinite(fallback) ? fallback : 0;
+  };
+
   const uniqueExamMap = {};
   (exams || [])
     .filter((e) => e.student_id === studentId)
     .filter((e) => hasResultData(e))
     .forEach((e) => {
       const normalizedName = String(e.exam_name || '').trim().toLowerCase();
-      const dateKey = String(e.exam_date || '').split('T')[0];
+      const dateKey = getExamDateText(e);
       // Student detail trend should show one point per actual exam name entered.
       // Keep latest record when duplicate rows exist for the same exam name.
       const uniqueKey = normalizedName
@@ -549,13 +571,13 @@ function StudentDetailPage({ config, studentId, onBack }) {
         uniqueExamMap[uniqueKey] = e;
         return;
       }
-      const currentTime = new Date(current.updated_at || current.created_at || current.exam_date || 0).getTime();
-      const candidateTime = new Date(e.updated_at || e.created_at || e.exam_date || 0).getTime();
+      const currentTime = new Date(current.updated_at || current.created_at || 0).getTime();
+      const candidateTime = new Date(e.updated_at || e.created_at || 0).getTime();
       if (candidateTime >= currentTime) uniqueExamMap[uniqueKey] = e;
     });
 
   const studentExams = Object.values(uniqueExamMap)
-    .sort((a, b) => new Date(a.exam_date || a.created_at) - new Date(b.exam_date || b.created_at));
+    .sort((a, b) => getExamSortTime(a) - getExamSortTime(b));
 
   const totalExams = studentExams.length;
   const totalNetSum = studentExams.reduce((sum, e) => sum + parseFloat(e.exam_total_net || 0), 0);
@@ -566,7 +588,7 @@ function StudentDetailPage({ config, studentId, onBack }) {
 
   const recentExams = studentExams.slice(-10);
   const netSeries = recentExams.map((e) => ({
-    date: (e.exam_date || e.created_at || '').toString().split('T')[0],
+    date: getExamDateText(e),
     total: parseFloat(e.exam_total_net || 0),
     name: e.exam_name || ''
   }));
