@@ -98,9 +98,9 @@
         ing_d: row.ing_d,
         ing_y: row.ing_y,
         ing_b: row.ing_b,
-        paragraf_d: row.paragraf_d ?? row.par_d ?? 0,
-        paragraf_y: row.paragraf_y ?? row.par_y ?? 0,
-        paragraf_b: row.paragraf_b ?? row.par_b ?? 0,
+        paragraf_d: row.paragraf_d ?? row.par_d ?? row.para_d ?? 0,
+        paragraf_y: row.paragraf_y ?? row.par_y ?? row.para_y ?? 0,
+        paragraf_b: row.paragraf_b ?? row.par_b ?? row.para_b ?? 0,
         created_at: row.created_at,
       };
     }
@@ -267,7 +267,7 @@
 
         if (data.type === 'quick_study') {
           const backendId = data.__backendId || createBackendId('quick_study');
-          const payload = {
+          const basePayload = {
             backend_id: backendId,
             student_id: data.student_id || null,
             study_date: data.study_date || null,
@@ -289,29 +289,23 @@
             ing_d: data.ing_d || 0,
             ing_y: data.ing_y || 0,
             ing_b: data.ing_b || 0,
-            paragraf_d: data.paragraf_d || 0,
-            paragraf_y: data.paragraf_y || 0,
-            paragraf_b: data.paragraf_b || 0,
             created_at: data.created_at || new Date().toISOString(),
           };
-          let res = await client.from('quick_studies').insert(payload).select('*').single();
-          if (res.error && String(res.error.message || '').includes('paragraf_')) {
-            const fallbackPayload = {
-              ...payload,
-              par_d: data.paragraf_d || 0,
-              par_y: data.paragraf_y || 0,
-              par_b: data.paragraf_b || 0,
-            };
-            delete fallbackPayload.paragraf_d;
-            delete fallbackPayload.paragraf_y;
-            delete fallbackPayload.paragraf_b;
-            res = await client.from('quick_studies').insert(fallbackPayload).select('*').single();
-          } else if (res.error && String(res.error.message || '').includes('par_')) {
-            const fallbackPayload = { ...payload };
-            delete fallbackPayload.par_d;
-            delete fallbackPayload.par_y;
-            delete fallbackPayload.par_b;
-            res = await client.from('quick_studies').insert(fallbackPayload).select('*').single();
+          const paragrafValue = {
+            d: data.paragraf_d || 0,
+            y: data.paragraf_y || 0,
+            b: data.paragraf_b || 0,
+          };
+          const payloadCandidates = [
+            { ...basePayload, paragraf_d: paragrafValue.d, paragraf_y: paragrafValue.y, paragraf_b: paragrafValue.b },
+            { ...basePayload, par_d: paragrafValue.d, par_y: paragrafValue.y, par_b: paragrafValue.b },
+            { ...basePayload, para_d: paragrafValue.d, para_y: paragrafValue.y, para_b: paragrafValue.b },
+            { ...basePayload },
+          ];
+          let res = null;
+          for (const payload of payloadCandidates) {
+            res = await client.from('quick_studies').insert(payload).select('*').single();
+            if (!res.error) break;
           }
           if (res.error) throw res.error;
           const record = mapRowToRecord('quick_study', res.data);
@@ -381,7 +375,7 @@
         }
 
         if (data.type === 'quick_study') {
-          const payload = {
+          const basePayload = {
             student_id: data.student_id || null,
             study_date: data.study_date || null,
             tur_d: data.tur_d || 0,
@@ -402,43 +396,27 @@
             ing_d: data.ing_d || 0,
             ing_y: data.ing_y || 0,
             ing_b: data.ing_b || 0,
-            paragraf_d: data.paragraf_d || 0,
-            paragraf_y: data.paragraf_y || 0,
-            paragraf_b: data.paragraf_b || 0,
           };
-          let res = await client
-            .from('quick_studies')
-            .update(payload)
-            .eq('backend_id', data.__backendId)
-            .select('*')
-            .single();
-          if (res.error && String(res.error.message || '').includes('paragraf_')) {
-            const fallbackPayload = {
-              ...payload,
-              par_d: data.paragraf_d || 0,
-              par_y: data.paragraf_y || 0,
-              par_b: data.paragraf_b || 0,
-            };
-            delete fallbackPayload.paragraf_d;
-            delete fallbackPayload.paragraf_y;
-            delete fallbackPayload.paragraf_b;
+          const paragrafValue = {
+            d: data.paragraf_d || 0,
+            y: data.paragraf_y || 0,
+            b: data.paragraf_b || 0,
+          };
+          const payloadCandidates = [
+            { ...basePayload, paragraf_d: paragrafValue.d, paragraf_y: paragrafValue.y, paragraf_b: paragrafValue.b },
+            { ...basePayload, par_d: paragrafValue.d, par_y: paragrafValue.y, par_b: paragrafValue.b },
+            { ...basePayload, para_d: paragrafValue.d, para_y: paragrafValue.y, para_b: paragrafValue.b },
+            { ...basePayload },
+          ];
+          let res = null;
+          for (const payload of payloadCandidates) {
             res = await client
               .from('quick_studies')
-              .update(fallbackPayload)
+              .update(payload)
               .eq('backend_id', data.__backendId)
               .select('*')
               .single();
-          } else if (res.error && String(res.error.message || '').includes('par_')) {
-            const fallbackPayload = { ...payload };
-            delete fallbackPayload.par_d;
-            delete fallbackPayload.par_y;
-            delete fallbackPayload.par_b;
-            res = await client
-              .from('quick_studies')
-              .update(fallbackPayload)
-              .eq('backend_id', data.__backendId)
-              .select('*')
-              .single();
+            if (!res.error) break;
           }
           if (res.error) throw res.error;
           const record = mapRowToRecord('quick_study', res.data);

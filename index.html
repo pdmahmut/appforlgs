@@ -718,6 +718,12 @@ function StudentDetailPage({ config, studentId, onBack }) {
     return `${y}-${m}-${day}`;
   };
   const dailyTotalsMap = {};
+  const getParagrafTotals = (q) => {
+    const d = Number(q.paragraf_d ?? q.par_d ?? q.para_d ?? 0);
+    const y = Number(q.paragraf_y ?? q.par_y ?? q.para_y ?? 0);
+    const b = Number(q.paragraf_b ?? q.par_b ?? q.para_b ?? 0);
+    return { d, y, b };
+  };
   studentQuick.forEach(q => {
     const dateKey = q.study_date ? toDateKey(q.study_date) : '';
     if (!dateKey) return;
@@ -728,7 +734,7 @@ function StudentDetailPage({ config, studentId, onBack }) {
       q.ink_d, q.ink_y, q.ink_b,
       q.din_d, q.din_y, q.din_b,
       q.ing_d, q.ing_y, q.ing_b,
-      q.paragraf_d, q.paragraf_y, q.paragraf_b,
+      getParagrafTotals(q).d, getParagrafTotals(q).y, getParagrafTotals(q).b,
     ].reduce((s, v) => s + (parseInt(v || 0, 10)), 0);
     dailyTotalsMap[dateKey] = (dailyTotalsMap[dateKey] || 0) + total;
   });
@@ -749,7 +755,8 @@ function StudentDetailPage({ config, studentId, onBack }) {
     if (!dateKey) return;
     if (!dailySubjectMap[dateKey]) dailySubjectMap[dateKey] = { tur: 0, par: 0, mat: 0, fen: 0, ink: 0, ing: 0, din: 0 };
     dailySubjectMap[dateKey].tur += (q.tur_d || 0) + (q.tur_y || 0) + (q.tur_b || 0);
-    dailySubjectMap[dateKey].par += (q.paragraf_d || 0) + (q.paragraf_y || 0) + (q.paragraf_b || 0);
+    const parVals = getParagrafTotals(q);
+    dailySubjectMap[dateKey].par += parVals.d + parVals.y + parVals.b;
     dailySubjectMap[dateKey].mat += (q.mat_d || 0) + (q.mat_y || 0) + (q.mat_b || 0);
     dailySubjectMap[dateKey].fen += (q.fen_d || 0) + (q.fen_y || 0) + (q.fen_b || 0);
     dailySubjectMap[dateKey].ink += (q.ink_d || 0) + (q.ink_y || 0) + (q.ink_b || 0);
