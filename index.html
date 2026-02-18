@@ -3226,8 +3226,17 @@ function DashboardPage({ config, onSelectStudent, onNavigate }) {
       }).filter(Boolean);
   }, [lastGroup, prevGroup, studentMap]);
 
-  const riskStudents = studentDiffs.filter(s => s.diff < 0);
-  const bigDropStudents = studentDiffs.filter(s => s.diff <= -5);
+  const riskStudents = useMemo(() => {
+    return studentDiffs
+      .filter((s) => Number.isFinite(s?.diff) && s.diff < 0)
+      .sort((a, b) => a.diff - b.diff); // most negative first
+  }, [studentDiffs]);
+
+  const bigDropStudents = useMemo(() => {
+    return studentDiffs
+      .filter((s) => Number.isFinite(s?.diff) && s.diff <= -5)
+      .sort((a, b) => a.diff - b.diff); // most negative first
+  }, [studentDiffs]);
 
   const bestImprover = studentDiffs.length > 0
     ? studentDiffs.reduce((a, b) => (b.diff > a.diff ? b : a))
@@ -3981,7 +3990,7 @@ function DashboardPage({ config, onSelectStudent, onNavigate }) {
                 {bigDropStudents.map(s => (
                   <div key={s.studentId} className="flex items-center justify-between px-3 py-2 rounded-lg" style={{ background: '#F8FAFC' }}>
                     <div className="text-sm" style={{ color: config.text_color }}>{s.name}</div>
-                    <div className="text-xs" style={{ color: '#ef4444' }}>{s.prevNet.toFixed(1)} ? {s.lastNet.toFixed(1)} ({s.diff.toFixed(1)})</div>
+                    <div className="text-xs" style={{ color: '#ef4444' }}>{s.prevNet.toFixed(1)} -> {s.lastNet.toFixed(1)} ({s.diff.toFixed(1)})</div>
                   </div>
                 ))}
               </div>
