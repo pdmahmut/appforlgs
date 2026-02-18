@@ -511,8 +511,48 @@ function StudentDetailPage({ config, studentId, onBack }) {
   const displayClass = student.sinif || 'Sinifi';
   const displayNo = student.okul_numarasi || student.student_number || '-';
 
-  const studentExams = exams
-    .filter(e => e.student_id === studentId)
+  const parseSubjects = (exam) => {
+    if (!exam || !exam.exam_subjects) return {};
+    try {
+      return typeof exam.exam_subjects === 'string' ? JSON.parse(exam.exam_subjects) : exam.exam_subjects;
+    } catch {
+      return {};
+    }
+  };
+
+  const hasResultData = (exam) => {
+    const total = Number(exam.exam_total_net);
+    if (Number.isFinite(total) && total > 0) return true;
+    const subjectsData = parseSubjects(exam);
+    return Object.values(subjectsData || {}).some((s) => {
+      const d = Number(s?.dogru || 0);
+      const y = Number(s?.yanlis || 0);
+      const b = Number(s?.bos || 0);
+      return (d + y + b) > 0;
+    });
+  };
+
+  const uniqueExamMap = {};
+  (exams || [])
+    .filter((e) => e.student_id === studentId)
+    .filter((e) => hasResultData(e))
+    .forEach((e) => {
+      const normalizedName = String(e.exam_name || '').trim().toLowerCase();
+      const dateKey = String(e.exam_date || '').split('T')[0];
+      const uniqueKey = e.defined_exam_id
+        ? `def:${e.defined_exam_id}`
+        : `name:${normalizedName}::date:${dateKey}`;
+      const current = uniqueExamMap[uniqueKey];
+      if (!current) {
+        uniqueExamMap[uniqueKey] = e;
+        return;
+      }
+      const currentTime = new Date(current.updated_at || current.created_at || current.exam_date || 0).getTime();
+      const candidateTime = new Date(e.updated_at || e.created_at || e.exam_date || 0).getTime();
+      if (candidateTime >= currentTime) uniqueExamMap[uniqueKey] = e;
+    });
+
+  const studentExams = Object.values(uniqueExamMap)
     .sort((a, b) => new Date(a.exam_date || a.created_at) - new Date(b.exam_date || b.created_at));
 
   const totalExams = studentExams.length;
@@ -540,10 +580,7 @@ function StudentDetailPage({ config, studentId, onBack }) {
   };
   const subjectSeries = subjects.map(key => {
     const series = recentExams.slice(-6).map(e => {
-      let subj = {};
-      try {
-        subj = typeof e.exam_subjects === 'string' ? JSON.parse(e.exam_subjects) : e.exam_subjects || {};
-      } catch {}
+      const subj = parseSubjects(e);
       if (subj[key]) {
         return parseFloat((parseFloat(subj[key].dogru || 0) - (parseFloat(subj[key].yanlis || 0) / 3)).toFixed(2));
       }
