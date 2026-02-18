@@ -2983,6 +2983,7 @@ function ExamPage({ config }) {
 
 function SchoolNetTrendChart({ config }) {
   const [trendData, setTrendData] = useState([]);
+  const [branchTrendSeries, setBranchTrendSeries] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const { exams, definedExams } = useAppData();
@@ -2998,6 +2999,37 @@ function SchoolNetTrendChart({ config }) {
   } = window.Recharts || {};
 
   useEffect(() => {
+    const parseSubjects = (raw) => {
+      if (!raw) return {};
+      try {
+        return typeof raw === 'string' ? JSON.parse(raw) : (raw || {});
+      } catch {
+        return {};
+      }
+    };
+
+    const calcNet = (subject) => {
+      if (!subject) return null;
+      const d = Number(subject.dogru || 0);
+      const y = Number(subject.yanlis || 0);
+      if (!Number.isFinite(d) || !Number.isFinite(y)) return null;
+      return d - (y / 3);
+    };
+
+    const formatSubjectLabel = (key) => {
+      const k = String(key || '').toLowerCase().trim();
+      const map = {
+        turkce: 'Turkce',
+        matematik: 'Matematik',
+        fen: 'Fen',
+        inkilap: 'Inkilap',
+        din: 'Din',
+        ingilizce: 'Ingilizce',
+        paragraf: 'Paragraf',
+      };
+      return map[k] || (k ? k.charAt(0).toUpperCase() + k.slice(1) : 'Brans');
+    };
+
     const buildTrendFromLocal = () => {
       const ortakExams = (exams || []).filter((e) => {
         if (e.deneme_tipi !== 'ortak') return false;
@@ -3009,7 +3041,10 @@ function SchoolNetTrendChart({ config }) {
       const grouped = {};
       ortakExams.forEach((e) => {
         const normalizedName = String(e.exam_name || 'Ortak Deneme').trim().toLowerCase();
-        const key = `name:${normalizedName}`;
+        const rowDate = String(e.exam_date || '').split('T')[0];
+        const key = e.defined_exam_id
+          ? `def:${Number(e.defined_exam_id)}`
+          : `name:${normalizedName}::date:${rowDate || 'no-date'}`;
         if (!grouped[key]) {
           grouped[key] = { examId: key, examName: e.exam_name || 'Ortak Deneme', rows: [] };
         }
@@ -3030,7 +3065,7 @@ function SchoolNetTrendChart({ config }) {
         return String(rows[0].created_at || '').split('T')[0];
       };
 
-      return Object.values(grouped)
+      const merged = Object.values(grouped)
         .map((g) => {
           const total = g.rows.reduce((sum, r) => sum + Number(r.exam_total_net || 0), 0);
           const count = g.rows.length;
@@ -3045,17 +3080,61 @@ function SchoolNetTrendChart({ config }) {
           };
         })
         .sort((a, b) => new Date(a.date) - new Date(b.date));
+
+      const allSubjectKeys = new Set();
+      Object.values(grouped).forEach((g) => {
+        g.rows.forEach((r) => {
+          const subj = parseSubjects(r.exam_subjects);
+          Object.keys(subj || {}).forEach((k) => allSubjectKeys.add(k));
+        });
+      });
+
+      const branchSeries = Array.from(allSubjectKeys).map((subjectKey) => {
+        const data = Object.values(grouped)
+          .map((g) => {
+            const date = resolveDate(g.rows);
+            let sum = 0;
+            let count = 0;
+            g.rows.forEach((r) => {
+              const subj = parseSubjects(r.exam_subjects);
+              const net = calcNet(subj?.[subjectKey]);
+              if (Number.isFinite(net)) {
+                sum += net;
+                count += 1;
+              }
+            });
+            return {
+              examId: g.examId,
+              examName: g.examName,
+              date,
+              dateLabel: date ? new Date(date).toLocaleDateString('tr-TR') : '-',
+              averageNet: count > 0 ? Number((sum / count).toFixed(2)) : null,
+              katilanOgrenciSayisi: count
+            };
+          })
+          .filter((r) => r.averageNet !== null)
+          .sort((a, b) => new Date(a.date) - new Date(b.date));
+
+        return {
+          key: subjectKey,
+          label: formatSubjectLabel(subjectKey),
+          data
+        };
+      }).filter((s) => s.data.length > 0);
+
+      return { merged, branchSeries };
     };
 
     setLoading(true);
     setError('');
     const mapped = buildTrendFromLocal();
-    setTrendData(mapped);
-    if (!mapped.length) {
+    setTrendData(mapped.merged);
+    setBranchTrendSeries(mapped.branchSeries);
+    if (!mapped.merged.length) {
       setError('Trend verisi alinamadi');
     }
     setLoading(false);
-  }, [exams]);
+  }, [exams, definedExams]);
 
   const canRenderChart = Boolean(
     ResponsiveContainer && LineChart && CartesianGrid && XAxis && YAxis && Tooltip && Line
@@ -3087,45 +3166,99 @@ function SchoolNetTrendChart({ config }) {
       )}
 
       {!loading && !error && canRenderChart && trendData.length > 0 && (
-        <div className="h-72 sm:h-80">
-          <ResponsiveContainer width="100%" height="100%">
-            <LineChart data={trendData} margin={{ top: 16, right: 16, left: 0, bottom: 8 }}>
-              <CartesianGrid strokeDasharray="3 3" stroke="#E2E8F0" />
-              <XAxis
-                dataKey="dateLabel"
-                tick={{ fill: '#64748B', fontSize: 12 }}
-                axisLine={{ stroke: '#E2E8F0' }}
-                tickLine={{ stroke: '#E2E8F0' }}
-              />
-              <YAxis
-                tick={{ fill: '#64748B', fontSize: 12 }}
-                axisLine={{ stroke: '#E2E8F0' }}
-                tickLine={{ stroke: '#E2E8F0' }}
-              />
-              <Tooltip
-                cursor={{ stroke: '#93C5FD', strokeWidth: 1 }}
-                content={({ active, payload }) => {
-                  if (!active || !payload || !payload.length) return null;
-                  const row = payload[0].payload;
-                  return (
-                    <div className="rounded-xl border border-slate-200 p-3 bg-white shadow-lg text-xs">
-                      <div className="font-semibold text-slate-900 mb-2">{row.examName} - {row.dateLabel}</div>
-                      <div className="text-slate-700">Ortalama Net: <span className="font-semibold">{row.averageNet.toFixed(2)}</span></div>
-                      <div className="text-slate-700">Katilim: <span className="font-semibold">{row.katilanOgrenciSayisi}</span></div>
-                    </div>
-                  );
-                }}
-              />
-              <Line
-                type="monotone"
-                dataKey="averageNet"
-                stroke="#2563EB"
-                strokeWidth={3}
-                dot={{ r: 4, strokeWidth: 2, fill: '#ffffff' }}
-                activeDot={{ r: 6 }}
-              />
-            </LineChart>
-          </ResponsiveContainer>
+        <div className="space-y-6">
+          <div className="h-72 sm:h-80">
+            <ResponsiveContainer width="100%" height="100%">
+              <LineChart data={trendData} margin={{ top: 16, right: 16, left: 0, bottom: 8 }}>
+                <CartesianGrid strokeDasharray="3 3" stroke="#E2E8F0" />
+                <XAxis
+                  dataKey="dateLabel"
+                  tick={{ fill: '#64748B', fontSize: 12 }}
+                  axisLine={{ stroke: '#E2E8F0' }}
+                  tickLine={{ stroke: '#E2E8F0' }}
+                />
+                <YAxis
+                  tick={{ fill: '#64748B', fontSize: 12 }}
+                  axisLine={{ stroke: '#E2E8F0' }}
+                  tickLine={{ stroke: '#E2E8F0' }}
+                />
+                <Tooltip
+                  cursor={{ stroke: '#93C5FD', strokeWidth: 1 }}
+                  content={({ active, payload }) => {
+                    if (!active || !payload || !payload.length) return null;
+                    const row = payload[0].payload;
+                    return (
+                      <div className="rounded-xl border border-slate-200 p-3 bg-white shadow-lg text-xs">
+                        <div className="font-semibold text-slate-900 mb-2">{row.examName} - {row.dateLabel}</div>
+                        <div className="text-slate-700">Ortalama Net: <span className="font-semibold">{row.averageNet.toFixed(2)}</span></div>
+                        <div className="text-slate-700">Katilim: <span className="font-semibold">{row.katilanOgrenciSayisi}</span></div>
+                      </div>
+                    );
+                  }}
+                />
+                <Line
+                  type="monotone"
+                  dataKey="averageNet"
+                  stroke="#2563EB"
+                  strokeWidth={3}
+                  dot={{ r: 4, strokeWidth: 2, fill: '#ffffff' }}
+                  activeDot={{ r: 6 }}
+                />
+              </LineChart>
+            </ResponsiveContainer>
+          </div>
+
+          <div>
+            <h4 className="text-sm font-semibold mb-3" style={{ color: config.text_color }}>Brans Bazli Net Trendleri</h4>
+            {branchTrendSeries.length === 0 ? (
+              <div className="rounded-xl border border-slate-200 p-4 text-sm" style={{ color: config.secondary_action_color }}>
+                Yeterli veri yok
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                {branchTrendSeries.map((series, idx) => (
+                  <div key={series.key} className="rounded-xl border border-slate-200 p-3">
+                    <div className="text-sm font-semibold mb-2" style={{ color: config.text_color }}>{series.label} Net Trend</div>
+                    {series.data.length === 0 ? (
+                      <div className="h-44 flex items-center justify-center text-xs" style={{ color: config.secondary_action_color }}>Yeterli veri yok</div>
+                    ) : (
+                      <div className="h-44">
+                        <ResponsiveContainer width="100%" height="100%">
+                          <LineChart data={series.data} margin={{ top: 8, right: 10, left: 0, bottom: 0 }}>
+                            <CartesianGrid strokeDasharray="3 3" stroke="#E2E8F0" />
+                            <XAxis dataKey="dateLabel" tick={{ fill: '#64748B', fontSize: 11 }} />
+                            <YAxis tick={{ fill: '#64748B', fontSize: 11 }} />
+                            <Tooltip
+                              content={({ active, payload }) => {
+                                if (!active || !payload || !payload.length) return null;
+                                const row = payload[0].payload;
+                                return (
+                                  <div className="rounded-xl border border-slate-200 p-3 bg-white shadow-lg text-xs">
+                                    <div className="font-semibold text-slate-900 mb-1">{series.label}</div>
+                                    <div className="text-slate-700">Tarih: <span className="font-semibold">{row.dateLabel}</span></div>
+                                    <div className="text-slate-700">Ortalama Net: <span className="font-semibold">{row.averageNet.toFixed(2)}</span></div>
+                                  </div>
+                                );
+                              }}
+                            />
+                            <Line
+                              type="monotone"
+                              dataKey="averageNet"
+                              stroke={['#2563EB', '#16A34A', '#9333EA', '#F59E0B', '#DC2626', '#0891B2'][idx % 6]}
+                              strokeWidth={2.5}
+                              dot={{ r: 3, strokeWidth: 1.5, fill: '#ffffff' }}
+                              activeDot={{ r: 5 }}
+                              connectNulls
+                            />
+                          </LineChart>
+                        </ResponsiveContainer>
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
         </div>
       )}
     </section>
