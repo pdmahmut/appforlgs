@@ -462,7 +462,7 @@ function StudentsPage({ config, onSelectStudent }) {
 }
 
 function StudentDetailPage({ config, studentId, onBack }) {
-  const { students, exams, quickStudies } = useAppData();
+  const { students, exams, quickStudies, definedExams } = useAppData();
   const [detailModal, setDetailModal] = useState(null);
   const [editModal, setEditModal] = useState(false);
   const [confirmDel, setConfirmDel] = useState(false);
@@ -533,6 +533,19 @@ function StudentDetailPage({ config, studentId, onBack }) {
   };
 
   const getExamDateText = (exam) => {
+    if (exam?.defined_exam_id) {
+      const def = (definedExams || []).find((d) => Number(d.__backendId) === Number(exam.defined_exam_id));
+      if (def?.exam_date) return String(def.exam_date).split('T')[0];
+    }
+    const normalizedName = String(exam?.exam_name || '').trim().toLowerCase();
+    if (normalizedName) {
+      const byName = (definedExams || [])
+        .filter((d) => String(d.exam_name || '').trim().toLowerCase() === normalizedName)
+        .sort((a, b) => new Date(a.exam_date || 0) - new Date(b.exam_date || 0));
+      if (byName.length > 0 && byName[0].exam_date) {
+        return String(byName[0].exam_date).split('T')[0];
+      }
+    }
     const raw = String(exam?.exam_date || exam?.created_at || '');
     const m = raw.match(/^(\d{4})-(\d{2})-(\d{2})/);
     if (m) return `${m[1]}-${m[2]}-${m[3]}`;
