@@ -1,26 +1,23 @@
-const http = require('http');
-const fs = require('fs');
-const path = require('path');
+require("dotenv").config();
+const express = require("express");
+const path = require("path");
+const dashboardRoutes = require("./server/routes/dashboardRoutes");
 
-const server = http.createServer((req, res) => {
-  if (req.url === '/' || req.url === '/index.html') {
-    const filePath = path.join(__dirname, 'index.html');
-    fs.readFile(filePath, (err, content) => {
-      if (err) {
-        res.writeHead(500, { 'Content-Type': 'text/plain' });
-        res.end('Internal Server Error');
-      } else {
-        res.writeHead(200, { 'Content-Type': 'text/html' });
-        res.end(content);
-      }
-    });
-  } else {
-    res.writeHead(404, { 'Content-Type': 'text/plain' });
-    res.end('Not Found');
-  }
+const app = express();
+const PORT = Number(process.env.PORT || 3000);
+
+app.use(express.json());
+app.use("/dashboard", dashboardRoutes);
+app.get("/health", (req, res) => res.status(200).json({ ok: true }));
+
+app.use(express.static(__dirname, {
+  index: false,
+}));
+
+app.get("/", (req, res) => {
+  res.sendFile(path.join(__dirname, "index.html"));
 });
 
-const PORT = process.env.PORT || 3000;
-server.listen(PORT, () => {
-  console.log(`Server running at http://localhost:${PORT}`);
+app.listen(PORT, () => {
+  console.log(`Web + API server running at http://localhost:${PORT}`);
 });

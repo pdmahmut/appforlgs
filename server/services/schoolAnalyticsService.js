@@ -47,7 +47,20 @@ function normalizeResult(raw) {
     matematikNet: toNumber(pick(raw, ["matematikNet", "matematik_net"])),
     fenNet: toNumber(pick(raw, ["fenNet", "fen_net"])),
     sosyalNet: toNumber(pick(raw, ["sosyalNet", "sosyal_net"])),
+    inkilapNet: toNumber(pick(raw, ["inkilapNet", "inkilap_net", "sosyalNet", "sosyal_net"])),
+    ingilizceNet: toNumber(pick(raw, ["ingilizceNet", "ingilizce_net"])),
+    dinNet: toNumber(pick(raw, ["dinNet", "din_net"])),
+    paragrafNet: toNumber(pick(raw, ["paragrafNet", "paragraf_net"])),
     toplamNet: toNumber(pick(raw, ["toplamNet", "toplam_net"])),
+  };
+}
+
+function normalizeStudent(raw) {
+  const first = pick(raw, ["name", "adSoyad", "ad_soyad"], "");
+  const alt = `${pick(raw, ["studentName", "student_name"], "")} ${pick(raw, ["studentSurname", "student_surname"], "")}`.trim();
+  return {
+    id: String(pick(raw, ["id", "__backendId"])),
+    name: first || alt || "Ogrenci",
   };
 }
 
@@ -99,6 +112,18 @@ function emptyPayload() {
       "40-60": 0,
       "60+": 0,
     },
+    gelisimTrendi: {
+      status: "veri_yok",
+      text: "Trend icin en az 3 deneme gerekli",
+    },
+    topYukselenler: [],
+    riskliOgrenciler: [],
+    buyukDususler: [],
+    alanOzeti: {
+      strongest: null,
+      weakest: null,
+      tumBranslar: [],
+    },
   };
 }
 
@@ -118,6 +143,8 @@ async function getSchoolAnalytics() {
     examDelegate.findMany(),
     resultDelegate.findMany(),
   ]);
+  const students = studentsRaw.map(normalizeStudent);
+  const studentById = new Map(students.map((s) => [String(s.id), s]));
 
   const exams = examsRaw.map(normalizeExam).filter((item) => item.isCommonExam);
   if (!exams.length) return emptyPayload();
@@ -159,6 +186,65 @@ async function getSchoolAnalytics() {
     ? round2((katilanOgrenciSayisi / toplamOgrenciSayisi) * 100)
     : 0;
 
+  const resultExamMeta = new Map(exams.map((e) => [String(e.id), e]));
+  const byStudent = new Map();
+  for (const r of allCommonResults) {
+    const sid = String(r.studentId);
+    if (!byStudent.has(sid)) byStudent.set(sid, []);
+    byStudent.get(sid).push(r);
+  }
+  const studentDiffs = [];
+  for (const [studentId, list] of byStudent.entries()) {
+    const sorted = list
+      .slice()
+      .sort((a, b) => new Date(resultExamMeta.get(String(a.examId))?.date || 0) - new Date(resultExamMeta.get(String(b.examId))?.date || 0));
+    if (sorted.length < 2) continue;
+    const last = sorted[sorted.length - 1];
+    const prev = sorted[sorted.length - 2];
+    const diff = round2(toNumber(last.toplamNet) - toNumber(prev.toplamNet));
+    const studentName = studentById.get(studentId)?.name || "Ogrenci";
+    studentDiffs.push({
+      studentId,
+      name: studentName,
+      diff,
+      lastNet: toNumber(last.toplamNet),
+      prevNet: toNumber(prev.toplamNet),
+    });
+  }
+  const topYukselenler = studentDiffs.filter((x) => x.diff > 0).sort((a, b) => b.diff - a.diff);
+  const riskliOgrenciler = studentDiffs.filter((x) => x.diff < 0).sort((a, b) => a.diff - b.diff);
+  const buyukDususler = studentDiffs.filter((x) => x.diff <= -5).sort((a, b) => a.diff - b.diff);
+
+  const gelisimTrendi = (() => {
+    if (netTrend.length < 3) {
+      return { status: "veri_yok", text: "Trend icin en az 3 deneme gerekli" };
+    }
+    const last3 = netTrend.slice(-3).map((x) => toNumber(x.averageNet));
+    if (last3[0] < last3[1] && last3[1] < last3[2]) return { status: "yukselis", text: "Son 3 denemede yukselis trendi" };
+    if (last3[0] > last3[1] && last3[1] > last3[2]) return { status: "dusus", text: "Son 3 denemede dusus trendi" };
+    return { status: "kararsiz", text: "Son 3 denemede kararsiz trend" };
+  })();
+
+  const branchLabelMap = {
+    turkceNet: "Turkce",
+    matematikNet: "Matematik",
+    fenNet: "Fen",
+    sosyalNet: "Sosyal",
+    inkilapNet: "Inkilap",
+    ingilizceNet: "Ingilizce",
+    dinNet: "Din",
+    paragrafNet: "Paragraf",
+  };
+  const branchKeys = Object.keys(sonDenemeSonuclari[0] || {}).filter((k) => k.endsWith("Net") && k !== "toplamNet");
+  const branchAverages = branchKeys.map((key) => ({
+    key,
+    label: branchLabelMap[key] || key,
+    avg: averageResults(sonDenemeSonuclari, key),
+  }));
+  branchAverages.sort((a, b) => b.avg - a.avg);
+  const strongest = branchAverages[0] || null;
+  const weakest = branchAverages[branchAverages.length - 1] || null;
+
   return {
     okulGenelOrtalamaNet: averageResults(allCommonResults, "toplamNet"),
     sonDenemeOrtalamaNet: averageResults(sonDenemeSonuclari, "toplamNet"),
@@ -176,6 +262,15 @@ async function getSchoolAnalytics() {
       oran: katilimOrani,
     },
     riskDagilimi: buildRiskDistribution(sonDenemeSonuclari),
+    gelisimTrendi,
+    topYukselenler,
+    riskliOgrenciler,
+    buyukDususler,
+    alanOzeti: {
+      strongest,
+      weakest,
+      tumBranslar: branchAverages,
+    },
   };
 }
 

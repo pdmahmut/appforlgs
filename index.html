@@ -3288,6 +3288,9 @@ function DashboardPage({ config, onSelectStudent, onNavigate }) {
   const { students, exams, quickStudies, definedExams, allData } = useAppData();
   const [showRiskModal, setShowRiskModal] = useState(false);
   const [showDropModal, setShowDropModal] = useState(false);
+  const [showTopImproversModal, setShowTopImproversModal] = useState(false);
+  const [showSubjectModal, setShowSubjectModal] = useState(false);
+  const [dashboardApiData, setDashboardApiData] = useState(null);
   const chartRef = useRef(null);
   const chartInstanceRef = useRef(null);
   const radarRef = useRef(null);
@@ -3393,77 +3396,120 @@ function DashboardPage({ config, onSelectStudent, onNavigate }) {
       .sort((a, b) => a.diff - b.diff); // most negative first
   }, [studentDiffs]);
 
-  const bestImprover = studentDiffs.length > 0
-    ? studentDiffs.reduce((a, b) => (b.diff > a.diff ? b : a))
-    : null;
-
-  const weakestSubject = useMemo(() => {
-    if (!ortakExams || ortakExams.length === 0) return null;
-    const subjects = ['turkce', 'matematik', 'fen', 'inkilap', 'ingilizce', 'din'];
+  const lastExamSubjectPerformance = useMemo(() => {
+    if (!lastGroup || !lastGroup.records || lastGroup.records.length === 0) return null;
     const hasStudentData = Object.keys(studentMap).length > 0;
+    const labelMap = {
+      turkce: 'Turkce',
+      matematik: 'Matematik',
+      fen: 'Fen',
+      inkilap: 'Inkilap',
+      ingilizce: 'Ingilizce',
+      din: 'Din',
+      paragraf: 'Paragraf'
+    };
     const totals = {};
     const counts = {};
-    subjects.forEach(s => { totals[s] = 0; counts[s] = 0; });
-    ortakExams.forEach(e => {
-      // Filter: only include if student exists (only when student data is loaded)
+    lastGroup.records.forEach((e) => {
       if (hasStudentData && !studentMap[String(e.student_id)]) return;
       let subj = {};
       try { subj = typeof e.exam_subjects === 'string' ? JSON.parse(e.exam_subjects) : e.exam_subjects || {}; } catch {}
-      subjects.forEach(s => {
-        if (subj[s]) {
-          totals[s] += calcNet(subj[s]);
-          counts[s] += 1;
-        }
+      Object.keys(subj || {}).forEach((key) => {
+        if (!subj[key]) return;
+        totals[key] = (totals[key] || 0) + calcNet(subj[key]);
+        counts[key] = (counts[key] || 0) + 1;
       });
     });
-    let minSubj = null;
-    let minAvg = Infinity;
-    subjects.forEach(s => {
-      if (counts[s] > 0) {
-        const avg = totals[s] / counts[s];
-        if (avg < minAvg) { minAvg = avg; minSubj = s; }
-      }
-    });
-    if (!minSubj) return null;
-    const labelMap = { turkce: 'Turkce', matematik: 'Matematik', fen: 'Fen', inkilap: 'Sosyal', ingilizce: 'Ingilizce' };
-    return { name: labelMap[minSubj], avg: minAvg };
-  }, [ortakExams, studentMap]);
 
-  const growthPercent = useMemo(() => {
-    if (groupedExams.length < 6) return null;
-    const hasStudentData = Object.keys(studentMap).length > 0;
-    const first = groupedExams.slice(0, 3);
-    const last = groupedExams.slice(-3);
-    const getAvgByStudent = (groups) => {
-      const map = {};
-      const count = {};
-      groups.forEach(g => {
-        g.records.forEach(r => {
-          // Filter: only include if student exists (only when student data is loaded)
-          if (hasStudentData && !studentMap[String(r.student_id)]) return;
-          const id = String(r.student_id);
-          map[id] = (map[id] || 0) + parseFloat(r.exam_total_net || 0);
-          count[id] = (count[id] || 0) + 1;
-        });
-      });
-      const avg = {};
-      Object.keys(map).forEach(id => { avg[id] = map[id] / count[id]; });
-      return avg;
+    const items = Object.keys(totals)
+      .filter((key) => counts[key] > 0)
+      .map((key) => ({
+        key,
+        label: labelMap[key] || key,
+        avg: totals[key] / counts[key]
+      }))
+      .sort((a, b) => b.avg - a.avg);
+
+    if (items.length === 0) return null;
+    return {
+      strongest: items[0],
+      weakest: items[items.length - 1],
+      sorted: items
     };
-    const firstAvg = getAvgByStudent(first);
-    const lastAvg = getAvgByStudent(last);
-    const pcts = [];
-    Object.keys(lastAvg).forEach(id => {
-      if (firstAvg[id] && firstAvg[id] > 0) {
-        pcts.push(((lastAvg[id] - firstAvg[id]) / firstAvg[id]) * 100);
-      }
-    });
-    if (pcts.length === 0) return null;
-    return pcts.reduce((s, v) => s + v, 0) / pcts.length;
+  }, [lastGroup, studentMap]);
+
+  const last3Trend = useMemo(() => {
+    if (!groupedExams || groupedExams.length < 3) return null;
+    const last3 = groupedExams.slice(-3);
+    const avgs = last3.map((g) => classAvg(g));
+    const [a, b, c] = avgs;
+    if (a < b && b < c) {
+      return { status: 'yukselis', icon: '↑', color: '#16a34a', text: 'Son 3 denemede yukselis trendi', values: avgs };
+    }
+    if (a > b && b > c) {
+      return { status: 'dusus', icon: '↓', color: '#ef4444', text: 'Son 3 denemede dusus trendi', values: avgs };
+    }
+    return { status: 'kararsiz', icon: '→', color: '#ca8a04', text: 'Son 3 denemede kararsiz trend', values: avgs };
   }, [groupedExams]);
+
+  const topImprovers = useMemo(() => {
+    return (studentDiffs || [])
+      .filter((s) => Number.isFinite(s?.diff) && s.diff > 0)
+      .sort((a, b) => b.diff - a.diff);
+  }, [studentDiffs]);
+
+  const apiNetTrend = Array.isArray(dashboardApiData?.netTrend) ? dashboardApiData.netTrend : [];
+  const effectiveLastAvg = Number.isFinite(Number(dashboardApiData?.sonDenemeOrtalamaNet))
+    ? Number(dashboardApiData.sonDenemeOrtalamaNet)
+    : lastAvg;
+  const effectiveAvgTrend = apiNetTrend.length >= 2
+    ? Number(apiNetTrend[apiNetTrend.length - 1].averageNet || 0) - Number(apiNetTrend[apiNetTrend.length - 2].averageNet || 0)
+    : avgTrend;
+  const effectiveRiskStudents = Array.isArray(dashboardApiData?.riskliOgrenciler) && dashboardApiData.riskliOgrenciler.length
+    ? dashboardApiData.riskliOgrenciler
+    : riskStudents;
+  const effectiveBigDropStudents = Array.isArray(dashboardApiData?.buyukDususler) && dashboardApiData.buyukDususler.length
+    ? dashboardApiData.buyukDususler
+    : bigDropStudents;
+  const effectiveTopImprovers = Array.isArray(dashboardApiData?.topYukselenler) && dashboardApiData.topYukselenler.length
+    ? dashboardApiData.topYukselenler
+    : topImprovers;
+  const effectiveSubjectPerformance = dashboardApiData?.alanOzeti?.strongest
+    ? {
+        strongest: dashboardApiData.alanOzeti.strongest,
+        weakest: dashboardApiData.alanOzeti.weakest,
+        sorted: Array.isArray(dashboardApiData.alanOzeti.tumBranslar) ? dashboardApiData.alanOzeti.tumBranslar : [],
+      }
+    : lastExamSubjectPerformance;
+  const effectiveLast3Trend = dashboardApiData?.gelisimTrendi?.status
+    ? ({
+        yukselis: { status: 'yukselis', icon: '↑', color: '#16a34a', text: dashboardApiData.gelisimTrendi.text || 'Son 3 denemede yukselis trendi' },
+        dusus: { status: 'dusus', icon: '↓', color: '#ef4444', text: dashboardApiData.gelisimTrendi.text || 'Son 3 denemede dusus trendi' },
+        kararsiz: { status: 'kararsiz', icon: '→', color: '#ca8a04', text: dashboardApiData.gelisimTrendi.text || 'Son 3 denemede kararsiz trend' },
+        veri_yok: null,
+      }[dashboardApiData.gelisimTrendi.status] || null)
+    : last3Trend;
 
   const hasStudents = (students || []).length > 0;
   const hasOrtak = ortakExams.length > 0;
+
+  useEffect(() => {
+    let mounted = true;
+    const fetchDashboardAnalytics = async () => {
+      try {
+        const res = await fetch('/dashboard/school-analytics');
+        if (!res.ok) return;
+        const json = await res.json();
+        if (!mounted) return;
+        if (json && json.success && json.data) {
+          setDashboardApiData(json.data);
+        }
+      } catch (_) {
+      }
+    };
+    fetchDashboardAnalytics();
+    return () => { mounted = false; };
+  }, []);
 
   const now = new Date();
   const dayMs = 24 * 60 * 60 * 1000;
@@ -3582,73 +3628,11 @@ function DashboardPage({ config, onSelectStudent, onNavigate }) {
     return items.sort((a, b) => b.date - a.date).slice(0, 6);
   }, [exams, quickStudies, studentNameById]);
 
-  const renderValue = (val, emptyText) => {
-    if (!hasStudents) return 'Henuz ogrenci eklenmemis';
-    if (!hasOrtak) return 'Henuz ortak deneme girilmemis';
-    return val ?? emptyText;
-  };
-
-  const cards = [
-    {
-      title: 'Genel Ortalama Net',
-      icon: 'N',
-      color: '#3498db',
-      value: hasOrtak ? lastAvg.toFixed(1) : null,
-      sub: lastGroup && prevGroup
-        ? (avgTrend > 0 ? `+${avgTrend.toFixed(1)}` : avgTrend < 0 ? `${avgTrend.toFixed(1)}` : '0.0')
-        : 'Trend icin daha fazla deneme gerekli',
-      subColor: avgTrend > 0 ? '#16a34a' : avgTrend < 0 ? '#ef4444' : '#64748b',
-      clickable: false
-    },
-    {
-      title: 'Gelisim Trendi',
-      icon: 'G',
-      color: growthPercent !== null && growthPercent < 0 ? '#e74c3c' : '#2ecc71',
-      value: growthPercent !== null ? `%${Math.abs(growthPercent).toFixed(1)} ${growthPercent >= 0 ? 'artis' : 'dusus'}` : null,
-      sub: '(son 3 deneme ortalamasi)',
-      subColor: '#94a3b8',
-      clickable: false
-    },
-    {
-      title: 'Risk Grubu',
-      icon: 'R',
-      color: '#f39c12',
-      value: hasOrtak ? `${riskStudents.length} ogrenci` : null,
-      sub: 'son 2 denemede dusus',
-      subColor: '#d97706',
-      clickable: true,
-      onClick: () => setShowRiskModal(true)
-    },
-    {
-      title: 'En Zayif Alan',
-      icon: 'Z',
-      color: '#9b59b6',
-      value: weakestSubject ? weakestSubject.name : null,
-      sub: weakestSubject ? `Ort: ${weakestSubject.avg.toFixed(1)} net` : 'Veri yok',
-      subColor: '#7c3aed',
-      clickable: false
-    },
-    {
-      title: 'Bu Ayin Yukseleni',
-      icon: 'Y',
-      color: '#27ae60',
-      value: bestImprover ? bestImprover.name : null,
-      sub: bestImprover ? `+${bestImprover.diff.toFixed(1)} net` : 'Veri yok',
-      subColor: '#16a34a',
-      clickable: true,
-      onClick: () => bestImprover && onSelectStudent && onSelectStudent(bestImprover.studentId)
-    },
-    {
-      title: 'Buyuk Dusus',
-      icon: 'D',
-      color: '#e74c3c',
-      value: hasOrtak ? `${bigDropStudents.length} ogrenci` : null,
-      sub: 'son denemede -5 net ve uzeri',
-      subColor: '#ef4444',
-      clickable: true,
-      onClick: () => setShowDropModal(true)
-    }
-  ];
+  const emptyMessage = !hasStudents
+    ? 'Henuz ogrenci eklenmemis'
+    : !hasOrtak
+      ? 'Henuz ortak deneme girilmemis'
+      : null;
 
   const lastExamMeta = useMemo(() => {
     if (!lastGroup) return null;
@@ -4003,23 +3987,105 @@ function DashboardPage({ config, onSelectStudent, onNavigate }) {
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-        {!loading && cards.map((c, i) => (
-          <div
-            key={c.title}
-            onClick={c.clickable ? c.onClick : undefined}
-            className={`rounded-2xl p-6 border border-gray-100 transition-all ${c.clickable ? 'cursor-pointer hover:shadow-lg hover:scale-[1.03]' : ''} slide-up`}
-            style={{ background: config.surface_color, animationDelay: `${i * 0.08}s` }}
-          >
-            <div className="flex items-start justify-between mb-2">
-              <div className="text-sm font-semibold" style={{ color: '#64748b' }}>{c.title}</div>
-              <div className="text-2xl">{c.icon}</div>
+        {!loading && (
+          <>
+            <div className="rounded-2xl p-6 border border-blue-100 shadow-sm hover:shadow-lg hover:scale-[1.02] transition-all slide-up" style={{ background: 'linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%)', animationDelay: '0s' }}>
+              <div className="flex items-start justify-between mb-2">
+                <div className="text-sm font-bold" style={{ color: '#1e3a8a' }}>Genel Ortalama Net</div>
+                <div className="text-2xl">📊</div>
+              </div>
+              <div className="text-3xl font-extrabold" style={{ color: '#1d4ed8' }}>
+                {emptyMessage ? '-' : effectiveLastAvg.toFixed(1)}
+              </div>
+              <div className="text-xs mt-2" style={{ color: effectiveAvgTrend > 0 ? '#15803d' : effectiveAvgTrend < 0 ? '#dc2626' : '#64748b' }}>
+                {emptyMessage ? emptyMessage : ((lastGroup && prevGroup) || apiNetTrend.length >= 2 ? (effectiveAvgTrend > 0 ? `↑ +${effectiveAvgTrend.toFixed(1)}` : effectiveAvgTrend < 0 ? `↓ ${effectiveAvgTrend.toFixed(1)}` : '→ 0.0') : 'Trend icin daha fazla deneme gerekli')}
+              </div>
             </div>
-            <div className="text-3xl font-bold" style={{ color: c.color }}>
-              {renderValue(c.value, '-')}
+
+            <div className="rounded-2xl p-6 border border-green-100 shadow-sm hover:shadow-lg hover:scale-[1.02] transition-all slide-up" style={{ background: 'linear-gradient(135deg, #ecfdf5 0%, #dcfce7 100%)', animationDelay: '0.08s' }}>
+              <div className="flex items-start justify-between mb-2">
+                <div className="text-sm font-bold" style={{ color: '#14532d' }}>Gelisim Trendi</div>
+                <div className="text-2xl">{effectiveLast3Trend ? effectiveLast3Trend.icon : '📈'}</div>
+              </div>
+              <div className="text-2xl font-extrabold" style={{ color: effectiveLast3Trend ? effectiveLast3Trend.color : '#64748b' }}>
+                {emptyMessage ? '-' : (effectiveLast3Trend ? (effectiveLast3Trend.status === 'yukselis' ? 'Yukselis' : effectiveLast3Trend.status === 'dusus' ? 'Dusus' : 'Kararsiz') : 'Veri yetersiz')}
+              </div>
+              <div className="text-xs mt-2" style={{ color: '#64748b' }}>
+                {emptyMessage ? emptyMessage : (effectiveLast3Trend ? effectiveLast3Trend.text : 'Trend icin en az 3 deneme gerekli')}
+              </div>
             </div>
-            <div className="text-xs mt-2" style={{ color: c.subColor || '#94a3b8' }}>{c.sub}</div>
-          </div>
-        ))}
+
+            <div
+              onClick={() => setShowRiskModal(true)}
+              className="rounded-2xl p-6 border border-amber-100 shadow-sm hover:shadow-lg hover:scale-[1.02] transition-all slide-up cursor-pointer"
+              style={{ background: 'linear-gradient(135deg, #fffbeb 0%, #fef3c7 100%)', animationDelay: '0.16s' }}
+            >
+              <div className="flex items-start justify-between mb-2">
+                <div className="text-sm font-bold" style={{ color: '#92400e' }}>Risk Grubu</div>
+                <div className="text-2xl">⚠️</div>
+              </div>
+              <div className="text-3xl font-extrabold" style={{ color: '#b45309' }}>
+                {emptyMessage ? '-' : `${effectiveRiskStudents.length} ogrenci`}
+              </div>
+              <div className="text-xs mt-2" style={{ color: '#92400e' }}>Son 2 denemede dusus</div>
+            </div>
+
+            <div
+              onClick={() => setShowSubjectModal(true)}
+              className="rounded-2xl p-6 border border-violet-100 shadow-sm hover:shadow-lg hover:scale-[1.02] transition-all slide-up cursor-pointer"
+              style={{ background: 'linear-gradient(135deg, #f5f3ff 0%, #ede9fe 100%)', animationDelay: '0.24s' }}
+            >
+              <div className="flex items-start justify-between mb-2">
+                <div className="text-sm font-bold" style={{ color: '#5b21b6' }}>Alan Ozeti</div>
+                <div className="text-2xl">🧠</div>
+              </div>
+              <div className="text-sm font-semibold" style={{ color: '#16a34a' }}>
+                Guclu: {emptyMessage ? '-' : (effectiveSubjectPerformance?.strongest?.label || '-')} {effectiveSubjectPerformance?.strongest ? `(${effectiveSubjectPerformance.strongest.avg.toFixed(1)})` : ''}
+              </div>
+              <div className="text-sm font-semibold mt-1" style={{ color: '#dc2626' }}>
+                Zayif: {emptyMessage ? '-' : (effectiveSubjectPerformance?.weakest?.label || '-')} {effectiveSubjectPerformance?.weakest ? `(${effectiveSubjectPerformance.weakest.avg.toFixed(1)})` : ''}
+              </div>
+              <div className="text-xs mt-2" style={{ color: '#6d28d9' }}>Son deneme brans ortalamalari</div>
+            </div>
+
+            <div className="rounded-2xl p-6 border border-emerald-100 shadow-sm hover:shadow-lg hover:scale-[1.02] transition-all slide-up" style={{ background: 'linear-gradient(135deg, #ecfdf5 0%, #d1fae5 100%)', animationDelay: '0.32s' }}>
+              <div className="flex items-start justify-between mb-2">
+                <div className="text-sm font-bold" style={{ color: '#065f46' }}>Bu Ayin Top 5 Yukseleni</div>
+                <div className="text-2xl">🔥</div>
+              </div>
+              <div className="space-y-1 min-h-[88px]">
+                {emptyMessage ? (
+                  <div className="text-sm" style={{ color: '#6b7280' }}>{emptyMessage}</div>
+                ) : effectiveTopImprovers.length === 0 ? (
+                  <div className="text-sm" style={{ color: '#6b7280' }}>Artis gosteren ogrenci yok</div>
+                ) : effectiveTopImprovers.slice(0, 5).map((s) => (
+                  <div key={s.studentId} className="flex items-center justify-between text-sm">
+                    <button className="text-left hover:underline" style={{ color: '#065f46' }} onClick={() => onSelectStudent && onSelectStudent(s.studentId)}>{s.name}</button>
+                    <span className="font-semibold" style={{ color: '#16a34a' }}>+{s.diff.toFixed(1)}</span>
+                  </div>
+                ))}
+              </div>
+              {effectiveTopImprovers.length > 5 && (
+                <button className="text-xs mt-2 underline" style={{ color: '#047857' }} onClick={() => setShowTopImproversModal(true)}>Tumunu Gor</button>
+              )}
+            </div>
+
+            <div
+              onClick={() => setShowDropModal(true)}
+              className="rounded-2xl p-6 border border-rose-100 shadow-sm hover:shadow-lg hover:scale-[1.02] transition-all slide-up cursor-pointer"
+              style={{ background: 'linear-gradient(135deg, #fef2f2 0%, #fee2e2 100%)', animationDelay: '0.4s' }}
+            >
+              <div className="flex items-start justify-between mb-2">
+                <div className="text-sm font-bold" style={{ color: '#991b1b' }}>Buyuk Dusus</div>
+                <div className="text-2xl">📉</div>
+              </div>
+              <div className="text-3xl font-extrabold" style={{ color: '#dc2626' }}>
+                {emptyMessage ? '-' : `${effectiveBigDropStudents.length} ogrenci`}
+              </div>
+              <div className="text-xs mt-2" style={{ color: '#991b1b' }}>Son denemede -5 net ve uzeri</div>
+            </div>
+          </>
+        )}
         {loading && Array.from({ length: 6 }).map((_, i) => (
           <div key={`skeleton-${i}`} className="rounded-2xl p-6 border border-gray-100 animate-pulse" style={{ background: config.surface_color }}>
             <div className="h-4 w-24 rounded bg-gray-200 mb-3"></div>
@@ -4108,6 +4174,58 @@ function DashboardPage({ config, onSelectStudent, onNavigate }) {
         </div>
       </div>
 
+      {showTopImproversModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center modal-backdrop" style={{background:'rgba(0,0,0,0.4)'}}>
+          <div className="rounded-2xl shadow-2xl p-6 max-w-lg w-full mx-4 fade-in" style={{background: config.surface_color}}>
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-lg font-bold" style={{ color: config.text_color }}>Top Yukselenler</h3>
+              <button onClick={() => setShowTopImproversModal(false)} className="p-1.5 rounded-lg hover:bg-gray-100"><Icons.X size={18}/></button>
+            </div>
+            {effectiveTopImprovers.length === 0 ? (
+              <div className="text-sm" style={{ color: config.secondary_action_color }}>Artis gosteren ogrenci yok</div>
+            ) : (
+              <div className="space-y-2 max-h-[60vh] overflow-auto pr-1">
+                {effectiveTopImprovers.map((s, i) => (
+                  <div key={`${s.studentId}-${i}`} className="flex items-center justify-between px-3 py-2 rounded-lg" style={{ background: '#F8FAFC' }}>
+                    <button className="text-sm text-left hover:underline" style={{ color: config.text_color }} onClick={() => { setShowTopImproversModal(false); onSelectStudent && onSelectStudent(s.studentId); }}>{s.name}</button>
+                    <div className="text-xs font-semibold" style={{ color: '#16a34a' }}>+{s.diff.toFixed(1)} net</div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
+      {showSubjectModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center modal-backdrop" style={{background:'rgba(0,0,0,0.4)'}}>
+          <div className="rounded-2xl shadow-2xl p-6 max-w-lg w-full mx-4 fade-in" style={{background: config.surface_color}}>
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-lg font-bold" style={{ color: config.text_color }}>Son Deneme Brans Ortalamalari</h3>
+              <button onClick={() => setShowSubjectModal(false)} className="p-1.5 rounded-lg hover:bg-gray-100"><Icons.X size={18}/></button>
+            </div>
+            {!effectiveSubjectPerformance || !effectiveSubjectPerformance.sorted.length ? (
+              <div className="text-sm" style={{ color: config.secondary_action_color }}>Veri yok</div>
+            ) : (
+              <div className="space-y-2">
+                {effectiveSubjectPerformance.sorted.map((item) => {
+                  const isStrong = item.key === effectiveSubjectPerformance.strongest.key;
+                  const isWeak = item.key === effectiveSubjectPerformance.weakest.key;
+                  return (
+                    <div key={item.key} className="flex items-center justify-between px-3 py-2 rounded-lg" style={{ background: isStrong ? '#ecfdf5' : isWeak ? '#fef2f2' : '#F8FAFC' }}>
+                      <div className="text-sm" style={{ color: config.text_color }}>
+                        {item.label} {isStrong ? '(Guclu)' : isWeak ? '(Zayif)' : ''}
+                      </div>
+                      <div className="text-xs font-semibold" style={{ color: isStrong ? '#166534' : isWeak ? '#b91c1c' : '#334155' }}>{item.avg.toFixed(1)} net</div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
       {showRiskModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center modal-backdrop" style={{background:'rgba(0,0,0,0.4)'}}>
           <div className="rounded-2xl shadow-2xl p-6 max-w-lg w-full mx-4 fade-in" style={{background: config.surface_color}}>
@@ -4115,11 +4233,11 @@ function DashboardPage({ config, onSelectStudent, onNavigate }) {
               <h3 className="text-lg font-bold" style={{ color: config.text_color }}>Riskli Ogrenciler</h3>
               <button onClick={() => setShowRiskModal(false)} className="p-1.5 rounded-lg hover:bg-gray-100"><Icons.X size={18}/></button>
             </div>
-            {riskStudents.length === 0 ? (
+            {effectiveRiskStudents.length === 0 ? (
               <div className="text-sm" style={{ color: config.secondary_action_color }}>Riskli ogrenci bulunamadi</div>
             ) : (
               <div className="space-y-2">
-                {riskStudents.map(s => (
+                {effectiveRiskStudents.map(s => (
                   <div key={s.studentId} className="flex items-center justify-between px-3 py-2 rounded-lg" style={{ background: '#F8FAFC' }}>
                     <div className="text-sm" style={{ color: config.text_color }}>{s.name}</div>
                     <div className="text-xs" style={{ color: '#ef4444' }}>{s.prevNet.toFixed(1)} -> {s.lastNet.toFixed(1)} ({s.diff.toFixed(1)})</div>
@@ -4138,11 +4256,11 @@ function DashboardPage({ config, onSelectStudent, onNavigate }) {
               <h3 className="text-lg font-bold" style={{ color: config.text_color }}>Buyuk Dusus Yasayanlar</h3>
               <button onClick={() => setShowDropModal(false)} className="p-1.5 rounded-lg hover:bg-gray-100"><Icons.X size={18}/></button>
             </div>
-            {bigDropStudents.length === 0 ? (
+            {effectiveBigDropStudents.length === 0 ? (
               <div className="text-sm" style={{ color: config.secondary_action_color }}>Buyuk dusus yasayan ogrenci yok</div>
             ) : (
               <div className="space-y-2">
-                {bigDropStudents.map(s => (
+                {effectiveBigDropStudents.map(s => (
                   <div key={s.studentId} className="flex items-center justify-between px-3 py-2 rounded-lg" style={{ background: '#F8FAFC' }}>
                     <div className="text-sm" style={{ color: config.text_color }}>{s.name}</div>
                     <div className="text-xs" style={{ color: '#ef4444' }}>{s.prevNet.toFixed(1)} -> {s.lastNet.toFixed(1)} ({s.diff.toFixed(1)})</div>
