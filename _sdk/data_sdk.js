@@ -98,6 +98,9 @@
         ing_d: row.ing_d,
         ing_y: row.ing_y,
         ing_b: row.ing_b,
+        paragraf_d: row.paragraf_d ?? row.par_d ?? 0,
+        paragraf_y: row.paragraf_y ?? row.par_y ?? 0,
+        paragraf_b: row.paragraf_b ?? row.par_b ?? 0,
         created_at: row.created_at,
       };
     }
@@ -286,9 +289,19 @@
             ing_d: data.ing_d || 0,
             ing_y: data.ing_y || 0,
             ing_b: data.ing_b || 0,
+            paragraf_d: data.paragraf_d || 0,
+            paragraf_y: data.paragraf_y || 0,
+            paragraf_b: data.paragraf_b || 0,
             created_at: data.created_at || new Date().toISOString(),
           };
-          const res = await client.from('quick_studies').insert(payload).select('*').single();
+          let res = await client.from('quick_studies').insert(payload).select('*').single();
+          if (res.error && String(res.error.message || '').includes('paragraf_')) {
+            const fallbackPayload = { ...payload };
+            delete fallbackPayload.paragraf_d;
+            delete fallbackPayload.paragraf_y;
+            delete fallbackPayload.paragraf_b;
+            res = await client.from('quick_studies').insert(fallbackPayload).select('*').single();
+          }
           if (res.error) throw res.error;
           const record = mapRowToRecord('quick_study', res.data);
           this._store.push(record);
@@ -378,13 +391,28 @@
             ing_d: data.ing_d || 0,
             ing_y: data.ing_y || 0,
             ing_b: data.ing_b || 0,
+            paragraf_d: data.paragraf_d || 0,
+            paragraf_y: data.paragraf_y || 0,
+            paragraf_b: data.paragraf_b || 0,
           };
-          const res = await client
+          let res = await client
             .from('quick_studies')
             .update(payload)
             .eq('backend_id', data.__backendId)
             .select('*')
             .single();
+          if (res.error && String(res.error.message || '').includes('paragraf_')) {
+            const fallbackPayload = { ...payload };
+            delete fallbackPayload.paragraf_d;
+            delete fallbackPayload.paragraf_y;
+            delete fallbackPayload.paragraf_b;
+            res = await client
+              .from('quick_studies')
+              .update(fallbackPayload)
+              .eq('backend_id', data.__backendId)
+              .select('*')
+              .single();
+          }
           if (res.error) throw res.error;
           const record = mapRowToRecord('quick_study', res.data);
           this._store = this._store.map((r) =>
@@ -487,5 +515,36 @@
     getByType(type) {
       return this._store.filter((r) => r.type === type);
     },
+
+    async fetchLatestOrtakExam() {
+      const client = this._supabase;
+      if (!client) throw new Error('Supabase client not initialized');
+
+      const { data: exams, error } = await client
+        .from('exams')
+        .select('*')
+        .eq('deneme_tipi', 'ortak')
+        .order('tarih', { ascending: false })
+        .limit(1);
+
+      if (error) throw error;
+      if (!exams || exams.length === 0) return null;
+
+      const latestExam = exams[0];
+      const { data: students, error: studentError } = await client
+        .from('students')
+        .select('name, turkcenet, matematiknet, fennet, ingilizcenet, inkilapnet, dinnet')
+        .eq('exam_id', latestExam.id);
+
+      if (studentError) throw studentError;
+
+      return {
+        exam: latestExam,
+        students: students.map(s => ({
+          name: s.name,
+          totalNet: s.turkcenet + s.matematiknet + s.fennet + s.ingilizcenet + s.inkilapnet + s.dinnet,
+        })),
+      };
+    }
   };
 })();
