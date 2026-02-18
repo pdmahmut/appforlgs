@@ -2753,7 +2753,7 @@ function ExamPage({ config }) {
                       style={{ background: config.surface_color, color: config.text_color }}
                     >
                       <option value="">-- Deneme Secin --</option>
-                      {definedExams.map(exam => (
+                      {sortedDefinedExams.map(exam => (
                         <option key={exam.__backendId} value={exam.__backendId}>
                           {exam.name}
                         </option>
@@ -2763,7 +2763,7 @@ function ExamPage({ config }) {
                   <div className="flex items-center text-sm" style={{ color: config.secondary_action_color }}>
                     {selectedDefinedExamId ? (
                       <>Secilen: <span className="ml-1 font-semibold" style={{ color: config.text_color }}>
-                        {definedExams.find(e => e.__backendId === selectedDefinedExamId)?.name}
+                        {sortedDefinedExams.find(e => e.__backendId === selectedDefinedExamId)?.name}
                       </span> A {new Date(selectedDate).toLocaleDateString('tr-TR')}</>
                     ) : (
                       <>Lutfen bir ortak deneme secin</>
