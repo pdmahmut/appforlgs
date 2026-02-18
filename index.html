@@ -790,6 +790,16 @@ function StudentDetailPage({ config, studentId, onBack }) {
     const par = getParagrafTotalsFromStudy(s);
     dailySubjectMap[dateKey].par += par.d + par.y + par.b;
   });
+  const paragrafByDateFromStudies = {};
+  studentStudyRecords.forEach((s) => {
+    const dateKey = s.study_date ? toDateKey(s.study_date) : '';
+    if (!dateKey) return;
+    const p = getParagrafTotalsFromStudy(s);
+    const total = p.d + p.y + p.b;
+    if (total > 0) {
+      paragrafByDateFromStudies[dateKey] = (paragrafByDateFromStudies[dateKey] || 0) + total;
+    }
+  });
   const heatmapValues = Object.entries(dailyTotalsMap).map(([date, count]) => ({ date, count }));
   const startOfWeek = (d) => {
     const date = new Date(d);
@@ -1571,7 +1581,10 @@ function StudentDetailPage({ config, studentId, onBack }) {
                       const db = toLocalDate(b.study_date);
                       return (db ? db.getTime() : 0) - (da ? da.getTime() : 0);
                     }).map((q) => {
-                      const paragrafTotal = (q.paragraf_d ?? q.par_d ?? q.para_d ?? 0) + (q.paragraf_y ?? q.par_y ?? q.para_y ?? 0) + (q.paragraf_b ?? q.par_b ?? q.para_b ?? 0);
+                      const qDateKey = q.study_date ? toDateKey(q.study_date) : '';
+                      const paragrafFromQuick = (q.paragraf_d ?? q.par_d ?? q.para_d ?? 0) + (q.paragraf_y ?? q.par_y ?? q.para_y ?? 0) + (q.paragraf_b ?? q.par_b ?? q.para_b ?? 0);
+                      const paragrafFallback = qDateKey ? (paragrafByDateFromStudies[qDateKey] || 0) : 0;
+                      const paragrafTotal = paragrafFromQuick > 0 ? paragrafFromQuick : paragrafFallback;
                       const total =
                         (q.tur_d||0)+(q.tur_y||0)+(q.tur_b||0)+
                         paragrafTotal+
