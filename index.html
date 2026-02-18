@@ -1555,6 +1555,7 @@ function StudentDetailPage({ config, studentId, onBack }) {
                       <th className="py-2"></th>
                       <th className="py-2">Tarih</th>
                       <th>Turkce</th>
+                      <th>Paragraf</th>
                       <th>Mat</th>
                       <th>Fen</th>
                       <th>Sosyal</th>
@@ -1570,8 +1571,10 @@ function StudentDetailPage({ config, studentId, onBack }) {
                       const db = toLocalDate(b.study_date);
                       return (db ? db.getTime() : 0) - (da ? da.getTime() : 0);
                     }).map((q) => {
+                      const paragrafTotal = (q.paragraf_d ?? q.par_d ?? q.para_d ?? 0) + (q.paragraf_y ?? q.par_y ?? q.para_y ?? 0) + (q.paragraf_b ?? q.par_b ?? q.para_b ?? 0);
                       const total =
                         (q.tur_d||0)+(q.tur_y||0)+(q.tur_b||0)+
+                        paragrafTotal+
                         (q.mat_d||0)+(q.mat_y||0)+(q.mat_b||0)+
                         (q.fen_d||0)+(q.fen_y||0)+(q.fen_b||0)+
                         (q.ink_d||0)+(q.ink_y||0)+(q.ink_b||0)+
@@ -1589,6 +1592,7 @@ function StudentDetailPage({ config, studentId, onBack }) {
                           </td>
                           <td className="py-2">{displayDate ? displayDate.toLocaleDateString('tr-TR') : ''}</td>
                           <td>{(q.tur_d||0)+(q.tur_y||0)+(q.tur_b||0)}</td>
+                          <td>{paragrafTotal}</td>
                           <td>{(q.mat_d||0)+(q.mat_y||0)+(q.mat_b||0)}</td>
                           <td>{(q.fen_d||0)+(q.fen_y||0)+(q.fen_b||0)}</td>
                           <td>{(q.ink_d||0)+(q.ink_y||0)+(q.ink_b||0)}</td>
