@@ -3081,7 +3081,7 @@ function DashboardPage({ config, onSelectStudent, onNavigate }) {
       color: '#3498db',
       value: hasOrtak ? lastAvg.toFixed(1) : null,
       sub: lastGroup && prevGroup
-        ? (avgTrend > 0 ? `? +${avgTrend.toFixed(1)}` : avgTrend < 0 ? `? ${avgTrend.toFixed(1)}` : '0.0')
+        ? (avgTrend > 0 ? `+${avgTrend.toFixed(1)}` : avgTrend < 0 ? `${avgTrend.toFixed(1)}` : '0.0')
         : 'Trend icin daha fazla deneme gerekli',
       subColor: avgTrend > 0 ? '#16a34a' : avgTrend < 0 ? '#ef4444' : '#64748b',
       clickable: false
@@ -3091,7 +3091,7 @@ function DashboardPage({ config, onSelectStudent, onNavigate }) {
       icon: 'G',
       color: growthPercent !== null && growthPercent < 0 ? '#e74c3c' : '#2ecc71',
       value: growthPercent !== null ? `%${Math.abs(growthPercent).toFixed(1)} ${growthPercent >= 0 ? 'artis' : 'dusus'}` : null,
-      sub: (son 3 deneme ortalamasi)',
+      sub: '(son 3 deneme ortalamasi)',
       subColor: '#94a3b8',
       clickable: false
     },
@@ -3099,7 +3099,7 @@ function DashboardPage({ config, onSelectStudent, onNavigate }) {
       title: 'Risk Grubu',
       icon: 'R',
       color: '#f39c12',
-      value: hasOrtak ? `${riskStudents.length} ?renci` : null,
+      value: hasOrtak ? `${riskStudents.length} ogrenci` : null,
       sub: 'son 2 denemede dusus',
       subColor: '#d97706',
       clickable: true,
@@ -3128,7 +3128,7 @@ function DashboardPage({ config, onSelectStudent, onNavigate }) {
       title: 'Buyuk Dusus',
       icon: 'D',
       color: '#e74c3c',
-      value: hasOrtak ? `${bigDropStudents.length} ?renci` : null,
+      value: hasOrtak ? `${bigDropStudents.length} ogrenci` : null,
       sub: 'son denemede -5 net ve uzeri',
       subColor: '#ef4444',
       clickable: true,
