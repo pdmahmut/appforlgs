@@ -3387,33 +3387,30 @@ function DashboardPage({ config, onSelectStudent, onNavigate }) {
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-        {loading ? (
-          Array.from({ length: 6 }).map((_, i) => (
-            <div key={i} className="rounded-2xl p-6 border border-gray-100 animate-pulse" style={{ background: config.surface_color }}>
-              <div className="h-4 w-24 rounded bg-gray-200 mb-3"></div>
-              <div className="h-8 w-32 rounded bg-gray-200 mb-2"></div>
-              <div className="h-3 w-28 rounded bg-gray-200"></div>
+        {!loading && cards.map((c, i) => (
+          <div
+            key={c.title}
+            onClick={c.clickable ? c.onClick : undefined}
+            className={`rounded-2xl p-6 border border-gray-100 transition-all ${c.clickable ? 'cursor-pointer hover:shadow-lg hover:scale-[1.03]' : ''} slide-up`}
+            style={{ background: config.surface_color, animationDelay: `${i * 0.08}s` }}
+          >
+            <div className="flex items-start justify-between mb-2">
+              <div className="text-sm font-semibold" style={{ color: '#64748b' }}>{c.title}</div>
+              <div className="text-2xl">{c.icon}</div>
             </div>
-          ))
-        ) : (
-          cards.map((c, i) => (
-            <div
-              key={c.title}
-              onClick={c.clickable ? c.onClick : undefined}
-              className={`rounded-2xl p-6 border border-gray-100 transition-all ${c.clickable ? 'cursor-pointer hover:shadow-lg hover:scale-[1.03]' : ''} slide-up`}
-              style={{ background: config.surface_color, animationDelay: `${i * 0.08}s` }}
-            >
-              <div className="flex items-start justify-between mb-2">
-                <div className="text-sm font-semibold" style={{ color: '#64748b' }}>{c.title}</div>
-                <div className="text-2xl">{c.icon}</div>
-              </div>
-              <div className="text-3xl font-bold" style={{ color: c.color }}>
-                {renderValue(c.value, '?')}
-              </div>
-              <div className="text-xs mt-2" style={{ color: c.subColor || '#94a3b8' }}>{c.sub}</div>
+            <div className="text-3xl font-bold" style={{ color: c.color }}>
+              {renderValue(c.value, '?')}
             </div>
-          ))}
-        )}
+            <div className="text-xs mt-2" style={{ color: c.subColor || '#94a3b8' }}>{c.sub}</div>
+          </div>
+        ))}
+        {loading && Array.from({ length: 6 }).map((_, i) => (
+          <div key={`skeleton-${i}`} className="rounded-2xl p-6 border border-gray-100 animate-pulse" style={{ background: config.surface_color }}>
+            <div className="h-4 w-24 rounded bg-gray-200 mb-3"></div>
+            <div className="h-8 w-32 rounded bg-gray-200 mb-2"></div>
+            <div className="h-3 w-28 rounded bg-gray-200"></div>
+          </div>
+        ))}
       </div>
 
       <div className="mt-8 grid grid-cols-1 lg:grid-cols-2 gap-4">
