@@ -90,6 +90,21 @@ const defaultConfig = {
   font_size: 16,
 };
 
+function toLocalDateInputValue(dateObj) {
+  const y = dateObj.getFullYear();
+  const m = String(dateObj.getMonth() + 1).padStart(2, '0');
+  const d = String(dateObj.getDate()).padStart(2, '0');
+  return `${y}-${m}-${d}`;
+}
+
+function getYesterdayLocalDateInputValue() {
+  // Use local noon to avoid UTC/day-shift issues around midnight.
+  const d = new Date();
+  d.setHours(12, 0, 0, 0);
+  d.setDate(d.getDate() - 1);
+  return toLocalDateInputValue(d);
+}
+
 let allData = [];
 let dataChangeListeners = [];
 function subscribeData(fn) { dataChangeListeners.push(fn); return () => { dataChangeListeners = dataChangeListeners.filter(f => f !== fn); }; }
@@ -1809,7 +1824,7 @@ function StudyPage({ config }) {
   const [selectedStudentId, setSelectedStudentId] = useState('');
   const [toast, setToast] = useState(null);
   const [loading, setLoading] = useState(false);
-  const [quickDate, setQuickDate] = useState(new Date().toISOString().split('T')[0]);
+  const [quickDate, setQuickDate] = useState(() => getYesterdayLocalDateInputValue());
   const [quickInputs, setQuickInputs] = useState({
     tur_d: '', tur_y: '', tur_b: '',
     mat_d: '', mat_y: '', mat_b: '',
