@@ -3991,14 +3991,16 @@ function DashboardPage({ config, onSelectStudent, onNavigate }) {
           <>
             <div className="rounded-2xl p-6 border border-blue-100 shadow-sm hover:shadow-lg hover:scale-[1.02] transition-all slide-up" style={{ background: 'linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%)', animationDelay: '0s' }}>
               <div className="flex items-start justify-between mb-2">
-                <div className="text-sm font-bold" style={{ color: '#1e3a8a' }}>Genel Ortalama Net</div>
+                <div className="text-sm font-bold" style={{ color: '#1e3a8a' }}>Son Deneme Ortalama Net</div>
                 <div className="text-2xl">📊</div>
               </div>
               <div className="text-3xl font-extrabold" style={{ color: '#1d4ed8' }}>
                 {emptyMessage ? '-' : effectiveLastAvg.toFixed(1)}
               </div>
               <div className="text-xs mt-2" style={{ color: effectiveAvgTrend > 0 ? '#15803d' : effectiveAvgTrend < 0 ? '#dc2626' : '#64748b' }}>
-                {emptyMessage ? emptyMessage : ((lastGroup && prevGroup) || apiNetTrend.length >= 2 ? (effectiveAvgTrend > 0 ? `↑ +${effectiveAvgTrend.toFixed(1)}` : effectiveAvgTrend < 0 ? `↓ ${effectiveAvgTrend.toFixed(1)}` : '→ 0.0') : 'Trend icin daha fazla deneme gerekli')}
+                {emptyMessage ? emptyMessage : (((lastGroup && prevGroup) || apiNetTrend.length >= 2)
+                  ? `Son ortak deneme ortalamasi | ${effectiveAvgTrend > 0 ? `↑ +${effectiveAvgTrend.toFixed(1)}` : effectiveAvgTrend < 0 ? `↓ ${effectiveAvgTrend.toFixed(1)}` : '→ 0.0'}`
+                  : 'Son ortak deneme ortalamasi')}
               </div>
             </div>
 
