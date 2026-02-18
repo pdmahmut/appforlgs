@@ -296,10 +296,21 @@
           };
           let res = await client.from('quick_studies').insert(payload).select('*').single();
           if (res.error && String(res.error.message || '').includes('paragraf_')) {
-            const fallbackPayload = { ...payload };
+            const fallbackPayload = {
+              ...payload,
+              par_d: data.paragraf_d || 0,
+              par_y: data.paragraf_y || 0,
+              par_b: data.paragraf_b || 0,
+            };
             delete fallbackPayload.paragraf_d;
             delete fallbackPayload.paragraf_y;
             delete fallbackPayload.paragraf_b;
+            res = await client.from('quick_studies').insert(fallbackPayload).select('*').single();
+          } else if (res.error && String(res.error.message || '').includes('par_')) {
+            const fallbackPayload = { ...payload };
+            delete fallbackPayload.par_d;
+            delete fallbackPayload.par_y;
+            delete fallbackPayload.par_b;
             res = await client.from('quick_studies').insert(fallbackPayload).select('*').single();
           }
           if (res.error) throw res.error;
@@ -402,10 +413,26 @@
             .select('*')
             .single();
           if (res.error && String(res.error.message || '').includes('paragraf_')) {
-            const fallbackPayload = { ...payload };
+            const fallbackPayload = {
+              ...payload,
+              par_d: data.paragraf_d || 0,
+              par_y: data.paragraf_y || 0,
+              par_b: data.paragraf_b || 0,
+            };
             delete fallbackPayload.paragraf_d;
             delete fallbackPayload.paragraf_y;
             delete fallbackPayload.paragraf_b;
+            res = await client
+              .from('quick_studies')
+              .update(fallbackPayload)
+              .eq('backend_id', data.__backendId)
+              .select('*')
+              .single();
+          } else if (res.error && String(res.error.message || '').includes('par_')) {
+            const fallbackPayload = { ...payload };
+            delete fallbackPayload.par_d;
+            delete fallbackPayload.par_y;
+            delete fallbackPayload.par_b;
             res = await client
               .from('quick_studies')
               .update(fallbackPayload)
