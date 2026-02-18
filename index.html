@@ -79,8 +79,8 @@ const studentColors = ['#3B82F6', '#10B981', '#F59E0B', '#EF4444', '#8B5CF6', '#
 
 const defaultConfig = {
   app_title: (window.__APP_CONFIG && window.__APP_CONFIG.APP_TITLE) || 'Ogrenci Takip Sistemi',
-  welcome_title: 'Ho? Geldiniz gY',
-  welcome_subtitle: 'L?tfen men?den bir b?l?m se?in',
+  welcome_title: 'Hos Geldiniz',
+  welcome_subtitle: 'Lutfen menuden bir bolum secin',
   background_color: '#F8FAFC',
   surface_color: '#FFFFFF',
   text_color: '#1E293B',
@@ -171,7 +171,7 @@ function Header({ route, navigate, config, onLogout }) {
   const links = [
     { id: 'ogrenciler', label: 'Ogrenciler', icon: Icons.Users },
     { id: 'gunluk-calisma', label: 'Gunluk Calisma', icon: Icons.BookOpen },
-    { id: 'deneme-girisi', label: 'Deneme Giri?i', icon: Icons.FileText },
+    { id: 'deneme-girisi', label: 'Deneme Girisi', icon: Icons.FileText },
     { id: 'dashboard', label: 'Dashboard', icon: Icons.LayoutDashboard },
   ];
   return (
@@ -243,10 +243,10 @@ function HomePage({ navigate, config }) {
     return () => clearInterval(id);
   }, []);
   const cards = [
-    { id: 'ogrenciler', title: 'Ogrenciler', desc: 'Ogrenci kay?tlar?n? y?netin', icon: Icons.Users, count: students.length, color: '#3B82F6', bg: '#EFF6FF' },
-    { id: 'gunluk-calisma', title: 'Gunluk Calisma', desc: 'Calisma kay?tlar?n? takip edin', icon: Icons.BookOpen, count: studies.length, color: '#10B981', bg: '#ECFDF5' },
-    { id: 'deneme-girisi', title: 'Deneme Giri?i', desc: 'Deneme sonu?lar?n? kaydedin', icon: Icons.FileText, count: examCount, color: '#F59E0B', bg: '#FFFBEB' },
-    { id: 'dashboard', title: 'Dashboard', desc: 'Genel bak?? ve ?zet', icon: Icons.LayoutDashboard, count: null, color: '#EC4899', bg: '#FDF2F8' },
+    { id: 'ogrenciler', title: 'Ogrenciler', desc: 'Ogrenci kayitlarini yonetin', icon: Icons.Users, count: students.length, color: '#3B82F6', bg: '#EFF6FF' },
+    { id: 'gunluk-calisma', title: 'Gunluk Calisma', desc: 'Calisma kayitlarini takip edin', icon: Icons.BookOpen, count: studies.length, color: '#10B981', bg: '#ECFDF5' },
+    { id: 'deneme-girisi', title: 'Deneme Girisi', desc: 'Deneme sonuclarini kaydedin', icon: Icons.FileText, count: examCount, color: '#F59E0B', bg: '#FFFBEB' },
+    { id: 'dashboard', title: 'Dashboard', desc: 'Genel bakis ve ozet', icon: Icons.LayoutDashboard, count: null, color: '#EC4899', bg: '#FDF2F8' },
   ];
   return (
     <div className="max-w-5xl mx-auto px-4 py-10 fade-in">
@@ -314,11 +314,11 @@ function StudentsPage({ config, onSelectStudent }) {
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!form.fullName.trim() || !form.sinif || !form.okulNo.trim()) {
-      setToast({ msg: 'L?tfen t?m alanlar? doldurun', type: 'error' });
+      setToast({ msg: 'Lutfen tum alanlari doldurun', type: 'error' });
       return;
     }
     if (students.length >= 999 && !editingStudent) {
-      setToast({ msg: 'Maksimum kay?t limitine ula??ld? (999)', type: 'error' });
+      setToast({ msg: 'Maksimum kayit limitine ulasildi (999)', type: 'error' });
       return;
     }
 
@@ -345,7 +345,7 @@ function StudentsPage({ config, onSelectStudent }) {
       setShowForm(false);
       resetForm();
     } else {
-      setToast({ msg: 'Hata olu?tu', type: 'error' });
+      setToast({ msg: 'Hata olustu', type: 'error' });
     }
   };
 
@@ -361,7 +361,7 @@ function StudentsPage({ config, onSelectStudent }) {
 
   const getStudentSummary = (s) => {
     const studentExams = exams.filter(e => e.student_id === s.__backendId);
-    if (studentExams.length === 0) return 'Hen?z deneme yok';
+    if (studentExams.length === 0) return 'Henuz deneme yok';
     const sorted = [...studentExams].sort((a, b) => new Date(b.exam_date || b.created_at) - new Date(a.exam_date || a.created_at));
     const last = sorted[0];
     return `${studentExams.length} deneme a Son deneme: ${parseFloat(last.exam_total_net || 0).toFixed(1)} net`;
@@ -396,7 +396,7 @@ function StudentsPage({ config, onSelectStudent }) {
               <div>
                 <label className="block text-sm font-semibold mb-2" style={{ color: config.text_color }}>Ad Soyad *</label>
                 <input value={form.fullName} onChange={(e) => setForm({...form, fullName: e.target.value})}
-                  className="w-full px-4 py-2.5 rounded-lg border border-gray-200 text-sm font-medium" placeholder="?rn: Ahmet Y?lmaz"/>
+                  className="w-full px-4 py-2.5 rounded-lg border border-gray-200 text-sm font-medium" placeholder="Orn: Ahmet Yilmaz"/>
               </div>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
@@ -409,7 +409,7 @@ function StudentsPage({ config, onSelectStudent }) {
                 <div>
                   <label className="block text-sm font-semibold mb-2" style={{ color: config.text_color }}>Okul Numaras? *</label>
                   <input value={form.okulNo} onChange={(e) => setForm({...form, okulNo: e.target.value})}
-                    className="w-full px-4 py-2.5 rounded-lg border border-gray-200 text-sm font-medium" placeholder="?rn: 1254"/>
+                    className="w-full px-4 py-2.5 rounded-lg border border-gray-200 text-sm font-medium" placeholder="Orn: 1254"/>
                 </div>
               </div>
               <div className="flex gap-3 justify-end pt-2">
@@ -631,7 +631,7 @@ function StudentDetailPage({ config, studentId, onBack }) {
     const end = new Date(startOfWeek(today));
     end.setDate(end.getDate() - (i * 7));
     const start = new Date(end);
-    const label = i === 0 ? 'Bu hafta' : i === 1 ? 'Ge?en hafta' : `${i} hafta ?nce`;
+    const label = i === 0 ? 'Bu hafta' : i === 1 ? 'Gecen hafta' : `${i} hafta ?nce`;
     let daysWorked = 0;
     const days = [];
     for (let d = new Date(start); d < new Date(start.getTime() + 7 * 24 * 60 * 60 * 1000); d.setDate(d.getDate() + 1)) {
@@ -704,8 +704,8 @@ function StudentDetailPage({ config, studentId, onBack }) {
           {[
             { label: 'Toplam Deneme', value: totalExams },
             { label: 'Ortalama Net', value: avgNet },
-            { label: 'En Y?ksek Net', value: maxNet },
-            { label: 'En D???k Net', value: minNet },
+            { label: 'En Yuksek Net', value: maxNet },
+            { label: 'En Dusuk Net', value: minNet },
             { label: 'Son Deneme', value: lastNet },
           ].map((card, i) => (
             <div key={i} className="rounded-xl p-4 border border-gray-100" style={{ background: config.surface_color }}>
@@ -1531,7 +1531,7 @@ function StudentDetailPage({ config, studentId, onBack }) {
                     {d.date.toLocaleDateString('tr-TR', { day: '2-digit', month: 'long', weekday: 'long' })}
                   </div>
                   <div className="text-sm font-semibold" style={{ color: d.worked ? '#10B981' : '#EF4444' }}>
-                    {d.worked ? 'ai  ?al???ld?' : 'ai  Veri yok'}
+                    {d.worked ? 'Calisildi' : 'ai  Veri yok'}
                   </div>
                 </div>
               ))}
@@ -1582,7 +1582,7 @@ function StudentDetailPage({ config, studentId, onBack }) {
       )}
 
       {confirmDel && (
-        <ConfirmModal message="Bu Ogrenciyi silmek istedi?inize emin misiniz?" onConfirm={handleDelete} onCancel={() => setConfirmDel(false)}/>
+        <ConfirmModal message="Bu ogrenciyi silmek istediginize emin misiniz?" onConfirm={handleDelete} onCancel={() => setConfirmDel(false)}/>
       )}
     </div>
   );
@@ -1606,12 +1606,12 @@ function StudyPage({ config }) {
   const quickFirstRef = React.useRef(null);
 
   const quickSubjects = [
-    { key: 'tur', label: 'T?R', accent: '#EF4444', soft: '#FEE2E2' },
+    { key: 'tur', label: 'TUR', accent: '#EF4444', soft: '#FEE2E2' },
     { key: 'mat', label: 'MAT', accent: '#3B82F6', soft: '#DBEAFE' },
     { key: 'fen', label: 'FEN', accent: '#10B981', soft: '#DCFCE7' },
-    { key: 'ink', label: '?NK', accent: '#F59E0B', soft: '#FEF3C7' },
-    { key: 'din', label: 'D?N', accent: '#EC4899', soft: '#FCE7F3' },
-    { key: 'ing', label: '?NG', accent: '#8B5CF6', soft: '#F3E8FF' },
+    { key: 'ink', label: 'INK', accent: '#F59E0B', soft: '#FEF3C7' },
+    { key: 'din', label: 'DIN', accent: '#EC4899', soft: '#FCE7F3' },
+    { key: 'ing', label: 'ING', accent: '#8B5CF6', soft: '#F3E8FF' },
   ];
 
   const quickSubjectsRow1 = quickSubjects.slice(0, 3);
@@ -1746,11 +1746,11 @@ function StudyPage({ config }) {
   const handleQuickSubmit = async (e) => {
     e.preventDefault();
     if (!selectedStudentId) {
-      setToast({ msg: 'L?tfen Ogrenci se?in', type: 'error' });
+      setToast({ msg: 'Lutfen ogrenci secin', type: 'error' });
       return;
     }
     if (!quickDate) {
-      setToast({ msg: 'Tarih se?meden kaydetme yap?lamaz', type: 'error' });
+      setToast({ msg: 'Tarih secmeden kaydetme yapilamaz', type: 'error' });
       return;
     }
 
@@ -1769,7 +1769,7 @@ function StudyPage({ config }) {
     setLoading(false);
 
     if (result.isOk) {
-      setToast({ msg: 'H?zl? giri? kaydedildi! a...', type: 'success' });
+      setToast({ msg: 'Hizli giris kaydedildi!', type: 'success' });
       setQuickInputs({
         tur_d: '', tur_y: '', tur_b: '',
         mat_d: '', mat_y: '', mat_b: '',
@@ -1781,7 +1781,7 @@ function StudyPage({ config }) {
       });
       focusQuickFirst();
     } else {
-      setToast({ msg: 'Hata olu?tu', type: 'error' });
+      setToast({ msg: 'Hata olustu', type: 'error' });
     }
   };
 
@@ -2027,15 +2027,15 @@ function ExamPage({ config }) {
     turkce: { bg: '#FEE2E2', text: '#DC2626', name: 'Turkce', emoji: 'gY ' },
     matematik: { bg: '#DBEAFE', text: '#0284C7', name: 'Matematik', emoji: 'gY' },
     fen: { bg: '#DCFCE7', text: '#16A34A', name: 'Fen', emoji: 'gYa' },
-    inkilap: { bg: '#FEF3C7', text: '#D97706', name: '?nk?lap', emoji: 'gY' },
+    inkilap: { bg: '#FEF3C7', text: '#D97706', name: 'Inkilap', emoji: 'gY' },
     ingilizce: { bg: '#F3E8FF', text: '#7C3AED', name: 'Ingilizce', emoji: 'gY' },
     din: { bg: '#FCE7F3', text: '#BE185D', name: 'Din', emoji: 'a ai ' },
   };
   const quickSubjects = [
-    { key: 'turkce', label: 'T?R', accent: '#EF4444', soft: '#FEE2E2' },
-    { key: 'inkilap', label: '?NK', accent: '#F59E0B', soft: '#FEF3C7' },
-    { key: 'din', label: 'D?N', accent: '#EC4899', soft: '#FCE7F3' },
-    { key: 'ingilizce', label: '?NG', accent: '#8B5CF6', soft: '#F3E8FF' },
+    { key: 'turkce', label: 'TUR', accent: '#EF4444', soft: '#FEE2E2' },
+    { key: 'inkilap', label: 'INK', accent: '#F59E0B', soft: '#FEF3C7' },
+    { key: 'din', label: 'DIN', accent: '#EC4899', soft: '#FCE7F3' },
+    { key: 'ingilizce', label: 'ING', accent: '#8B5CF6', soft: '#F3E8FF' },
     { key: 'matematik', label: 'MAT', accent: '#3B82F6', soft: '#DBEAFE' },
     { key: 'fen', label: 'FEN', accent: '#10B981', soft: '#DCFCE7' },
   ];
@@ -2065,11 +2065,11 @@ function ExamPage({ config }) {
   const handleDefineExam = async (e) => {
     e.preventDefault();
     if (!newDefineExamName.trim()) {
-      setToast({ msg: 'Deneme ad? bo? olamaz', type: 'error' });
+      setToast({ msg: 'Deneme adi bos olamaz', type: 'error' });
       return;
     }
     if (!newDefineExamDate) {
-      setToast({ msg: 'Tarih se?in', type: 'error' });
+      setToast({ msg: 'Tarih secin', type: 'error' });
       return;
     }
     setIsSaving(true);
@@ -2081,11 +2081,11 @@ function ExamPage({ config }) {
     });
     setIsSaving(false);
     if (result.isOk) {
-      setToast({ msg: 'Deneme tan?mland?! gY', type: 'success' });
+      setToast({ msg: 'Deneme tanimlandi!', type: 'success' });
       setNewDefineExamName('');
       setNewDefineExamDate(new Date().toISOString().split('T')[0]);
     } else {
-      setToast({ msg: 'Hata olu?tu', type: 'error' });
+      setToast({ msg: 'Hata olustu', type: 'error' });
     }
   };
 
@@ -2094,7 +2094,7 @@ function ExamPage({ config }) {
     const result = await window.dataSdk.delete({ type: 'defined_exam', __backendId: id });
     setIsSaving(false);
     if (result.isOk) setToast({ msg: 'Deneme silindi', type: 'success' });
-    else setToast({ msg: 'Silme hatas?', type: 'error' });
+    else setToast({ msg: 'Silme hatasi', type: 'error' });
   };
 
   const handleOpenEditModal = (exam) => {
@@ -2105,11 +2105,11 @@ function ExamPage({ config }) {
 
   const handleEditDefinedExam = async () => {
     if (!editName.trim()) {
-      setToast({ msg: 'Deneme ad? bo? olamaz', type: 'error' });
+      setToast({ msg: 'Deneme adi bos olamaz', type: 'error' });
       return;
     }
     if (!editDate) {
-      setToast({ msg: 'Tarih se?in', type: 'error' });
+      setToast({ msg: 'Tarih secin', type: 'error' });
       return;
     }
     setIsSaving(true);
@@ -2126,7 +2126,7 @@ function ExamPage({ config }) {
       setEditName('');
       setEditDate('');
     } else {
-      setToast({ msg: 'Guncelleme hatas?', type: 'error' });
+      setToast({ msg: 'Guncelleme hatasi', type: 'error' });
     }
   };
 
@@ -2182,15 +2182,15 @@ function ExamPage({ config }) {
   const handleSave = async (e) => {
     e.preventDefault();
     if (!selectedStudentId) {
-      setToast({ msg: 'L?tfen Ogrenci se?in', type: 'error' });
+      setToast({ msg: 'Lutfen ogrenci secin', type: 'error' });
       return;
     }
     if (examType === 'ortak' && !selectedDefinedExamId) {
-      setToast({ msg: 'L?tfen ortak deneme se?in', type: 'error' });
+      setToast({ msg: 'Lutfen ortak deneme secin', type: 'error' });
       return;
     }
     if (examType === 'bireysel' && !examName.trim()) {
-      setToast({ msg: 'L?tfen deneme ad? girin', type: 'error' });
+      setToast({ msg: 'Lutfen deneme adi girin', type: 'error' });
       return;
     }
 
@@ -2221,7 +2221,7 @@ function ExamPage({ config }) {
       setToast({ msg: 'Deneme kaydedildi! gY', type: 'success' });
       handleReset();
     } else {
-      setToast({ msg: 'Hata olu?tu', type: 'error' });
+      setToast({ msg: 'Hata olustu', type: 'error' });
     }
   };
 
@@ -2245,7 +2245,7 @@ function ExamPage({ config }) {
     const result = await window.dataSdk.delete({ type: 'exam', __backendId: id });
     setIsSaving(false);
     if (result.isOk) setToast({ msg: 'Deneme silindi', type: 'success' });
-    else setToast({ msg: 'Silme hatas?', type: 'error' });
+    else setToast({ msg: 'Silme hatasi', type: 'error' });
   };
 
   const studentExams = exams.filter(e => e.student_id === selectedStudentId);
@@ -2354,7 +2354,7 @@ function ExamPage({ config }) {
                 disabled={isSaving}
                 className="w-full px-4 py-2 rounded-lg bg-blue-600 text-white text-sm font-bold hover:bg-blue-700 transition disabled:opacity-60"
               >
-                {isSaving ? 'Kaydediliyor...' : 'a Tan?mla'}
+                {isSaving ? 'Kaydediliyor...' : 'Yeni Deneme Tanimla'}
               </button>
             </form>
 
@@ -2485,7 +2485,7 @@ function ExamPage({ config }) {
                       value={examName}
                       onChange={(e) => setExamName(e.target.value)}
                       className="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-sm font-medium"
-                      placeholder="TYT Yay?nlar? 8. Deneme"
+                      placeholder="TYT Yayinlari 8. Deneme"
                       style={{ background: config.surface_color, color: config.text_color }}
                     />
                   </div>
@@ -2614,7 +2614,7 @@ function ExamPage({ config }) {
                   value={editName}
                   onChange={(e) => setEditName(e.target.value)}
                   className="w-full px-3 py-2 rounded-lg border border-gray-300 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  placeholder="Deneme ad?"
+                  placeholder="Deneme adi"
                 />
               </div>
               <div>
@@ -3029,10 +3029,10 @@ function DashboardPage({ config, onSelectStudent, onNavigate }) {
     const diffMin = Math.floor(diffMs / (60 * 1000));
     const diffHr = Math.floor(diffMs / (60 * 60 * 1000));
     const diffDay = Math.floor(diffMs / dayMs);
-    if (diffMin <= 1) return 'Az ?nce';
+    if (diffMin <= 1) return 'Az once';
     if (diffMin < 60) return `${diffMin} dk ?nce`;
     if (diffHr < 24) return `${diffHr} saat ?nce`;
-    if (diffDay === 1) return 'D?n';
+    if (diffDay === 1) return 'Dun';
     return `${diffDay} gun ?nce`;
   };
 
@@ -3077,37 +3077,37 @@ function DashboardPage({ config, onSelectStudent, onNavigate }) {
   const cards = [
     {
       title: 'Genel Ortalama Net',
-      icon: '?',
+      icon: 'N',
       color: '#3498db',
       value: hasOrtak ? lastAvg.toFixed(1) : null,
       sub: lastGroup && prevGroup
-        ? (avgTrend > 0 ? `? +${avgTrend.toFixed(1)}` : avgTrend < 0 ? `? ${avgTrend.toFixed(1)}` : '? 0.0')
-        : 'Trend i?in daha fazla deneme gerekli',
+        ? (avgTrend > 0 ? `? +${avgTrend.toFixed(1)}` : avgTrend < 0 ? `? ${avgTrend.toFixed(1)}` : '0.0')
+        : 'Trend icin daha fazla deneme gerekli',
       subColor: avgTrend > 0 ? '#16a34a' : avgTrend < 0 ? '#ef4444' : '#64748b',
       clickable: false
     },
     {
-      title: 'Geli?im Trendi',
-      icon: '?',
+      title: 'Gelisim Trendi',
+      icon: 'G',
       color: growthPercent !== null && growthPercent < 0 ? '#e74c3c' : '#2ecc71',
-      value: growthPercent !== null ? `%${Math.abs(growthPercent).toFixed(1)} ${growthPercent >= 0 ? 'art?' : 'd?'}` : null,
-      sub: '(son 3 deneme ortalamas?)',
+      value: growthPercent !== null ? `%${Math.abs(growthPercent).toFixed(1)} ${growthPercent >= 0 ? 'artis' : 'dusus'}` : null,
+      sub: (son 3 deneme ortalamasi)',
       subColor: '#94a3b8',
       clickable: false
     },
     {
       title: 'Risk Grubu',
-      icon: '?',
+      icon: 'R',
       color: '#f39c12',
       value: hasOrtak ? `${riskStudents.length} ?renci` : null,
-      sub: 'son 2 denemede d?',
+      sub: 'son 2 denemede dusus',
       subColor: '#d97706',
       clickable: true,
       onClick: () => setShowRiskModal(true)
     },
     {
-      title: 'En Zay?f Alan',
-      icon: '?',
+      title: 'En Zayif Alan',
+      icon: 'Z',
       color: '#9b59b6',
       value: weakestSubject ? weakestSubject.name : null,
       sub: weakestSubject ? `Ort: ${weakestSubject.avg.toFixed(1)} net` : 'Veri yok',
@@ -3115,8 +3115,8 @@ function DashboardPage({ config, onSelectStudent, onNavigate }) {
       clickable: false
     },
     {
-      title: 'Bu Ay?n Y?kseleni',
-      icon: '?',
+      title: 'Bu Ayin Yukseleni',
+      icon: 'Y',
       color: '#27ae60',
       value: bestImprover ? bestImprover.name : null,
       sub: bestImprover ? `+${bestImprover.diff.toFixed(1)} net` : 'Veri yok',
@@ -3125,11 +3125,11 @@ function DashboardPage({ config, onSelectStudent, onNavigate }) {
       onClick: () => bestImprover && onSelectStudent && onSelectStudent(bestImprover.studentId)
     },
     {
-      title: 'B?y?k D?',
-      icon: '?',
+      title: 'Buyuk Dusus',
+      icon: 'D',
       color: '#e74c3c',
       value: hasOrtak ? `${bigDropStudents.length} ?renci` : null,
-      sub: 'son denemede -5 net ve ?zeri',
+      sub: 'son denemede -5 net ve uzeri',
       subColor: '#ef4444',
       clickable: true,
       onClick: () => setShowDropModal(true)
@@ -3187,8 +3187,8 @@ function DashboardPage({ config, onSelectStudent, onNavigate }) {
       { key: 'matematik', label: 'Matematik' },
       { key: 'fen', label: 'Fen Bilimleri' },
       { key: 'ingilizce', label: 'Ingilizce' },
-      { key: 'inkilap', label: '?nk?lap Tarihi' },
-      { key: 'din', label: 'Din K?lt?r?' },
+      { key: 'inkilap', label: 'Inkilap Tarihi' },
+      { key: 'din', label: 'Din Kulturu' },
     ];
     const totals = {};
     const counts = {};
@@ -3501,7 +3501,7 @@ function DashboardPage({ config, onSelectStudent, onNavigate }) {
               <div className="text-2xl">{c.icon}</div>
             </div>
             <div className="text-3xl font-bold" style={{ color: c.color }}>
-              {renderValue(c.value, '?')}
+              {renderValue(c.value, '-')}
             </div>
             <div className="text-xs mt-2" style={{ color: c.subColor || '#94a3b8' }}>{c.sub}</div>
           </div>
@@ -3578,7 +3578,7 @@ function DashboardPage({ config, onSelectStudent, onNavigate }) {
               {recentActivities.length === 0 ? (
                 <div className="text-sm" style={{ color: config.secondary_action_color }}>Hen?z aktivite yok</div>
               ) : recentActivities.map((a, i) => {
-                const timeText = a.ago || 'Az ?nce';
+                const timeText = a.ago || 'Az once';
                 return (
                   <div key={i} className="relative">
                     <div className="absolute -left-[18px] top-1.5 w-3 h-3 rounded-full" style={{ background: a.type === 'exam' ? '#3B82F6' : '#10B981' }}></div>
@@ -3703,7 +3703,7 @@ function LoginPage({ onLogin, config }) {
       localStorage.setItem('appAuthenticated', 'true');
       onLogin();
     } else {
-      setErr('Hatal? ?ifre');
+      setErr('Hatali sifre');
     }
   };
 
