@@ -2288,8 +2288,10 @@ function ExamPage({ config }) {
   const [toast, setToast] = useState(null);
   const [detailModal, setDetailModal] = useState(null);
   const [editingDefinedExam, setEditingDefinedExam] = useState(null);
+  const [confirmDeleteDefinedExam, setConfirmDeleteDefinedExam] = useState(null);
   const [editName, setEditName] = useState('');
   const [editDate, setEditDate] = useState('');
+  const [isDeletingDefinedExam, setIsDeletingDefinedExam] = useState(false);
 
   const subjectColors = {
     turkce: { bg: '#FEE2E2', text: '#DC2626', name: 'Turkce', emoji: '' },
@@ -2307,6 +2309,22 @@ function ExamPage({ config }) {
     { key: 'matematik', label: 'MAT', accent: '#3B82F6', soft: '#DBEAFE' },
     { key: 'fen', label: 'FEN', accent: '#10B981', soft: '#DCFCE7' },
   ];
+
+  const toSortableDate = (v) => {
+    if (!v) return 0;
+    const text = String(v).split('T')[0];
+    const dt = new Date(`${text}T12:00:00`);
+    const ts = dt.getTime();
+    return Number.isFinite(ts) ? ts : 0;
+  };
+
+  const sortedDefinedExams = useMemo(() => {
+    return [...(definedExams || [])].sort((a, b) => {
+      const aTs = toSortableDate(a.exam_date || a.created_at);
+      const bTs = toSortableDate(b.exam_date || b.created_at);
+      return bTs - aTs; // newest first
+    });
+  }, [definedExams]);
 
   const toNum = (v) => {
     if (v === '' || v == null) return 0;
@@ -2358,11 +2376,15 @@ function ExamPage({ config }) {
   };
 
   const handleDeleteDefinedExam = async (id) => {
-    setIsSaving(true);
+    setIsDeletingDefinedExam(true);
     const result = await window.dataSdk.delete({ type: 'defined_exam', __backendId: id });
-    setIsSaving(false);
-    if (result.isOk) setToast({ msg: 'Deneme silindi', type: 'success' });
-    else setToast({ msg: 'Silme hatasi', type: 'error' });
+    setIsDeletingDefinedExam(false);
+    if (result.isOk) {
+      setToast({ msg: 'Deneme silindi', type: 'success' });
+      setConfirmDeleteDefinedExam(null);
+    } else {
+      setToast({ msg: 'Silme hatasi', type: 'error' });
+    }
   };
 
   const handleOpenEditModal = (exam) => {
@@ -2628,32 +2650,36 @@ function ExamPage({ config }) {
 
             <div className="border-t border-blue-200 pt-4">
               <h3 className="text-sm font-bold mb-3 text-blue-900">Tanimlanan Denemeler</h3>
-              {definedExams.length === 0 ? (
+              {sortedDefinedExams.length === 0 ? (
                 <p className="text-xs text-blue-700 text-center py-4">Ilk denemeyi tanimlayin</p>
               ) : (
                 <div className="space-y-2 max-h-64 overflow-y-auto">
-                  {definedExams.map(exam => (
+                  {sortedDefinedExams.map(exam => (
                     <div key={exam.__backendId} className="flex items-center justify-between p-2 rounded-lg bg-white border border-blue-100">
                       <div className="flex-1">
                         <p className="text-xs font-bold text-blue-900">{exam.name}</p>
-                        <p className="text-xs text-blue-600">{new Date(exam.exam_date).toLocaleDateString('tr-TR')}</p>
+                        <p className="text-xs text-blue-600">
+                          {exam.exam_date ? new Date(exam.exam_date).toLocaleDateString('tr-TR') : '-'}
+                        </p>
                       </div>
                       <div className="flex gap-1">
                         <button
+                          type="button"
                           onClick={() => handleOpenEditModal(exam)}
-                          className="text-blue-500 hover:text-blue-700 p-1"
-                          disabled={isSaving}
+                          className="text-blue-600 hover:text-blue-800 px-2 py-1 rounded text-xs font-semibold"
+                          disabled={isSaving || isDeletingDefinedExam}
                           title="Duzenle"
                         >
-                          ai 
+                          Duzenle
                         </button>
                         <button
-                          onClick={() => handleDeleteDefinedExam(exam.__backendId)}
-                          className="text-red-500 hover:text-red-700 p-1"
-                          disabled={isSaving}
+                          type="button"
+                          onClick={() => setConfirmDeleteDefinedExam(exam)}
+                          className="text-red-600 hover:text-red-800 px-2 py-1 rounded text-xs font-semibold"
+                          disabled={isSaving || isDeletingDefinedExam}
                           title="Sil"
                         >
-                          Detay 
+                          Sil
                         </button>
                       </div>
                     </div>
@@ -2909,6 +2935,36 @@ function ExamPage({ config }) {
                 className="flex-1 px-4 py-2 rounded-lg border border-gray-300 text-gray-700 text-sm font-bold hover:bg-gray-50 transition disabled:opacity-60"
               >
                 Iptal
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {confirmDeleteDefinedExam && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center modal-backdrop" style={{ background: 'rgba(0,0,0,0.4)' }}>
+          <div className="rounded-2xl shadow-2xl p-6 max-w-md w-full mx-4 fade-in" style={{ background: config.surface_color }}>
+            <h3 className="text-lg font-bold mb-2" style={{ color: config.text_color }}>Deneme Sil</h3>
+            <p className="text-sm mb-5" style={{ color: config.secondary_action_color }}>
+              Bu denemeyi silmek istediginize emin misiniz?
+            </p>
+            <div className="flex gap-3">
+              <button
+                type="button"
+                onClick={() => setConfirmDeleteDefinedExam(null)}
+                disabled={isDeletingDefinedExam}
+                className="flex-1 px-4 py-2 rounded-lg border border-gray-300 text-sm font-semibold hover:bg-gray-50 disabled:opacity-60"
+                style={{ color: config.secondary_action_color }}
+              >
+                Vazgec
+              </button>
+              <button
+                type="button"
+                onClick={() => handleDeleteDefinedExam(confirmDeleteDefinedExam.__backendId)}
+                disabled={isDeletingDefinedExam}
+                className="flex-1 px-4 py-2 rounded-lg bg-red-600 text-white text-sm font-semibold hover:bg-red-700 disabled:opacity-60"
+              >
+                {isDeletingDefinedExam ? 'Siliniyor...' : 'Evet, Sil'}
               </button>
             </div>
           </div>
