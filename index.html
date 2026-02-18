@@ -539,9 +539,11 @@ function StudentDetailPage({ config, studentId, onBack }) {
     .forEach((e) => {
       const normalizedName = String(e.exam_name || '').trim().toLowerCase();
       const dateKey = String(e.exam_date || '').split('T')[0];
-      const uniqueKey = e.defined_exam_id
-        ? `def:${e.defined_exam_id}`
-        : `name:${normalizedName}::date:${dateKey}`;
+      // Student detail trend should show one point per actual exam name entered.
+      // Keep latest record when duplicate rows exist for the same exam name.
+      const uniqueKey = normalizedName
+        ? `name:${normalizedName}`
+        : `date:${dateKey}`;
       const current = uniqueExamMap[uniqueKey];
       if (!current) {
         uniqueExamMap[uniqueKey] = e;
