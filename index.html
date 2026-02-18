@@ -524,7 +524,7 @@ function StudentsPage({ config, onSelectStudent }) {
 }
 
 function StudentDetailPage({ config, studentId, onBack }) {
-  const { students, exams, quickStudies, definedExams } = useAppData();
+  const { students, exams, quickStudies, studies, definedExams } = useAppData();
   const [detailModal, setDetailModal] = useState(null);
   const [editModal, setEditModal] = useState(false);
   const [confirmDel, setConfirmDel] = useState(false);
@@ -691,6 +691,7 @@ function StudentDetailPage({ config, studentId, onBack }) {
   const lastExams = [...studentExams].reverse().slice(0, 10);
 
   const studentQuick = (quickStudies || []).filter(q => q.student_id === studentId);
+  const studentStudyRecords = (studies || []).filter(s => s.student_id === studentId);
   const today = new Date();
   const yearStart = new Date(today.getFullYear(), 0, 1);
   const yearEnd = new Date(today.getFullYear(), 11, 31);
@@ -724,6 +725,18 @@ function StudentDetailPage({ config, studentId, onBack }) {
     const b = Number(q.paragraf_b ?? q.par_b ?? q.para_b ?? 0);
     return { d, y, b };
   };
+  const getParagrafTotalsFromStudy = (s) => {
+    try {
+      const obj = typeof s.study_subjects === 'string' ? JSON.parse(s.study_subjects) : (s.study_subjects || {});
+      const p = obj?.paragraf || obj?.par || obj?.paragraph || {};
+      const d = Number(p.dogru ?? p.d ?? 0);
+      const y = Number(p.yanlis ?? p.y ?? 0);
+      const b = Number(p.bos ?? p.b ?? 0);
+      return { d, y, b };
+    } catch {
+      return { d: 0, y: 0, b: 0 };
+    }
+  };
   studentQuick.forEach(q => {
     const dateKey = q.study_date ? toDateKey(q.study_date) : '';
     if (!dateKey) return;
@@ -737,6 +750,13 @@ function StudentDetailPage({ config, studentId, onBack }) {
       getParagrafTotals(q).d, getParagrafTotals(q).y, getParagrafTotals(q).b,
     ].reduce((s, v) => s + (parseInt(v || 0, 10)), 0);
     dailyTotalsMap[dateKey] = (dailyTotalsMap[dateKey] || 0) + total;
+  });
+  studentStudyRecords.forEach((s) => {
+    const dateKey = s.study_date ? toDateKey(s.study_date) : '';
+    if (!dateKey) return;
+    const par = getParagrafTotalsFromStudy(s);
+    const total = par.d + par.y + par.b;
+    if (total > 0) dailyTotalsMap[dateKey] = (dailyTotalsMap[dateKey] || 0) + total;
   });
   const subjectKeys = [
     { key: 'tur', label: 'Turkce', color: '#e11d48' },
@@ -762,6 +782,13 @@ function StudentDetailPage({ config, studentId, onBack }) {
     dailySubjectMap[dateKey].ink += (q.ink_d || 0) + (q.ink_y || 0) + (q.ink_b || 0);
     dailySubjectMap[dateKey].ing += (q.ing_d || 0) + (q.ing_y || 0) + (q.ing_b || 0);
     dailySubjectMap[dateKey].din += (q.din_d || 0) + (q.din_y || 0) + (q.din_b || 0);
+  });
+  studentStudyRecords.forEach((s) => {
+    const dateKey = s.study_date ? toDateKey(s.study_date) : '';
+    if (!dateKey) return;
+    if (!dailySubjectMap[dateKey]) dailySubjectMap[dateKey] = { tur: 0, par: 0, mat: 0, fen: 0, ink: 0, ing: 0, din: 0 };
+    const par = getParagrafTotalsFromStudy(s);
+    dailySubjectMap[dateKey].par += par.d + par.y + par.b;
   });
   const heatmapValues = Object.entries(dailyTotalsMap).map(([date, count]) => ({ date, count }));
   const startOfWeek = (d) => {
@@ -790,6 +817,32 @@ function StudentDetailPage({ config, studentId, onBack }) {
     const emoji = daysWorked === 7 ? 'Tam' : daysWorked >= 5 ? 'Iyi' : daysWorked >= 3 ? 'Orta' : daysWorked >= 1 ? 'Dusuk' : 'Yok';
     weeklyStats.push({ label, daysWorked, pct, emoji, days });
   }
+
+  useEffect(() => {
+    const parQuickTotal = studentQuick.reduce((sum, q) => {
+      const p = getParagrafTotals(q);
+      return sum + p.d + p.y + p.b;
+    }, 0);
+    const parStudyTotal = studentStudyRecords.reduce((sum, s) => {
+      const p = getParagrafTotalsFromStudy(s);
+      return sum + p.d + p.y + p.b;
+    }, 0);
+    const parChartTotal = Object.values(dailySubjectMap).reduce((sum, d) => sum + Number(d.par || 0), 0);
+    console.log('[StudentDetail Filters]', {
+      trendFilter: activeTrendSubjects,
+      lessonFilter: activeLessonSubjects
+    });
+    console.log('[StudentDetail DataSource]', {
+      quickStudiesCount: studentQuick.length,
+      studiesCount: studentStudyRecords.length,
+      paragrafFromQuick: parQuickTotal,
+      paragrafFromStudies: parStudyTotal
+    });
+    console.log('[StudentDetail ChartDataset]', {
+      paragrafTotalInCharts: parChartTotal,
+      sampleDailyMap: Object.entries(dailySubjectMap).slice(0, 5)
+    });
+  }, [activeTrendSubjects, activeLessonSubjects, studentQuick, studentStudyRecords, dailySubjectMap]);
 
   const handleEditOpen = () => {
     setForm({
@@ -1915,6 +1968,43 @@ function StudyPage({ config }) {
     setLoading(false);
 
     if (result.isOk) {
+      const paragrafTotalInput = Number(payload.paragraf_d || 0) + Number(payload.paragraf_y || 0) + Number(payload.paragraf_b || 0);
+      const paragrafTotalStored =
+        Number(result.data?.paragraf_d || 0) +
+        Number(result.data?.par_y || 0) +
+        Number(result.data?.para_y || 0) +
+        Number(result.data?.paragraf_y || 0) +
+        Number(result.data?.par_b || 0) +
+        Number(result.data?.para_b || 0) +
+        Number(result.data?.paragraf_b || 0) +
+        Number(result.data?.par_d || 0) +
+        Number(result.data?.para_d || 0);
+
+      // Fallback storage: if quick_studies table cannot persist paragraf columns,
+      // save paragraf counts into studies.study_subjects so analytics can still read them.
+      if (paragrafTotalInput > 0 && paragrafTotalStored === 0) {
+        const sidecarBackendId = `paragraf-quick-${selectedStudentId}-${quickDate}`;
+        const sidecarPayload = {
+          type: 'study',
+          __backendId: sidecarBackendId,
+          student_id: selectedStudentId,
+          study_date: quickDate,
+          study_subjects: {
+            paragraf: {
+              dogru: Number(payload.paragraf_d || 0),
+              yanlis: Number(payload.paragraf_y || 0),
+              bos: Number(payload.paragraf_b || 0),
+            }
+          },
+          study_total_net: paragrafTotalInput,
+          created_at: new Date().toISOString()
+        };
+        const sideCreate = await window.dataSdk.create(sidecarPayload);
+        if (!sideCreate.isOk) {
+          await window.dataSdk.update(sidecarPayload);
+        }
+      }
+
       setToast({ msg: 'Hizli giris kaydedildi!', type: 'success' });
       setQuickInputs({
         tur_d: '', tur_y: '', tur_b: '',
