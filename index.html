@@ -2681,6 +2681,134 @@ function ExamPage({ config }) {
   );
 }
 
+function SchoolNetTrendChart({ config }) {
+  const [trendData, setTrendData] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
+
+  const {
+    ResponsiveContainer,
+    LineChart,
+    CartesianGrid,
+    XAxis,
+    YAxis,
+    Tooltip,
+    Line
+  } = window.Recharts || {};
+
+  useEffect(() => {
+    const controller = new AbortController();
+
+    async function fetchAnalytics() {
+      try {
+        setLoading(true);
+        setError('');
+        const response = await fetch('/dashboard/school-analytics', { signal: controller.signal });
+        if (!response.ok) throw new Error(`Request failed: ${response.status}`);
+        const payload = await response.json();
+        const trend = Array.isArray(payload?.data?.netTrend) ? payload.data.netTrend : [];
+
+        const mapped = trend.map((item) => ({
+          examId: item.examId,
+          examName: item.examName || 'Sinav',
+          date: item.date,
+          averageNet: Number(item.averageNet || 0),
+          katilanOgrenciSayisi: Number(item.katilanOgrenciSayisi || 0),
+          dateLabel: item.date
+            ? new Date(item.date).toLocaleDateString('tr-TR')
+            : '-'
+        }));
+
+        setTrendData(mapped);
+      } catch (err) {
+        if (err.name !== 'AbortError') {
+          setError('Trend verisi alinamadi');
+          setTrendData([]);
+        }
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    fetchAnalytics();
+    return () => controller.abort();
+  }, []);
+
+  const canRenderChart = Boolean(
+    ResponsiveContainer && LineChart && CartesianGrid && XAxis && YAxis && Tooltip && Line
+  );
+
+  return (
+    <section className="rounded-2xl border border-slate-200 shadow-sm p-5 sm:p-6 mt-6" style={{ background: config.surface_color }}>
+      <div className="flex items-center justify-between mb-4">
+        <div>
+          <h3 className="text-base sm:text-lg font-bold" style={{ color: config.text_color }}>Okul Geneli Net Trendi</h3>
+          <p className="text-xs sm:text-sm" style={{ color: config.secondary_action_color }}>Sadece ortak sinav ortalamalari</p>
+        </div>
+      </div>
+
+      {loading && (
+        <div className="h-72 rounded-xl border border-slate-200 animate-pulse" style={{ background: '#F8FAFC' }}></div>
+      )}
+
+      {!loading && (error || !canRenderChart) && (
+        <div className="h-72 rounded-xl border border-slate-200 flex items-center justify-center text-sm" style={{ color: config.secondary_action_color }}>
+          {error || 'Grafik kutuphanesi yuklenemedi'}
+        </div>
+      )}
+
+      {!loading && !error && canRenderChart && trendData.length === 0 && (
+        <div className="h-72 rounded-xl border border-slate-200 flex items-center justify-center text-sm" style={{ color: config.secondary_action_color }}>
+          Ortak sinav trend verisi bulunamadi
+        </div>
+      )}
+
+      {!loading && !error && canRenderChart && trendData.length > 0 && (
+        <div className="h-72 sm:h-80">
+          <ResponsiveContainer width="100%" height="100%">
+            <LineChart data={trendData} margin={{ top: 16, right: 16, left: 0, bottom: 8 }}>
+              <CartesianGrid strokeDasharray="3 3" stroke="#E2E8F0" />
+              <XAxis
+                dataKey="dateLabel"
+                tick={{ fill: '#64748B', fontSize: 12 }}
+                axisLine={{ stroke: '#E2E8F0' }}
+                tickLine={{ stroke: '#E2E8F0' }}
+              />
+              <YAxis
+                tick={{ fill: '#64748B', fontSize: 12 }}
+                axisLine={{ stroke: '#E2E8F0' }}
+                tickLine={{ stroke: '#E2E8F0' }}
+              />
+              <Tooltip
+                cursor={{ stroke: '#93C5FD', strokeWidth: 1 }}
+                content={({ active, payload }) => {
+                  if (!active || !payload || !payload.length) return null;
+                  const row = payload[0].payload;
+                  return (
+                    <div className="rounded-xl border border-slate-200 p-3 bg-white shadow-lg text-xs">
+                      <div className="font-semibold text-slate-900 mb-2">{row.examName} - {row.dateLabel}</div>
+                      <div className="text-slate-700">Ortalama Net: <span className="font-semibold">{row.averageNet.toFixed(2)}</span></div>
+                      <div className="text-slate-700">Katilim: <span className="font-semibold">{row.katilanOgrenciSayisi}</span></div>
+                    </div>
+                  );
+                }}
+              />
+              <Line
+                type="monotone"
+                dataKey="averageNet"
+                stroke="#2563EB"
+                strokeWidth={3}
+                dot={{ r: 4, strokeWidth: 2, fill: '#ffffff' }}
+                activeDot={{ r: 6 }}
+              />
+            </LineChart>
+          </ResponsiveContainer>
+        </div>
+      )}
+    </section>
+  );
+}
+
 function DashboardPage({ config, onSelectStudent, onNavigate }) {
   const { students, exams, quickStudies, definedExams, allData } = useAppData();
   const [showRiskModal, setShowRiskModal] = useState(false);
@@ -3413,6 +3541,8 @@ function DashboardPage({ config, onSelectStudent, onNavigate }) {
           </div>
         ))}
       </div>
+
+      <SchoolNetTrendChart config={config} />
 
       <div className="mt-8 grid grid-cols-1 lg:grid-cols-2 gap-4">
         <div className="rounded-2xl p-6 shadow-lg" style={{ background: config.surface_color }}>
