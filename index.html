@@ -2358,6 +2358,15 @@ function ExamPage({ config }) {
       setToast({ msg: 'Tarih secin', type: 'error' });
       return;
     }
+    const normalizedNewName = newDefineExamName.trim().toLowerCase();
+    const duplicate = (definedExams || []).some((d) =>
+      String(d.name || '').trim().toLowerCase() === normalizedNewName &&
+      String(d.exam_date || '').split('T')[0] === String(newDefineExamDate || '').split('T')[0]
+    );
+    if (duplicate) {
+      setToast({ msg: 'Ayni deneme adi ve tarih zaten var', type: 'error' });
+      return;
+    }
     setIsSaving(true);
     const result = await window.dataSdk.create({
       type: 'defined_exam',
@@ -2400,6 +2409,16 @@ function ExamPage({ config }) {
     }
     if (!editDate) {
       setToast({ msg: 'Tarih secin', type: 'error' });
+      return;
+    }
+    const normalizedEditName = editName.trim().toLowerCase();
+    const duplicate = (definedExams || []).some((d) =>
+      d.__backendId !== editingDefinedExam.__backendId &&
+      String(d.name || '').trim().toLowerCase() === normalizedEditName &&
+      String(d.exam_date || '').split('T')[0] === String(editDate || '').split('T')[0]
+    );
+    if (duplicate) {
+      setToast({ msg: 'Ayni deneme adi ve tarih zaten var', type: 'error' });
       return;
     }
     setIsSaving(true);
@@ -3288,7 +3307,10 @@ function DashboardPage({ config, onSelectStudent, onNavigate }) {
     const map = {};
     (ortakExams || []).forEach((e) => {
       const normalizedName = String(e.exam_name || 'Ortak Deneme').trim().toLowerCase();
-      const key = `name:${normalizedName}`;
+      const rowDate = String(e.exam_date || '').split('T')[0];
+      const key = e.defined_exam_id
+        ? `def:${Number(e.defined_exam_id)}`
+        : `name:${normalizedName}::date:${rowDate || 'no-date'}`;
       if (!map[key]) {
         map[key] = { key, name: e.exam_name || 'Ortak Deneme', records: [] };
       }
