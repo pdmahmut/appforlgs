@@ -1,9 +1,9 @@
-﻿<!doctype html>
+<!doctype html>
 <html lang="tr" class="h-full">
  <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>??renci Takip Sistemi</title>
+  <title>Ogrenci Takip Sistemi</title>
   <script src="https://cdn.tailwindcss.com/3.4.17"></script>
   <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
   <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
@@ -17,7 +17,7 @@
     window.__APP_CONFIG = {
       SUPABASE_URL: 'https://mnwxfknxkwwurrevmlri.supabase.co',
       SUPABASE_ANON_KEY: 'sb_publishable_qci3p2BNw3oqVNwd4Fhq9A_pgwOZrpc',
-      APP_TITLE: '??renci Takip Sistemi',
+      APP_TITLE: 'Ogrenci Takip Sistemi',
       LOGIN_PASSWORD: '1234'
     };
   </script>
@@ -78,8 +78,8 @@ const Icons = {
 const studentColors = ['#3B82F6', '#10B981', '#F59E0B', '#EF4444', '#8B5CF6', '#EC4899', '#14B8A6', '#F97316'];
 
 const defaultConfig = {
-  app_title: (window.__APP_CONFIG && window.__APP_CONFIG.APP_TITLE) || '??renci Takip Sistemi',
-  welcome_title: 'Ho? Geldiniz ğŸ‘‹',
+  app_title: (window.__APP_CONFIG && window.__APP_CONFIG.APP_TITLE) || 'Ogrenci Takip Sistemi',
+  welcome_title: 'Ho? Geldiniz gY',
   welcome_subtitle: 'L?tfen men?den bir b?l?m se?in',
   background_color: '#F8FAFC',
   surface_color: '#FFFFFF',
@@ -169,8 +169,8 @@ function Spinner({ size = 'md' }) {
 function Header({ route, navigate, config, onLogout }) {
   const [mobileOpen, setMobileOpen] = useState(false);
   const links = [
-    { id: 'ogrenciler', label: '??renciler', icon: Icons.Users },
-    { id: 'gunluk-calisma', label: 'G?nl?k ?al??ma', icon: Icons.BookOpen },
+    { id: 'ogrenciler', label: 'Ogrenciler', icon: Icons.Users },
+    { id: 'gunluk-calisma', label: 'Gunluk Calisma', icon: Icons.BookOpen },
     { id: 'deneme-girisi', label: 'Deneme Giri?i', icon: Icons.FileText },
     { id: 'dashboard', label: 'Dashboard', icon: Icons.LayoutDashboard },
   ];
@@ -195,7 +195,7 @@ function Header({ route, navigate, config, onLogout }) {
           </nav>
           <div className="flex items-center gap-2">
             <button onClick={onLogout} className="hidden sm:flex px-4 py-2 rounded-lg text-sm font-semibold transition-all items-center gap-1.5 hover:bg-red-50" style={{color: config.secondary_action_color}}>
-              ğŸšª ??k??
+              gYsa ??k??
             </button>
             <button onClick={() => setMobileOpen(!mobileOpen)} className="md:hidden p-2 rounded-lg hover:bg-gray-100">
               <Icons.Menu size={22} className="text-gray-600"/>
@@ -214,7 +214,7 @@ function Header({ route, navigate, config, onLogout }) {
               </button>
             ))}
             <button onClick={() => { onLogout(); setMobileOpen(false); }} className="px-3 py-2.5 rounded-lg text-sm font-medium flex items-center gap-2 transition-colors hover:bg-red-50" style={{color: config.secondary_action_color}}>
-              ğŸšª ??k??
+              gYsa ??k??
             </button>
           </nav>
         </div>
@@ -243,8 +243,8 @@ function HomePage({ navigate, config }) {
     return () => clearInterval(id);
   }, []);
   const cards = [
-    { id: 'ogrenciler', title: '??renciler', desc: '??renci kay?tlar?n? y?netin', icon: Icons.Users, count: students.length, color: '#3B82F6', bg: '#EFF6FF' },
-    { id: 'gunluk-calisma', title: 'G?nl?k ?al??ma', desc: '?al??ma kay?tlar?n? takip edin', icon: Icons.BookOpen, count: studies.length, color: '#10B981', bg: '#ECFDF5' },
+    { id: 'ogrenciler', title: 'Ogrenciler', desc: 'Ogrenci kay?tlar?n? y?netin', icon: Icons.Users, count: students.length, color: '#3B82F6', bg: '#EFF6FF' },
+    { id: 'gunluk-calisma', title: 'Gunluk Calisma', desc: 'Calisma kay?tlar?n? takip edin', icon: Icons.BookOpen, count: studies.length, color: '#10B981', bg: '#ECFDF5' },
     { id: 'deneme-girisi', title: 'Deneme Giri?i', desc: 'Deneme sonu?lar?n? kaydedin', icon: Icons.FileText, count: examCount, color: '#F59E0B', bg: '#FFFBEB' },
     { id: 'dashboard', title: 'Dashboard', desc: 'Genel bak?? ve ?zet', icon: Icons.LayoutDashboard, count: null, color: '#EC4899', bg: '#FDF2F8' },
   ];
@@ -257,7 +257,7 @@ function HomePage({ navigate, config }) {
         </div>
         <div className="flex gap-3 text-center">
           {[
-            { label: 'G?n', value: countdown.days },
+            { label: 'Gun', value: countdown.days },
             { label: 'Saat', value: countdown.hours },
             { label: 'Dak', value: countdown.minutes },
           ].map((c, i) => (
@@ -341,7 +341,7 @@ function StudentsPage({ config, onSelectStudent }) {
     setLoading(false);
 
     if (result.isOk) {
-      setToast({ msg: editingStudent ? '??renci g?ncellendi!' : '??renci eklendi!', type: 'success' });
+      setToast({ msg: editingStudent ? 'Ogrenci guncellendi!' : 'Ogrenci eklendi!', type: 'success' });
       setShowForm(false);
       resetForm();
     } else {
@@ -364,7 +364,7 @@ function StudentsPage({ config, onSelectStudent }) {
     if (studentExams.length === 0) return 'Hen?z deneme yok';
     const sorted = [...studentExams].sort((a, b) => new Date(b.exam_date || b.created_at) - new Date(a.exam_date || a.created_at));
     const last = sorted[0];
-    return `${studentExams.length} deneme â€¢ Son deneme: ${parseFloat(last.exam_total_net || 0).toFixed(1)} net`;
+    return `${studentExams.length} deneme a Son deneme: ${parseFloat(last.exam_total_net || 0).toFixed(1)} net`;
   };
 
   return (
@@ -373,13 +373,13 @@ function StudentsPage({ config, onSelectStudent }) {
 
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-8">
         <div>
-          <h1 className="text-3xl font-extrabold" style={{color: config.text_color}}>??renciler</h1>
-          <p className="text-sm mt-1" style={{color: config.secondary_action_color}}>{students.length} ??renci kay?tl?</p>
+          <h1 className="text-3xl font-extrabold" style={{color: config.text_color}}>Ogrenciler</h1>
+          <p className="text-sm mt-1" style={{color: config.secondary_action_color}}>{students.length} Ogrenci kay?tl?</p>
         </div>
         <button onClick={() => { resetForm(); setShowForm(true); }}
           className="flex items-center gap-2 px-5 py-2.5 rounded-xl text-white text-sm font-semibold transition-all hover:shadow-lg"
           style={{ background: config.primary_action_color }}>
-          <Icons.Plus size={18}/> ??renci Ekle
+          <Icons.Plus size={18}/> Ogrenci Ekle
         </button>
       </div>
 
@@ -388,7 +388,7 @@ function StudentsPage({ config, onSelectStudent }) {
           <div className="bg-white rounded-2xl shadow-2xl p-6 max-w-lg w-full mx-4 fade-in">
             <div className="flex items-center justify-between mb-4">
               <h2 className="text-lg font-bold" style={{color: config.text_color}}>
-                {editingStudent ? '??renciyi D?zenle' : 'Yeni ??renci Ekle'}
+                {editingStudent ? 'Ogrenciyi Duzenle' : 'Yeni Ogrenci Ekle'}
               </h2>
               <button onClick={() => { setShowForm(false); resetForm(); }} className="p-1.5 rounded-lg hover:bg-gray-100"><Icons.X size={18}/></button>
             </div>
@@ -428,7 +428,7 @@ function StudentsPage({ config, onSelectStudent }) {
 
       {students.length === 0 ? (
         <div className="text-center py-12 rounded-2xl border-2 border-dashed border-gray-300">
-          <p className="text-lg font-medium" style={{ color: config.secondary_action_color }}>Hen?z ??renci yok</p>
+          <p className="text-lg font-medium" style={{ color: config.secondary_action_color }}>Hen?z Ogrenci yok</p>
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
@@ -441,14 +441,14 @@ function StudentsPage({ config, onSelectStudent }) {
                   {((s.ad_soyad || `${s.student_name || ''} ${s.student_surname || ''}`.trim() || '?')[0] || '?').toUpperCase()}
                 </div>
                 <div className="text-xs px-2 py-1 rounded-full" style={{ background: '#F1F5F9', color: config.secondary_action_color }}>
-                  {s.sinif || 'S?n?f?'}
+                  {s.sinif || 'Sinifi'}
                 </div>
               </div>
               <h3 className="text-lg font-bold mb-1" style={{color: config.text_color}}>
                 {s.ad_soyad || `${s.student_name || ''} ${s.student_surname || ''}`.trim()}
               </h3>
               <p className="text-sm" style={{color: config.secondary_action_color}}>
-                {s.sinif || 'S?n?f?'} â€¢ No: {s.okul_numarasi || s.student_number || '-'}
+                {s.sinif || 'Sinifi'} a No: {s.okul_numarasi || s.student_number || '-'}
               </p>
               <p className="text-xs mt-3" style={{color: config.secondary_action_color}}>
                 {getStudentSummary(s)}
@@ -481,8 +481,8 @@ function StudentDetailPage({ config, studentId, onBack }) {
   const [editingExam, setEditingExam] = useState(null);
   const [editExamSubjects, setEditExamSubjects] = useState({});
   const [editExamErrors, setEditExamErrors] = useState({});
-  const weekdays = ['Paz', 'Pzt', 'Sal', '?ar', 'Per', 'Cum', 'Cmt'];
-  const monthNames = ['Ocak','Åubat','Mart','Nisan','May?s','Haziran','Temmuz','A?ustos','Eyl?l','Ekim','Kas?m','Aral?k'];
+  const weekdays = ['Paz', 'Pzt', 'Sal', 'Car', 'Per', 'Cum', 'Cmt'];
+  const monthNames = ['Ocak','Subat','Mart','Nisan','Mayis','Haziran','Temmuz','Agustos','Eylul','Ekim','Kasim','Aralik'];
   const {
     ResponsiveContainer,
     LineChart,
@@ -502,13 +502,13 @@ function StudentDetailPage({ config, studentId, onBack }) {
     return (
       <div className="max-w-6xl mx-auto px-4 py-8">
         <button onClick={onBack} className="px-4 py-2 rounded-lg border border-gray-200 text-sm font-semibold">Geri</button>
-        <div className="mt-6 text-center text-sm" style={{ color: config.secondary_action_color }}>??renci bulunamad?</div>
+        <div className="mt-6 text-center text-sm" style={{ color: config.secondary_action_color }}>Ogrenci bulunamad?</div>
       </div>
     );
   }
 
   const displayName = student.ad_soyad || `${student.student_name || ''} ${student.student_surname || ''}`.trim();
-  const displayClass = student.sinif || 'S?n?f?';
+  const displayClass = student.sinif || 'Sinifi';
   const displayNo = student.okul_numarasi || student.student_number || '-';
 
   const studentExams = exams
@@ -531,11 +531,11 @@ function StudentDetailPage({ config, studentId, onBack }) {
 
   const subjects = ['turkce', 'matematik', 'fen', 'inkilap', 'ingilizce', 'din'];
   const subjectLabels = {
-    turkce: 'T?rk?e',
+    turkce: 'Turkce',
     matematik: 'Matematik',
     fen: 'Fen',
     inkilap: 'Sosyal',
-    ingilizce: '?ngilizce',
+    ingilizce: 'Ingilizce',
     din: 'Din'
   };
   const subjectSeries = subjects.map(key => {
@@ -596,11 +596,11 @@ function StudentDetailPage({ config, studentId, onBack }) {
     dailyTotalsMap[dateKey] = (dailyTotalsMap[dateKey] || 0) + total;
   });
   const subjectKeys = [
-    { key: 'tur', label: 'T?rk?e', color: '#e11d48' },
+    { key: 'tur', label: 'Turkce', color: '#e11d48' },
     { key: 'mat', label: 'Matematik', color: '#2563eb' },
     { key: 'fen', label: 'Fen', color: '#14b8a6' },
     { key: 'ink', label: 'Sosyal', color: '#f59e0b' },
-    { key: 'ing', label: '?ngilizce', color: '#8b5cf6' },
+    { key: 'ing', label: 'Ingilizce', color: '#8b5cf6' },
     { key: 'din', label: 'Din', color: '#84cc16' },
   ];
   const activeTrendSubjects = selectedTrendSubjects === null ? subjectKeys.map(s => s.key) : selectedTrendSubjects;
@@ -641,7 +641,7 @@ function StudentDetailPage({ config, studentId, onBack }) {
       days.push({ date: new Date(d), worked });
     }
     const pct = ((daysWorked / 7) * 100).toFixed(1);
-    const emoji = daysWorked === 7 ? 'ğŸ”¥' : daysWorked >= 5 ? 'ğŸ’ª' : daysWorked >= 3 ? 'ğŸ‘' : daysWorked >= 1 ? 'âš ï¸' : 'âŒ';
+    const emoji = daysWorked === 7 ? 'gY' : daysWorked >= 5 ? 'gYa' : daysWorked >= 3 ? 'gY' : daysWorked >= 1 ? 'as i ' : 'a';
     weeklyStats.push({ label, daysWorked, pct, emoji, days });
   }
 
@@ -688,14 +688,14 @@ function StudentDetailPage({ config, studentId, onBack }) {
       <div className="flex items-center justify-between mb-6">
         <button onClick={onBack} className="px-4 py-2 rounded-lg border border-gray-200 text-sm font-semibold">Geri</button>
         <div className="flex gap-2">
-          <button onClick={handleEditOpen} className="px-4 py-2 rounded-lg border border-gray-200 text-sm font-semibold">D?zenle</button>
+          <button onClick={handleEditOpen} className="px-4 py-2 rounded-lg border border-gray-200 text-sm font-semibold">Duzenle</button>
           <button onClick={() => setConfirmDel(true)} className="px-4 py-2 rounded-lg bg-red-500 text-white text-sm font-semibold">Sil</button>
         </div>
       </div>
 
       <div className="rounded-2xl p-6 border border-gray-100 mb-6" style={{ background: config.surface_color }}>
         <h1 className="text-2xl font-bold mb-2" style={{ color: config.text_color }}>{displayName}</h1>
-        <p className="text-sm" style={{ color: config.secondary_action_color }}>{displayClass} â€¢ No: {displayNo}</p>
+        <p className="text-sm" style={{ color: config.secondary_action_color }}>{displayClass} a No: {displayNo}</p>
       </div>
 
       <div className="mb-8">
@@ -716,13 +716,13 @@ function StudentDetailPage({ config, studentId, onBack }) {
         </div>
 
         {totalExams === 0 ? (
-          <div className="text-center py-10 rounded-xl border border-dashed" style={{ color: config.secondary_action_color }}>Hen?z deneme verisi girilmemi?</div>
+          <div className="text-center py-10 rounded-xl border border-dashed" style={{ color: config.secondary_action_color }}>Henuz deneme verisi girilmemis</div>
         ) : (
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             <div className="rounded-2xl p-4 border border-gray-100" style={{ background: config.surface_color }}>
-              <h3 className="text-sm font-semibold mb-3" style={{ color: config.text_color }}>Net ?lerleme (Son 10 Deneme)</h3>
+              <h3 className="text-sm font-semibold mb-3" style={{ color: config.text_color }}>Net Ilerleme (Son 10 Deneme)</h3>
               {netSeries.length === 0 ? (
-                <div className="text-center py-10 text-sm" style={{ color: config.secondary_action_color }}>Hen?z veri yok</div>
+                <div className="text-center py-10 text-sm" style={{ color: config.secondary_action_color }}>Henuz veri yok</div>
               ) : (
                 <svg width="100%" height="260" viewBox="0 0 500 260" preserveAspectRatio="xMidYMid meet">
                   {[0, 1, 2, 3, 4].map(i => (
@@ -765,7 +765,7 @@ function StudentDetailPage({ config, studentId, onBack }) {
             <div className="rounded-2xl p-4 border border-gray-100" style={{ background: config.surface_color }}>
               <h3 className="text-sm font-semibold mb-3" style={{ color: config.text_color }}>Son Denemeler</h3>
               {recentExams.length === 0 ? (
-                <div className="text-center py-10 text-sm" style={{ color: config.secondary_action_color }}>Hen?z veri yok</div>
+                <div className="text-center py-10 text-sm" style={{ color: config.secondary_action_color }}>Henuz veri yok</div>
               ) : (
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   <div className="rounded-xl p-3 border border-gray-100" style={{ background: '#F1F5F9' }}>
@@ -776,14 +776,14 @@ function StudentDetailPage({ config, studentId, onBack }) {
                     </div>
                   </div>
                   <button onClick={() => setShowAllExams(true)} className="rounded-xl p-3 border border-gray-100 text-left hover:shadow-md transition" style={{ background: '#EFF6FF' }}>
-                    <div className="text-xs font-semibold" style={{ color: config.text_color }}>T?m Denemeler</div>
+                    <div className="text-xs font-semibold" style={{ color: config.text_color }}>Tum Denemeler</div>
                     <div className="text-[10px]" style={{ color: config.secondary_action_color }}>T?klayarak listele</div>
                     <div className="mt-2 text-lg font-bold" style={{ color: '#1D4ED8' }}>
                       {studentExams.length}
                     </div>
                   </button>
                   <button onClick={() => setShowAllStudies(true)} className="rounded-xl p-3 border border-gray-100 text-left hover:shadow-md transition" style={{ background: '#ECFDF5' }}>
-                    <div className="text-xs font-semibold" style={{ color: config.text_color }}>G?nl?k ?al??malar</div>
+                    <div className="text-xs font-semibold" style={{ color: config.text_color }}>Gunluk Calismalar</div>
                     <div className="text-[10px]" style={{ color: config.secondary_action_color }}>T?klayarak listele</div>
                     <div className="mt-2 text-lg font-bold" style={{ color: '#059669' }}>
                       {studentQuick.length}
@@ -811,7 +811,7 @@ function StudentDetailPage({ config, studentId, onBack }) {
       <div className="mb-8">
         <h2 className="text-xl font-bold mb-4" style={{ color: config.text_color }}>Ders Ders Deneme Analizi (Son 6)</h2>
         {subjectSeries.length === 0 ? (
-          <div className="text-center py-10 rounded-xl border border-dashed" style={{ color: config.secondary_action_color }}>Hen?z deneme verisi girilmemi?</div>
+          <div className="text-center py-10 rounded-xl border border-dashed" style={{ color: config.secondary_action_color }}>Henuz deneme verisi girilmemis</div>
         ) : (
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             {subjectSeries.map(s => (
@@ -861,14 +861,14 @@ function StudentDetailPage({ config, studentId, onBack }) {
       </div>
 
       <div className="mb-8">
-        <h2 className="text-xl font-bold mb-4" style={{ color: config.text_color }}>G?nl?k ?al??ma Analizi</h2>
+        <h2 className="text-xl font-bold mb-4" style={{ color: config.text_color }}>Gunluk Calisma Analizi</h2>
         <div className="rounded-2xl p-4 border border-gray-100 mb-6" style={{ background: config.surface_color }}>
-          <h3 className="text-sm font-semibold mb-3" style={{ color: config.text_color }}>ğŸ“Š Haftal?k S?reklilik Skoru</h3>
+          <h3 className="text-sm font-semibold mb-3" style={{ color: config.text_color }}>gYS Haftal?k S?reklilik Skoru</h3>
           <div className="space-y-2">
             {weeklyStats.map((w, i) => (
               <button key={i} onClick={() => setShowWeekDetail(w)} className="w-full text-left flex items-center justify-between px-3 py-2 rounded-lg hover:shadow-sm transition" style={{ background: '#F8FAFC' }}>
                 <div className="text-sm" style={{ color: config.text_color }}>
-                  {w.label}: {w.daysWorked}/7 g?n ?al??t?n! {w.emoji}
+                  {w.label}: {w.daysWorked}/7 gun ?al??t?n! {w.emoji}
                 </div>
                 <div className="text-sm font-bold" style={{ color: config.primary_action_color }}>
                   %{w.pct}
@@ -880,20 +880,20 @@ function StudentDetailPage({ config, studentId, onBack }) {
 
         <div className="rounded-2xl p-4 border border-gray-100 mb-4" style={{ background: config.surface_color }}>
           <div className="flex items-start justify-between gap-4">
-            <div className="text-xs font-semibold pt-1" style={{ color: config.secondary_action_color }}>Trend & Haftal?k Kar??la?t?rma</div>
+            <div className="text-xs font-semibold pt-1" style={{ color: config.secondary_action_color }}>Trend & Haftal?k Karsilastirma</div>
             <div className="flex flex-col items-end gap-3">
               <div className="flex items-center gap-2">
                 <button
                   onClick={() => setTrendRange(7)}
                   className={`px-3 py-1 rounded-full text-xs font-semibold border ${trendRange === 7 ? 'bg-blue-600 text-white border-blue-600' : 'border-gray-200'}`}
                 >
-                  Son 7 g?n
+                  Son 7 gun
                 </button>
                 <button
                   onClick={() => setTrendRange(30)}
                   className={`px-3 py-1 rounded-full text-xs font-semibold border ${trendRange === 30 ? 'bg-blue-600 text-white border-blue-600' : 'border-gray-200'}`}
                 >
-                  Son 30 g?n
+                  Son 30 gun
                 </button>
               </div>
               <div className="flex flex-wrap gap-2">
@@ -901,7 +901,7 @@ function StudentDetailPage({ config, studentId, onBack }) {
                 onClick={() => setSelectedTrendSubjects(prev => (prev === null ? [] : null))}
                 className="px-3 py-1 rounded-full text-xs font-semibold border border-gray-200"
               >
-                T?m?
+                Tumu
               </button>
               {subjectKeys.map(s => {
                 const active = selectedTrendSubjects === null ? true : activeTrendSubjects.includes(s.key);
@@ -927,10 +927,10 @@ function StudentDetailPage({ config, studentId, onBack }) {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           <div className="rounded-2xl p-4 border border-gray-100" style={{ background: config.surface_color }}>
             <div className="flex items-center justify-between mb-3">
-              <h3 className="text-sm font-semibold" style={{ color: config.text_color }}>ğŸ“ˆ Soru ??z?m Trendi</h3>
+              <h3 className="text-sm font-semibold" style={{ color: config.text_color }}>gY Soru ??z?m Trendi</h3>
             </div>
             {Object.keys(dailyTotalsMap).length === 0 ? (
-              <div className="text-center py-10 text-sm" style={{ color: config.secondary_action_color }}>Hen?z veri yok</div>
+              <div className="text-center py-10 text-sm" style={{ color: config.secondary_action_color }}>Henuz veri yok</div>
             ) : (
               (() => {
                 const totalDays = trendRange;
@@ -1019,9 +1019,9 @@ function StudentDetailPage({ config, studentId, onBack }) {
           </div>
 
           <div className="rounded-2xl p-4 border border-gray-100" style={{ background: config.surface_color }}>
-            <h3 className="text-sm font-semibold mb-3" style={{ color: config.text_color }}>ğŸ“Š Haftal?k Kar??la?t?rma</h3>
+            <h3 className="text-sm font-semibold mb-3" style={{ color: config.text_color }}>gYS Haftal?k Karsilastirma</h3>
             {Object.keys(dailyTotalsMap).length === 0 ? (
-              <div className="text-center py-10 text-sm" style={{ color: config.secondary_action_color }}>Hen?z veri yok</div>
+              <div className="text-center py-10 text-sm" style={{ color: config.secondary_action_color }}>Henuz veri yok</div>
             ) : (
               (() => {
                 const weeks = [];
@@ -1066,19 +1066,19 @@ function StudentDetailPage({ config, studentId, onBack }) {
 
         <div className="rounded-2xl p-4 border border-gray-100 mt-6" style={{ background: config.surface_color }}>
             <div className="flex items-center justify-between mb-4">
-              <div className="text-xs font-semibold" style={{ color: config.secondary_action_color }}>Ders Bazl? Analizler</div>
+              <div className="text-xs font-semibold" style={{ color: config.secondary_action_color }}>Ders Bazli Analizler</div>
               <div className="flex items-center gap-2">
                 <button
                   onClick={() => setLessonRange(7)}
                   className={`px-3 py-1 rounded-full text-xs font-semibold border ${lessonRange === 7 ? 'bg-blue-600 text-white border-blue-600' : 'border-gray-200'}`}
                 >
-                  Son 7 g?n
+                  Son 7 gun
               </button>
               <button
                 onClick={() => setLessonRange(30)}
                 className={`px-3 py-1 rounded-full text-xs font-semibold border ${lessonRange === 30 ? 'bg-blue-600 text-white border-blue-600' : 'border-gray-200'}`}
               >
-                Son 30 g?n
+                Son 30 gun
                 </button>
               </div>
             </div>
@@ -1089,7 +1089,7 @@ function StudentDetailPage({ config, studentId, onBack }) {
                 onClick={() => setSelectedLessonSubjects(prev => (prev === null ? [] : null))}
                 className="px-3 py-1 rounded-full text-xs font-semibold border border-gray-200"
               >
-                T?m?
+                Tumu
               </button>
               {subjectKeys.map(s => {
                 const active = selectedLessonSubjects === null ? true : activeLessonSubjects.includes(s.key);
@@ -1111,7 +1111,7 @@ function StudentDetailPage({ config, studentId, onBack }) {
           </div>
 
           {Object.keys(dailySubjectMap).length === 0 ? (
-            <div className="text-center py-8 text-sm" style={{ color: config.secondary_action_color }}>Hen?z ?al??ma verisi girilmemi?</div>
+            <div className="text-center py-8 text-sm" style={{ color: config.secondary_action_color }}>Hen?z Calisma verisi girilmemi?</div>
           ) : (
             (() => {
               const rangeDays = lessonRange;
@@ -1137,7 +1137,7 @@ function StudentDetailPage({ config, studentId, onBack }) {
               return (
                 <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
                   <div className="rounded-2xl p-4 border border-gray-100" style={{ background: '#F8FAFC' }}>
-                    <h4 className="text-xs font-semibold mb-3" style={{ color: config.text_color }}>ğŸ“Š Ders Da??l?m? (Y???lm?? Bar)</h4>
+                    <h4 className="text-xs font-semibold mb-3" style={{ color: config.text_color }}>gYS Ders Dagilimi (Yigilmis Bar)</h4>
                     <svg width="100%" height="260" viewBox="0 0 560 260" preserveAspectRatio="xMidYMid meet">
                       {[0, 1, 2, 3, 4].map(i => (
                         <line key={`h-${i}`} x1="40" y1={30 + i * 45} x2="540" y2={30 + i * 45} stroke="#E2E8F0" strokeWidth="1" />
@@ -1180,9 +1180,9 @@ function StudentDetailPage({ config, studentId, onBack }) {
 
                   <div className="grid grid-cols-1 gap-6">
                     <div className="rounded-2xl p-4 border border-gray-100" style={{ background: '#F8FAFC' }}>
-                      <h4 className="text-xs font-semibold mb-3" style={{ color: config.text_color }}>ğŸŸ£ Ders Bazl? Toplam Soru (Donut)</h4>
+                      <h4 className="text-xs font-semibold mb-3" style={{ color: config.text_color }}>gYY Ders Bazli Toplam Soru (Donut)</h4>
                       {totalAll === 0 ? (
-                        <div className="text-center py-10 text-sm" style={{ color: config.secondary_action_color }}>Se?ilen aral?kta veri yok</div>
+                        <div className="text-center py-10 text-sm" style={{ color: config.secondary_action_color }}>Secilen aralikta veri yok</div>
                       ) : (
                         <div className="flex items-center gap-6">
                           <svg width="220" height="220" viewBox="0 0 220 220">
@@ -1219,7 +1219,10 @@ function StudentDetailPage({ config, studentId, onBack }) {
                             </g>
                           </svg>
                           <div className="space-y-2 text-xs">
-                            {subjectKeys.filter(s => activeLessonSubjects.includes(s.key)).map(s => (
+                            {subjectKeys.filter(s => activeLessonSubjects.includes(s.key)).map(s => {
+                              const v = totalsBySubject[s.key] || 0;
+                              const pct = totalAll ? ((v / totalAll) * 100).toFixed(1) : '0.0';
+                              return (
                               <div key={s.key} className="flex items-center justify-between gap-3">
                                 <div className="flex items-center gap-2">
                                   <span className="w-3 h-3 rounded-sm inline-block" style={{ background: s.color }}></span>
@@ -1227,7 +1230,8 @@ function StudentDetailPage({ config, studentId, onBack }) {
                                 </div>
                                 <div className="font-semibold" style={{ color: config.text_color }}>{v} ({pct}%)</div>
                               </div>
-                            ))}
+                              );
+                            })}
                           </div>
                         </div>
                       )}
@@ -1274,18 +1278,18 @@ function StudentDetailPage({ config, studentId, onBack }) {
         <div className="fixed inset-0 z-50 flex items-center justify-center modal-backdrop" style={{background:'rgba(0,0,0,0.4)'}}>
           <div className="rounded-2xl shadow-2xl p-6 max-w-2xl w-full mx-4 fade-in max-h-[80vh] overflow-y-auto" style={{background: config.surface_color}}>
             <div className="flex items-center justify-between mb-4">
-              <h3 className="text-lg font-bold" style={{ color: config.text_color }}>T?m Denemeler</h3>
+              <h3 className="text-lg font-bold" style={{ color: config.text_color }}>Tum Denemeler</h3>
               <button onClick={() => setShowAllExams(false)} className="p-1.5 rounded-lg hover:bg-gray-100"><Icons.X size={18}/></button>
             </div>
             {studentExams.length === 0 ? (
-              <div className="text-center py-8" style={{ color: config.secondary_action_color }}>Hen?z deneme verisi girilmemi?</div>
+              <div className="text-center py-8" style={{ color: config.secondary_action_color }}>Henuz deneme verisi girilmemis</div>
             ) : (
               <div className="overflow-x-auto">
                 <table className="w-full text-sm">
                   <thead>
                     <tr className="text-left" style={{ color: config.secondary_action_color }}>
                       <th className="py-2">Tarih</th>
-                      <th>Deneme Ad?</th>
+                      <th>Deneme Adi</th>
                       <th>Tip</th>
                       <th>Toplam Net</th>
                       <th></th>
@@ -1299,9 +1303,9 @@ function StudentDetailPage({ config, studentId, onBack }) {
                         <td>{e.deneme_tipi === 'bireysel' ? 'Bireysel' : 'Ortak'}</td>
                         <td className="font-semibold">{parseFloat(e.exam_total_net || 0).toFixed(2)}</td>
                         <td className="flex gap-2">
-                          <button onClick={() => handleOpenEditExam(e)} className="text-blue-600 text-xs font-semibold hover:underline">âœï¸</button>
-                          <button onClick={() => setDetailModal(e)} className="text-blue-600 text-xs font-semibold hover:underline">ğŸ‘ï¸</button>
-                          <button onClick={() => handleDeleteExam(e)} disabled={saving} className="text-red-600 text-xs font-semibold hover:underline disabled:opacity-50">ğŸ—‘ï¸</button>
+                          <button onClick={() => handleOpenEditExam(e)} className="text-blue-600 text-xs font-semibold hover:underline">ai </button>
+                          <button onClick={() => setDetailModal(e)} className="text-blue-600 text-xs font-semibold hover:underline">gYi </button>
+                          <button onClick={() => handleDeleteExam(e)} disabled={saving} className="text-red-600 text-xs font-semibold hover:underline disabled:opacity-50">gYi </button>
                         </td>
                       </tr>
                     ))}
@@ -1317,7 +1321,7 @@ function StudentDetailPage({ config, studentId, onBack }) {
         <div className="fixed inset-0 z-50 flex items-center justify-center modal-backdrop" style={{background:'rgba(0,0,0,0.4)'}}>
           <div className="rounded-2xl shadow-2xl p-6 max-w-3xl w-full mx-4 fade-in max-h-[80vh] overflow-y-auto" style={{background: config.surface_color}}>
             <div className="flex items-center justify-between mb-4">
-              <h3 className="text-lg font-bold" style={{ color: config.text_color }}>T?m G?nl?k ?al??malar</h3>
+              <h3 className="text-lg font-bold" style={{ color: config.text_color }}>T?m Gunluk Calismalar</h3>
               <button onClick={() => setShowAllStudies(false)} className="p-1.5 rounded-lg hover:bg-gray-100"><Icons.X size={18}/></button>
             </div>
             <div className="flex items-center justify-between mb-3">
@@ -1326,7 +1330,7 @@ function StudentDetailPage({ config, studentId, onBack }) {
                   type="checkbox"
                   checked={selectedStudyIds.length === studentQuick.length && studentQuick.length > 0}
                   onChange={(e) => setSelectedStudyIds(e.target.checked ? studentQuick.map(s => s.__backendId) : [])}
-                /> T?m?n? se?
+                /> Tumun? se?
               </label>
               <button
                 onClick={async () => {
@@ -1343,7 +1347,7 @@ function StudentDetailPage({ config, studentId, onBack }) {
               </button>
             </div>
             {studentQuick.length === 0 ? (
-              <div className="text-center py-8" style={{ color: config.secondary_action_color }}>Hen?z ?al??ma verisi girilmemi?</div>
+              <div className="text-center py-8" style={{ color: config.secondary_action_color }}>Hen?z Calisma verisi girilmemi?</div>
             ) : (
               <div className="overflow-x-auto">
                 <table className="w-full text-sm">
@@ -1351,11 +1355,11 @@ function StudentDetailPage({ config, studentId, onBack }) {
                     <tr className="text-left" style={{ color: config.secondary_action_color }}>
                       <th className="py-2"></th>
                       <th className="py-2">Tarih</th>
-                      <th>T?rk?e</th>
+                      <th>Turkce</th>
                       <th>Mat</th>
                       <th>Fen</th>
                       <th>Sosyal</th>
-                      <th>?ng</th>
+                      <th>Ing</th>
                       <th>Din</th>
                       <th>Toplam</th>
                       <th></th>
@@ -1393,7 +1397,7 @@ function StudentDetailPage({ config, studentId, onBack }) {
                           <td>{(q.din_d||0)+(q.din_y||0)+(q.din_b||0)}</td>
                           <td className="font-semibold">{total}</td>
                           <td className="space-x-2">
-                            <button onClick={() => setEditingStudy(q)} className="text-blue-600 text-xs font-semibold">D?zenle</button>
+                            <button onClick={() => setEditingStudy(q)} className="text-blue-600 text-xs font-semibold">Duzenle</button>
                             <button onClick={async () => { await window.dataSdk.delete({ type: 'quick_study', __backendId: q.__backendId }); }} className="text-red-600 text-xs font-semibold">Sil</button>
                           </td>
                         </tr>
@@ -1411,7 +1415,7 @@ function StudentDetailPage({ config, studentId, onBack }) {
         <div className="fixed inset-0 z-50 flex items-center justify-center modal-backdrop" style={{background:'rgba(0,0,0,0.4)'}}>
           <div className="rounded-2xl shadow-2xl p-6 max-w-2xl w-full mx-4 fade-in max-h-[80vh] overflow-y-auto" style={{background: config.surface_color}}>
             <div className="flex items-center justify-between mb-4">
-              <h3 className="text-lg font-bold" style={{ color: config.text_color }}>Deneme D?zenle</h3>
+              <h3 className="text-lg font-bold" style={{ color: config.text_color }}>Deneme Duzenle</h3>
               <button onClick={() => setEditingExam(null)} className="p-1.5 rounded-lg hover:bg-gray-100"><Icons.X size={18}/></button>
             </div>
             <div className="grid grid-cols-2 gap-4 mb-6">
@@ -1465,7 +1469,7 @@ function StudentDetailPage({ config, studentId, onBack }) {
                 disabled={saving || Object.keys(editExamErrors).length > 0}
                 className="flex-1 px-4 py-2 rounded-lg bg-green-600 text-white text-sm font-bold hover:bg-green-700 transition disabled:opacity-60"
               >
-                {saving ? 'Kaydediliyor...' : 'âœ“ Kaydet'}
+                {saving ? 'Kaydediliyor...' : 'a Kaydet'}
               </button>
               <button
                 onClick={() => setEditingExam(null)}
@@ -1483,12 +1487,12 @@ function StudentDetailPage({ config, studentId, onBack }) {
         <div className="fixed inset-0 z-[60] flex items-center justify-center modal-backdrop" style={{background:'rgba(0,0,0,0.4)'}}>
           <div className="rounded-2xl shadow-2xl p-6 max-w-lg w-full mx-4 fade-in" style={{background: config.surface_color}}>
             <div className="flex items-center justify-between mb-4">
-              <h3 className="text-lg font-bold" style={{ color: config.text_color }}>G?nl?k ?al??ma D?zenle</h3>
+              <h3 className="text-lg font-bold" style={{ color: config.text_color }}>Gunluk Calisma Duzenle</h3>
               <button onClick={() => setEditingStudy(null)} className="p-1.5 rounded-lg hover:bg-gray-100"><Icons.X size={18}/></button>
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm">
               {[
-                ['tur', 'T?rk?e'], ['mat', 'Mat'], ['fen', 'Fen'], ['ink', 'Sosyal'], ['ing', '?ng'], ['din', 'Din']
+                ['tur', 'Turkce'], ['mat', 'Mat'], ['fen', 'Fen'], ['ink', 'Sosyal'], ['ing', 'Ing'], ['din', 'Din']
               ].map(([k, label]) => (
                 <div key={k} className="rounded-lg border border-gray-100 p-2">
                   <div className="text-xs font-semibold mb-1" style={{ color: config.secondary_action_color }}>{label}</div>
@@ -1527,7 +1531,7 @@ function StudentDetailPage({ config, studentId, onBack }) {
                     {d.date.toLocaleDateString('tr-TR', { day: '2-digit', month: 'long', weekday: 'long' })}
                   </div>
                   <div className="text-sm font-semibold" style={{ color: d.worked ? '#10B981' : '#EF4444' }}>
-                    {d.worked ? 'âœ”ï¸ ?al???ld?' : 'âœ–ï¸ Veri yok'}
+                    {d.worked ? 'ai  ?al???ld?' : 'ai  Veri yok'}
                   </div>
                 </div>
               ))}
@@ -1540,7 +1544,7 @@ function StudentDetailPage({ config, studentId, onBack }) {
         <div className="fixed inset-0 z-50 flex items-center justify-center modal-backdrop" style={{background:'rgba(0,0,0,0.4)'}}>
           <div className="bg-white rounded-2xl shadow-2xl p-6 max-w-lg w-full mx-4 fade-in">
             <div className="flex items-center justify-between mb-4">
-              <h2 className="text-lg font-bold" style={{color: config.text_color}}>??renciyi D?zenle</h2>
+              <h2 className="text-lg font-bold" style={{color: config.text_color}}>Ogrenciyi Duzenle</h2>
               <button onClick={() => setEditModal(false)} className="p-1.5 rounded-lg hover:bg-gray-100"><Icons.X size={18}/></button>
             </div>
             <form onSubmit={handleUpdate} className="space-y-4">
@@ -1578,7 +1582,7 @@ function StudentDetailPage({ config, studentId, onBack }) {
       )}
 
       {confirmDel && (
-        <ConfirmModal message="Bu ??renciyi silmek istedi?inize emin misiniz?" onConfirm={handleDelete} onCancel={() => setConfirmDel(false)}/>
+        <ConfirmModal message="Bu Ogrenciyi silmek istedi?inize emin misiniz?" onConfirm={handleDelete} onCancel={() => setConfirmDel(false)}/>
       )}
     </div>
   );
@@ -1742,7 +1746,7 @@ function StudyPage({ config }) {
   const handleQuickSubmit = async (e) => {
     e.preventDefault();
     if (!selectedStudentId) {
-      setToast({ msg: 'L?tfen ??renci se?in', type: 'error' });
+      setToast({ msg: 'L?tfen Ogrenci se?in', type: 'error' });
       return;
     }
     if (!quickDate) {
@@ -1765,7 +1769,7 @@ function StudyPage({ config }) {
     setLoading(false);
 
     if (result.isOk) {
-      setToast({ msg: 'H?zl? giri? kaydedildi! âœ…', type: 'success' });
+      setToast({ msg: 'H?zl? giri? kaydedildi! a...', type: 'success' });
       setQuickInputs({
         tur_d: '', tur_y: '', tur_b: '',
         mat_d: '', mat_y: '', mat_b: '',
@@ -1808,14 +1812,14 @@ function StudyPage({ config }) {
                 />
               </div>
               <div className="flex items-center gap-2">
-                <label className="text-sm font-semibold" style={{ color: config.text_color }}>??renci *</label>
+                <label className="text-sm font-semibold" style={{ color: config.text_color }}>Ogrenci *</label>
                 <select
                   value={selectedStudentId}
                   onChange={(e) => setSelectedStudentId(e.target.value)}
                   className="px-3 py-2 rounded-lg border border-gray-200 text-sm font-medium"
                   style={{ background: config.surface_color, color: config.text_color }}
                 >
-                  <option value="">-- ??renci Se?in --</option>
+                  <option value="">-- Ogrenci Se?in --</option>
                   {students.map(s => (
                     <option key={s.__backendId} value={s.__backendId}>
                       {s.ad_soyad || `${s.student_name || ''} ${s.student_surname || ''}`.trim()}
@@ -2020,12 +2024,12 @@ function ExamPage({ config }) {
   const [editDate, setEditDate] = useState('');
 
   const subjectColors = {
-    turkce: { bg: '#FEE2E2', text: '#DC2626', name: 'T?rk?e', emoji: 'ğŸ“˜' },
-    matematik: { bg: '#DBEAFE', text: '#0284C7', name: 'Matematik', emoji: 'ğŸ”¢' },
-    fen: { bg: '#DCFCE7', text: '#16A34A', name: 'Fen', emoji: 'ğŸ§ª' },
-    inkilap: { bg: '#FEF3C7', text: '#D97706', name: '?nk?lap', emoji: 'ğŸ“œ' },
-    ingilizce: { bg: '#F3E8FF', text: '#7C3AED', name: '?ngilizce', emoji: 'ğŸŒ' },
-    din: { bg: '#FCE7F3', text: '#BE185D', name: 'Din', emoji: 'â˜ªï¸' },
+    turkce: { bg: '#FEE2E2', text: '#DC2626', name: 'Turkce', emoji: 'gY ' },
+    matematik: { bg: '#DBEAFE', text: '#0284C7', name: 'Matematik', emoji: 'gY' },
+    fen: { bg: '#DCFCE7', text: '#16A34A', name: 'Fen', emoji: 'gYa' },
+    inkilap: { bg: '#FEF3C7', text: '#D97706', name: '?nk?lap', emoji: 'gY' },
+    ingilizce: { bg: '#F3E8FF', text: '#7C3AED', name: 'Ingilizce', emoji: 'gY' },
+    din: { bg: '#FCE7F3', text: '#BE185D', name: 'Din', emoji: 'a ai ' },
   };
   const quickSubjects = [
     { key: 'turkce', label: 'T?R', accent: '#EF4444', soft: '#FEE2E2' },
@@ -2077,7 +2081,7 @@ function ExamPage({ config }) {
     });
     setIsSaving(false);
     if (result.isOk) {
-      setToast({ msg: 'Deneme tan?mland?! ğŸ‰', type: 'success' });
+      setToast({ msg: 'Deneme tan?mland?! gY', type: 'success' });
       setNewDefineExamName('');
       setNewDefineExamDate(new Date().toISOString().split('T')[0]);
     } else {
@@ -2117,12 +2121,12 @@ function ExamPage({ config }) {
     });
     setIsSaving(false);
     if (result.isOk) {
-      setToast({ msg: 'Deneme g?ncellendi! ğŸ‰', type: 'success' });
+      setToast({ msg: 'Deneme guncellendi! gY', type: 'success' });
       setEditingDefinedExam(null);
       setEditName('');
       setEditDate('');
     } else {
-      setToast({ msg: 'G?ncelleme hatas?', type: 'error' });
+      setToast({ msg: 'Guncelleme hatas?', type: 'error' });
     }
   };
 
@@ -2178,7 +2182,7 @@ function ExamPage({ config }) {
   const handleSave = async (e) => {
     e.preventDefault();
     if (!selectedStudentId) {
-      setToast({ msg: 'L?tfen ??renci se?in', type: 'error' });
+      setToast({ msg: 'L?tfen Ogrenci se?in', type: 'error' });
       return;
     }
     if (examType === 'ortak' && !selectedDefinedExamId) {
@@ -2214,7 +2218,7 @@ function ExamPage({ config }) {
     setIsSaving(false);
 
     if (result.isOk) {
-      setToast({ msg: 'Deneme kaydedildi! ğŸ‰', type: 'success' });
+      setToast({ msg: 'Deneme kaydedildi! gY', type: 'success' });
       handleReset();
     } else {
       setToast({ msg: 'Hata olu?tu', type: 'error' });
@@ -2285,7 +2289,7 @@ function ExamPage({ config }) {
               <h2 className="text-xl font-bold" style={{color: config.text_color}}>{detailModal.examName}</h2>
               <button onClick={() => setDetailModal(null)} className="p-1.5 rounded-lg hover:bg-gray-100"><Icons.X size={20} className="text-gray-500"/></button>
             </div>
-            <p className="text-sm mb-6" style={{color: config.secondary_action_color}}>ğŸ“… {new Date(detailModal.date).toLocaleDateString('tr-TR')}</p>
+            <p className="text-sm mb-6" style={{color: config.secondary_action_color}}>gY... {new Date(detailModal.date).toLocaleDateString('tr-TR')}</p>
             
             <div className="space-y-3 mb-6">
               {Object.entries(detailModal.subjects).map(([key, data]) => {
@@ -2294,9 +2298,9 @@ function ExamPage({ config }) {
                   <div key={key} className="rounded-lg p-4" style={{background: color.bg}}>
                     <p className="font-semibold mb-2" style={{color: color.text}}>{color.emoji} {color.name}</p>
                     <div className="text-xs space-y-1" style={{color: color.text}}>
-                      <p>âœ“ Do?ru: {data.dogru}</p>
-                      <p>âœ— Yanl??: {data.yanlis}</p>
-                      <p>âŠ˜ Bo?: {data.bos}</p>
+                      <p>a Do?ru: {data.dogru}</p>
+                      <p>a Yanl??: {data.yanlis}</p>
+                      <p>aS  Bo?: {data.bos}</p>
                       <p className="font-bold text-sm">NET: {data.net}</p>
                     </div>
                   </div>
@@ -2321,11 +2325,11 @@ function ExamPage({ config }) {
         {/* SOL TARAF: Deneme Tan?mlama */}
         <div className="lg:col-span-1">
           <div className="rounded-2xl p-6 border-2 border-blue-200" style={{ background: '#F0F9FF' }}>
-            <h2 className="text-lg font-bold mb-4 text-blue-900">ğŸ“‹ Yeni Deneme Tan?mla</h2>
+            <h2 className="text-lg font-bold mb-4 text-blue-900">gY Yeni Deneme Tan?mla</h2>
             
             <form onSubmit={handleDefineExam} className="space-y-3 mb-6">
               <div>
-                <label className="block text-xs font-semibold mb-1.5 text-blue-900">Deneme Ad?</label>
+                <label className="block text-xs font-semibold mb-1.5 text-blue-900">Deneme Adi</label>
                 <input
                   type="text"
                   value={newDefineExamName}
@@ -2350,7 +2354,7 @@ function ExamPage({ config }) {
                 disabled={isSaving}
                 className="w-full px-4 py-2 rounded-lg bg-blue-600 text-white text-sm font-bold hover:bg-blue-700 transition disabled:opacity-60"
               >
-                {isSaving ? 'Kaydediliyor...' : 'âœ“ Tan?mla'}
+                {isSaving ? 'Kaydediliyor...' : 'a Tan?mla'}
               </button>
             </form>
 
@@ -2371,9 +2375,9 @@ function ExamPage({ config }) {
                           onClick={() => handleOpenEditModal(exam)}
                           className="text-blue-500 hover:text-blue-700 p-1"
                           disabled={isSaving}
-                          title="D?zenle"
+                          title="Duzenle"
                         >
-                          âœï¸
+                          ai 
                         </button>
                         <button
                           onClick={() => handleDeleteDefinedExam(exam.__backendId)}
@@ -2381,7 +2385,7 @@ function ExamPage({ config }) {
                           disabled={isSaving}
                           title="Sil"
                         >
-                          ğŸ—‘ï¸
+                          gYi 
                         </button>
                       </div>
                     </div>
@@ -2392,22 +2396,22 @@ function ExamPage({ config }) {
           </div>
         </div>
 
-        {/* SAÄ TARAF: Deneme Giri?i Formu */}
+        {/* SAA TARAF: Deneme Giri?i Formu */}
         <div className="lg:col-span-2">
           <form onSubmit={handleSave}>
             <div className="rounded-2xl p-6 border border-gray-200 mb-6" style={{ background: config.surface_color }}>
-              <h2 className="text-lg font-bold mb-4" style={{ color: config.text_color }}>ğŸ“ Deneme Giri?i</h2>
+              <h2 className="text-lg font-bold mb-4" style={{ color: config.text_color }}>gY Deneme Giri?i</h2>
               
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
                 <div>
-                  <label className="block text-sm font-semibold mb-2" style={{ color: config.text_color }}>??renci Se?in *</label>
+                  <label className="block text-sm font-semibold mb-2" style={{ color: config.text_color }}>Ogrenci Se?in *</label>
                   <select
                     value={selectedStudentId}
                     onChange={(e) => setSelectedStudentId(e.target.value)}
                     className="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-sm font-medium"
                     style={{ background: config.surface_color, color: config.text_color }}
                   >
-                    <option value="">-- ??renci Se?in --</option>
+                    <option value="">-- Ogrenci Se?in --</option>
                     {students.map(s => (
                       <option key={s.__backendId} value={s.__backendId}>
                         {s.ad_soyad || `${s.student_name || ''} ${s.student_surname || ''}`.trim()}
@@ -2466,7 +2470,7 @@ function ExamPage({ config }) {
                     {selectedDefinedExamId ? (
                       <>Se?ilen: <span className="ml-1 font-semibold" style={{ color: config.text_color }}>
                         {definedExams.find(e => e.__backendId === selectedDefinedExamId)?.name}
-                      </span> Â· {new Date(selectedDate).toLocaleDateString('tr-TR')}</>
+                      </span> A {new Date(selectedDate).toLocaleDateString('tr-TR')}</>
                     ) : (
                       <>L?tfen bir ortak deneme se?in</>
                     )}
@@ -2475,7 +2479,7 @@ function ExamPage({ config }) {
               ) : (
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-sm font-semibold mb-2" style={{ color: config.text_color }}>Deneme Ad? *</label>
+                    <label className="block text-sm font-semibold mb-2" style={{ color: config.text_color }}>Deneme Adi *</label>
                     <input
                       type="text"
                       value={examName}
@@ -2491,7 +2495,7 @@ function ExamPage({ config }) {
 
             {!selectedStudentId ? (
               <div className="text-center py-12 rounded-2xl border-2 border-dashed border-gray-300">
-                <p className="text-lg font-medium" style={{ color: config.secondary_action_color }}>ğŸ“Œ L?tfen ??renci se?in</p>
+                <p className="text-lg font-medium" style={{ color: config.secondary_action_color }}>gY L?tfen Ogrenci se?in</p>
               </div>
             ) : (
               <>
@@ -2568,7 +2572,7 @@ function ExamPage({ config }) {
           
           {studentExams.length === 0 ? (
             <div className="text-center py-12 rounded-2xl border-2 border-dashed border-gray-300">
-              <p className="text-base font-medium" style={{ color: config.secondary_action_color }}>Hen?z deneme girilmemi? ğŸ“</p>
+              <p className="text-base font-medium" style={{ color: config.secondary_action_color }}>Hen?z deneme girilmemi? gY</p>
             </div>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
@@ -2578,7 +2582,7 @@ function ExamPage({ config }) {
                 return (
                   <div key={exam.__backendId} className="rounded-2xl border border-gray-100 p-6 card-hover" style={{ background: config.surface_color }}>
                     <h3 className="text-xl font-bold mb-2" style={{ color: config.text_color }}>{exam.exam_name}</h3>
-                    <p className="text-sm mb-4" style={{ color: config.secondary_action_color }}>ğŸ“… {new Date(displayDate).toLocaleDateString('tr-TR')}</p>
+                    <p className="text-sm mb-4" style={{ color: config.secondary_action_color }}>gY... {new Date(displayDate).toLocaleDateString('tr-TR')}</p>
                     
                     <div className="rounded-lg p-4 bg-emerald-50 text-center mb-5">
                       <p className="text-xs font-semibold mb-1" style={{ color: '#059669' }}>TOPLAM NET</p>
@@ -2587,7 +2591,7 @@ function ExamPage({ config }) {
 
                     <div className="flex gap-2">
                       <button onClick={() => openExamDetail(exam)} className="flex-1 px-3 py-2.5 rounded-lg text-white text-sm font-semibold transition-all" style={{background: config.primary_action_color}}>Detaylar</button>
-                      <button onClick={() => handleDelete(exam.__backendId)} className="px-3 py-2.5 rounded-lg border border-red-200 text-red-600 hover:bg-red-50 font-semibold text-sm transition-colors">ğŸ—‘ï¸</button>
+                      <button onClick={() => handleDelete(exam.__backendId)} className="px-3 py-2.5 rounded-lg border border-red-200 text-red-600 hover:bg-red-50 font-semibold text-sm transition-colors">gYi </button>
                     </div>
                   </div>
                 );
@@ -2601,10 +2605,10 @@ function ExamPage({ config }) {
       {editingDefinedExam && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
           <div className="bg-white rounded-lg shadow-lg max-w-sm w-full p-6">
-            <h2 className="text-lg font-bold text-gray-900 mb-4">Deneme D?zenle</h2>
+            <h2 className="text-lg font-bold text-gray-900 mb-4">Deneme Duzenle</h2>
             <div className="space-y-4 mb-6">
               <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-1.5">Deneme Ad?</label>
+                <label className="block text-sm font-semibold text-gray-700 mb-1.5">Deneme Adi</label>
                 <input
                   type="text"
                   value={editName}
@@ -2671,13 +2675,11 @@ function SchoolNetTrendChart({ config }) {
 
   useEffect(() => {
     const buildTrendFromLocal = () => {
-      const activeDefinedExamIds = new Set((definedExams || []).map((d) => Number(d.__backendId)));
       const ortakExams = (exams || []).filter((e) => {
         if (e.deneme_tipi !== 'ortak') return false;
         const examName = String(e.exam_name || '').trim().toLowerCase();
         if (examName.startsWith('mebi')) return false;
-        if (!e.defined_exam_id) return true;
-        return activeDefinedExamIds.has(Number(e.defined_exam_id));
+        return true;
       });
       const grouped = {};
       ortakExams.forEach((e) => {
@@ -2716,7 +2718,7 @@ function SchoolNetTrendChart({ config }) {
       setError('Trend verisi alinamadi');
     }
     setLoading(false);
-  }, [exams, definedExams]);
+  }, [exams]);
 
   const canRenderChart = Boolean(
     ResponsiveContainer && LineChart && CartesianGrid && XAxis && YAxis && Tooltip && Line
@@ -2804,15 +2806,13 @@ function DashboardPage({ config, onSelectStudent, onNavigate }) {
   const loading = !allData || allData.length === 0;
 
   const ortakExams = useMemo(() => {
-    const activeDefinedExamIds = new Set((definedExams || []).map((d) => Number(d.__backendId)));
     return (exams || []).filter((e) => {
       if (e.deneme_tipi !== 'ortak') return false;
       const examName = String(e.exam_name || '').trim().toLowerCase();
       if (examName.startsWith('mebi')) return false;
-      if (!e.defined_exam_id) return true;
-      return activeDefinedExamIds.has(Number(e.defined_exam_id));
+      return true;
     });
-  }, [exams, definedExams]);
+  }, [exams]);
 
   const groupedExams = useMemo(() => {
     const map = {};
@@ -2868,7 +2868,7 @@ function DashboardPage({ config, onSelectStudent, onNavigate }) {
         const prevNet = parseFloat(prev.exam_total_net || 0);
         return {
           studentId: sid,
-          name: (studentMap[sid]?.ad_soyad || '').trim() || (studentMap[sid]?.student_name || '??renci'),
+          name: (studentMap[sid]?.ad_soyad || '').trim() || (studentMap[sid]?.student_name || 'Ogrenci'),
           lastNet,
           prevNet,
           diff: lastNet - prevNet
@@ -2911,7 +2911,7 @@ function DashboardPage({ config, onSelectStudent, onNavigate }) {
       }
     });
     if (!minSubj) return null;
-    const labelMap = { turkce: 'T?rk?e', matematik: 'Matematik', fen: 'Fen', inkilap: 'Sosyal', ingilizce: '?ngilizce' };
+    const labelMap = { turkce: 'Turkce', matematik: 'Matematik', fen: 'Fen', inkilap: 'Sosyal', ingilizce: 'Ingilizce' };
     return { name: labelMap[minSubj], avg: minAvg };
   }, [ortakExams, studentMap]);
 
@@ -2976,7 +2976,7 @@ function DashboardPage({ config, onSelectStudent, onNavigate }) {
       const days = last ? diffDays(now, last) : 999;
       return {
         id: String(s.__backendId),
-        name: (s.ad_soyad || `${s.student_name || ''} ${s.student_surname || ''}`.trim() || '??renci'),
+        name: (s.ad_soyad || `${s.student_name || ''} ${s.student_surname || ''}`.trim() || 'Ogrenci'),
         days
       };
     }).filter(s => s.days >= 7);
@@ -3008,7 +3008,7 @@ function DashboardPage({ config, onSelectStudent, onNavigate }) {
         const student = (students || []).find(s => String(s.__backendId) === String(id));
         list.push({
           id,
-          name: (student?.ad_soyad || `${student?.student_name || ''} ${student?.student_surname || ''}`.trim() || '??renci'),
+          name: (student?.ad_soyad || `${student?.student_name || ''} ${student?.student_surname || ''}`.trim() || 'Ogrenci'),
           drop
         });
       }
@@ -3019,7 +3019,7 @@ function DashboardPage({ config, onSelectStudent, onNavigate }) {
   const studentNameById = useMemo(() => {
     const map = {};
     (students || []).forEach(s => {
-      map[String(s.__backendId)] = (s.ad_soyad || `${s.student_name || ''} ${s.student_surname || ''}`.trim() || '??renci');
+      map[String(s.__backendId)] = (s.ad_soyad || `${s.student_name || ''} ${s.student_surname || ''}`.trim() || 'Ogrenci');
     });
     return map;
   }, [students]);
@@ -3033,7 +3033,7 @@ function DashboardPage({ config, onSelectStudent, onNavigate }) {
     if (diffMin < 60) return `${diffMin} dk ?nce`;
     if (diffHr < 24) return `${diffHr} saat ?nce`;
     if (diffDay === 1) return 'D?n';
-    return `${diffDay} g?n ?nce`;
+    return `${diffDay} gun ?nce`;
   };
 
   const recentActivities = useMemo(() => {
@@ -3041,7 +3041,7 @@ function DashboardPage({ config, onSelectStudent, onNavigate }) {
     (exams || []).forEach(e => {
       const d = new Date(e.created_at || e.exam_date || '');
       const sid = String(e.student_id || e.student_backend_id || '');
-      const name = studentNameById[sid] || 'Bilinmeyen ??renci';
+      const name = studentNameById[sid] || 'Bilinmeyen Ogrenci';
       items.push({
         type: 'exam',
         date: d,
@@ -3057,11 +3057,11 @@ function DashboardPage({ config, onSelectStudent, onNavigate }) {
         (q.ink_d||0)+(q.ink_y||0)+(q.ink_b||0)+
         (q.ing_d||0)+(q.ing_y||0)+(q.ing_b||0)+
         (q.din_d||0)+(q.din_y||0)+(q.din_b||0);
-      const name = studentNameById[String(q.student_id || '')] || 'Bilinmeyen ??renci';
+      const name = studentNameById[String(q.student_id || '')] || 'Bilinmeyen Ogrenci';
       items.push({
         type: 'study',
         date: d,
-        text: `${name} - G?nl?k ?al??ma (${total} soru)`,
+        text: `${name} - Gunluk Calisma (${total} soru)`,
         ago: formatAgo(d)
       });
     });
@@ -3069,8 +3069,8 @@ function DashboardPage({ config, onSelectStudent, onNavigate }) {
   }, [exams, quickStudies, studentNameById]);
 
   const renderValue = (val, emptyText) => {
-    if (!hasStudents) return 'Hen?z ?renci eklenmemi?';
-    if (!hasOrtak) return 'Hen?z ortak deneme girilmemi?';
+    if (!hasStudents) return 'Henuz ogrenci eklenmemis';
+    if (!hasOrtak) return 'Henuz ortak deneme girilmemis';
     return val ?? emptyText;
   };
 
@@ -3157,7 +3157,7 @@ function DashboardPage({ config, onSelectStudent, onNavigate }) {
         const net = parseFloat(r.exam_total_net || 0);
         const student = studentMap[sid];
         const name = (student?.ad_soyad || '').trim() || (student?.student_name || '') + ' ' + (student?.student_surname || '');
-        const trimmedName = name.trim() || 'Bilinmeyen ??renci';
+        const trimmedName = name.trim() || 'Bilinmeyen Ogrenci';
         const parts = trimmedName.split(' ');
         const shortName = parts.length > 1 ? `${parts[0]} ${parts[1][0]}.` : parts[0];
         const details = {
@@ -3183,10 +3183,10 @@ function DashboardPage({ config, onSelectStudent, onNavigate }) {
     if (!ortakExams || ortakExams.length === 0) return null;
     const hasStudentData = Object.keys(studentMap).length > 0;
     const subjects = [
-      { key: 'turkce', label: 'T?rk?e' },
+      { key: 'turkce', label: 'Turkce' },
       { key: 'matematik', label: 'Matematik' },
       { key: 'fen', label: 'Fen Bilimleri' },
-      { key: 'ingilizce', label: '?ngilizce' },
+      { key: 'ingilizce', label: 'Ingilizce' },
       { key: 'inkilap', label: '?nk?lap Tarihi' },
       { key: 'din', label: 'Din K?lt?r?' },
     ];
@@ -3291,7 +3291,7 @@ function DashboardPage({ config, onSelectStudent, onNavigate }) {
         const y = scales.y.getPixelForValue(nets[index]) - 18;
         ctx.save();
         ctx.font = '16px Plus Jakarta Sans';
-        ctx.fillText('â­', x - 8, y);
+        ctx.fillText('a', x - 8, y);
         ctx.restore();
       }
     };
@@ -3349,11 +3349,11 @@ function DashboardPage({ config, onSelectStudent, onNavigate }) {
                 const idx = items[0].dataIndex;
                 const d = chartData.rows[idx].details;
                 return [
-                  `T?rk?e: ${d.turkce.toFixed(1)}`,
+                  `Turkce: ${d.turkce.toFixed(1)}`,
                   `Matematik: ${d.matematik.toFixed(1)}`,
                   `Fen: ${d.fen.toFixed(1)}`,
                   `Sosyal: ${d.inkilap.toFixed(1)}`,
-                  `?ngilizce: ${d.ingilizce.toFixed(1)}`,
+                  `Ingilizce: ${d.ingilizce.toFixed(1)}`,
                 ];
               }
             }
@@ -3478,13 +3478,13 @@ function DashboardPage({ config, onSelectStudent, onNavigate }) {
     <div className="max-w-7xl mx-auto px-4 py-8 fade-in">
       <div className="mb-8 grid grid-cols-1 lg:grid-cols-2 gap-6 items-center">
         <div>
-          <h1 className="text-3xl sm:text-4xl font-extrabold" style={{ color: config.text_color }}>Genel Bak??</h1>
-          <p className="text-sm sm:text-base mt-2" style={{ color: config.secondary_action_color }}>??renci performans ?zeti ve trend analizi</p>
+          <h1 className="text-3xl sm:text-4xl font-extrabold" style={{ color: config.text_color }}>Genel Bakis</h1>
+          <p className="text-sm sm:text-base mt-2" style={{ color: config.secondary_action_color }}>Ogrenci performans ozeti ve trend analizi</p>
         </div>
         <div className="rounded-2xl p-10 border border-gray-100 shadow-sm w-full text-center justify-self-center max-w-md" style={{ background: 'linear-gradient(135deg, #EFF6FF 0%, #F5F3FF 100%)' }}>
           <div className="text-lg font-semibold" style={{ color: '#3B82F6' }}>LGS 2026</div>
           <div className="text-xl font-bold" style={{ color: '#0F172A' }}>14 Haziran 2026</div>
-          <div className="text-lg mt-2" style={{ color: '#64748B' }}>{lgsDaysLeft} g?n kald?</div>
+          <div className="text-lg mt-2" style={{ color: '#64748B' }}>{lgsDaysLeft} gun kald?</div>
         </div>
       </div>
 
@@ -3520,36 +3520,36 @@ function DashboardPage({ config, onSelectStudent, onNavigate }) {
       <div className="mt-8 grid grid-cols-1 lg:grid-cols-2 gap-4">
         <div className="rounded-2xl p-6 shadow-lg" style={{ background: config.surface_color }}>
           <div className="mb-4">
-            <h3 className="text-lg font-bold" style={{ color: config.text_color }}>ğŸš¨ Dikkat Gerekli ??renciler</h3>
+            <h3 className="text-lg font-bold" style={{ color: config.text_color }}>gYs  Dikkat Gerekli Ogrenciler</h3>
             <div className="text-sm" style={{ color: config.secondary_action_color }}>Son denemelerde performans d?????</div>
           </div>
 
           {(weeklyNoStudy.length === 0 && declineStudents.length === 0) ? (
             <div className="rounded-xl p-4 text-sm" style={{ background: '#e8f8f5', color: '#0f766e' }}>
-              âœ… Harika! T?m ??renciler aktif ve ba?ar?l?
+              a... Harika! T?m Ogrenciler aktif ve ba?ar?l?
             </div>
           ) : (
             <div className="space-y-4">
               <div className="rounded-xl p-4" style={{ background: '#fff9e6' }}>
                 <div className="text-xs font-semibold mb-2" style={{ color: '#8a6d3b' }}>
-                  âš ï¸ Bu Hafta ?al??ma Getirmeyen ({weeklyNoStudy.length} ??renci)
+                  as i  Bu Hafta Calisma Getirmeyen ({weeklyNoStudy.length} Ogrenci)
                 </div>
                 <div className="space-y-2">
                   {weeklyNoStudy.slice(0, 5).map(s => (
                     <div key={s.id} onClick={() => onSelectStudent && onSelectStudent(s.id)} className="flex items-center justify-between text-sm cursor-pointer hover:bg-white/60 px-2 py-1 rounded">
                       <span>{s.name}</span>
-                      <span style={{ color: '#6b7280' }}>{s.days} g?nd?r ?al??ma yok</span>
+                      <span style={{ color: '#6b7280' }}>{s.days} gund?r Calisma yok</span>
                     </div>
                   ))}
                   {weeklyNoStudy.length > 5 && (
-                    <div className="text-xs" style={{ color: '#6b7280' }}>+{weeklyNoStudy.length - 5} ??renci daha</div>
+                    <div className="text-xs" style={{ color: '#6b7280' }}>+{weeklyNoStudy.length - 5} Ogrenci daha</div>
                   )}
                 </div>
               </div>
 
               <div className="rounded-xl p-4" style={{ background: '#ffe6e6' }}>
                 <div className="text-xs font-semibold mb-2" style={{ color: '#b91c1c' }}>
-                  ğŸ“‰ Son 2-3 Denemede Net D????? ({declineStudents.length} ??renci)
+                  gY Son 2-3 Denemede Net D????? ({declineStudents.length} Ogrenci)
                 </div>
                 <div className="space-y-2">
                   {declineStudents.slice(0, 5).map(s => (
@@ -3559,7 +3559,7 @@ function DashboardPage({ config, onSelectStudent, onNavigate }) {
                     </div>
                   ))}
                   {declineStudents.length > 5 && (
-                    <div className="text-xs" style={{ color: '#6b7280' }}>+{declineStudents.length - 5} ??renci daha</div>
+                    <div className="text-xs" style={{ color: '#6b7280' }}>+{declineStudents.length - 5} Ogrenci daha</div>
                   )}
                 </div>
               </div>
@@ -3569,7 +3569,7 @@ function DashboardPage({ config, onSelectStudent, onNavigate }) {
 
         <div className="rounded-2xl p-6 shadow-lg" style={{ background: config.surface_color }}>
           <div className="mb-4">
-            <h3 className="text-lg font-bold" style={{ color: config.text_color }}>ğŸ“ Son Aktiviteler</h3>
+            <h3 className="text-lg font-bold" style={{ color: config.text_color }}>gY Son Aktiviteler</h3>
             <div className="text-sm" style={{ color: config.secondary_action_color }}>Son veri giri?leri</div>
           </div>
           <div className="relative pl-6">
@@ -3584,7 +3584,7 @@ function DashboardPage({ config, onSelectStudent, onNavigate }) {
                     <div className="absolute -left-[18px] top-1.5 w-3 h-3 rounded-full" style={{ background: a.type === 'exam' ? '#3B82F6' : '#10B981' }}></div>
                     <div className="text-xs" style={{ color: '#94a3b8' }}>{timeText}</div>
                     <div className="text-sm" style={{ color: config.text_color }}>
-                      {a.type === 'exam' ? 'ğŸ“Š ' : 'âœï¸ '}{a.text}
+                      {a.type === 'exam' ? 'gYS ' : 'ai  '}{a.text}
                     </div>
                   </div>
                 );
@@ -3598,11 +3598,11 @@ function DashboardPage({ config, onSelectStudent, onNavigate }) {
         <div className="fixed inset-0 z-50 flex items-center justify-center modal-backdrop" style={{background:'rgba(0,0,0,0.4)'}}>
           <div className="rounded-2xl shadow-2xl p-6 max-w-lg w-full mx-4 fade-in" style={{background: config.surface_color}}>
             <div className="flex items-center justify-between mb-4">
-              <h3 className="text-lg font-bold" style={{ color: config.text_color }}>Riskli ??renciler</h3>
+              <h3 className="text-lg font-bold" style={{ color: config.text_color }}>Riskli Ogrenciler</h3>
               <button onClick={() => setShowRiskModal(false)} className="p-1.5 rounded-lg hover:bg-gray-100"><Icons.X size={18}/></button>
             </div>
             {riskStudents.length === 0 ? (
-              <div className="text-sm" style={{ color: config.secondary_action_color }}>Riskli ??renci bulunamad?</div>
+              <div className="text-sm" style={{ color: config.secondary_action_color }}>Riskli Ogrenci bulunamad?</div>
             ) : (
               <div className="space-y-2">
                 {riskStudents.map(s => (
@@ -3625,7 +3625,7 @@ function DashboardPage({ config, onSelectStudent, onNavigate }) {
               <button onClick={() => setShowDropModal(false)} className="p-1.5 rounded-lg hover:bg-gray-100"><Icons.X size={18}/></button>
             </div>
             {bigDropStudents.length === 0 ? (
-              <div className="text-sm" style={{ color: config.secondary_action_color }}>B?y?k d???? ya?ayan ??renci yok</div>
+              <div className="text-sm" style={{ color: config.secondary_action_color }}>B?y?k d???? ya?ayan Ogrenci yok</div>
             ) : (
               <div className="space-y-2">
                 {bigDropStudents.map(s => (
@@ -3713,7 +3713,7 @@ function LoginPage({ onLogin, config }) {
         <h2 className="text-xl font-bold mb-2" style={{ color: config.text_color }}>{config.welcome_title}</h2>
         <p className="text-sm mb-4" style={{ color: config.secondary_action_color }}>{config.welcome_subtitle}</p>
         <form onSubmit={handleSubmit} className="space-y-3">
-          <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="Åifre" className="w-full px-4 py-3 rounded-lg border" style={{ borderColor: '#E2E8F0', color: config.text_color }} />
+          <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="Aifre" className="w-full px-4 py-3 rounded-lg border" style={{ borderColor: '#E2E8F0', color: config.text_color }} />
           {err ? <div className="text-sm text-red-500">{err}</div> : null}
           <div className="flex justify-end">
             <button type="submit" className="px-4 py-2 rounded-lg text-white" style={{ background: config.primary_action_color }}>Giri?</button>
