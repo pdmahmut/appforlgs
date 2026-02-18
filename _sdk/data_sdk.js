@@ -498,6 +498,9 @@
         } else if (record.type === 'defined_exam') {
           const res = await client.from('defined_exams').delete().eq('id', Number(record.__backendId));
           if (res.error) throw res.error;
+        } else if (record.type === 'quick_study') {
+          const res = await client.from('quick_studies').delete().eq('backend_id', record.__backendId);
+          if (res.error) throw res.error;
         } else {
           return { isOk: false, error: 'Unknown type' };
         }
