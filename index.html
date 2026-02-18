@@ -1,9 +1,9 @@
-<!doctype html>
+﻿<!doctype html>
 <html lang="tr" class="h-full">
  <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Öğrenci Takip Sistemi</title>
+  <title>Ã–ÄŸrenci Takip Sistemi</title>
   <script src="https://cdn.tailwindcss.com/3.4.17"></script>
   <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
   <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
@@ -17,7 +17,7 @@
     window.__APP_CONFIG = {
       SUPABASE_URL: 'https://mnwxfknxkwwurrevmlri.supabase.co',
       SUPABASE_ANON_KEY: 'sb_publishable_qci3p2BNw3oqVNwd4Fhq9A_pgwOZrpc',
-      APP_TITLE: 'Öğrenci Takip Sistemi',
+      APP_TITLE: 'Ã–ÄŸrenci Takip Sistemi',
       LOGIN_PASSWORD: '1234'
     };
   </script>
@@ -78,9 +78,9 @@ const Icons = {
 const studentColors = ['#3B82F6', '#10B981', '#F59E0B', '#EF4444', '#8B5CF6', '#EC4899', '#14B8A6', '#F97316'];
 
 const defaultConfig = {
-  app_title: (window.__APP_CONFIG && window.__APP_CONFIG.APP_TITLE) || 'Öğrenci Takip Sistemi',
-  welcome_title: 'Hoş Geldiniz 👋',
-  welcome_subtitle: 'Lütfen menüden bir bölüm seçin',
+  app_title: (window.__APP_CONFIG && window.__APP_CONFIG.APP_TITLE) || 'Ã–ÄŸrenci Takip Sistemi',
+  welcome_title: 'HoÅŸ Geldiniz ğŸ‘‹',
+  welcome_subtitle: 'LÃ¼tfen menÃ¼den bir bÃ¶lÃ¼m seÃ§in',
   background_color: '#F8FAFC',
   surface_color: '#FFFFFF',
   text_color: '#1E293B',
@@ -153,7 +153,7 @@ function ConfirmModal({ message, onConfirm, onCancel }) {
       <div className="bg-white rounded-2xl shadow-2xl p-6 max-w-sm w-full mx-4 fade-in">
         <p className="text-gray-800 font-medium mb-5">{message}</p>
         <div className="flex gap-3 justify-end">
-          <button onClick={onCancel} className="px-4 py-2 rounded-xl text-gray-600 hover:bg-gray-100 font-medium text-sm transition-colors">İptal</button>
+          <button onClick={onCancel} className="px-4 py-2 rounded-xl text-gray-600 hover:bg-gray-100 font-medium text-sm transition-colors">Ä°ptal</button>
           <button onClick={onConfirm} className="px-4 py-2 rounded-xl bg-red-500 text-white hover:bg-red-600 font-medium text-sm transition-colors">Sil</button>
         </div>
       </div>
@@ -169,9 +169,9 @@ function Spinner({ size = 'md' }) {
 function Header({ route, navigate, config, onLogout }) {
   const [mobileOpen, setMobileOpen] = useState(false);
   const links = [
-    { id: 'ogrenciler', label: 'Öğrenciler', icon: Icons.Users },
-    { id: 'gunluk-calisma', label: 'Günlük Çalışma', icon: Icons.BookOpen },
-    { id: 'deneme-girisi', label: 'Deneme Girişi', icon: Icons.FileText },
+    { id: 'ogrenciler', label: 'Ã–ÄŸrenciler', icon: Icons.Users },
+    { id: 'gunluk-calisma', label: 'GÃ¼nlÃ¼k Ã‡alÄ±ÅŸma', icon: Icons.BookOpen },
+    { id: 'deneme-girisi', label: 'Deneme GiriÅŸi', icon: Icons.FileText },
     { id: 'dashboard', label: 'Dashboard', icon: Icons.LayoutDashboard },
   ];
   return (
@@ -195,7 +195,7 @@ function Header({ route, navigate, config, onLogout }) {
           </nav>
           <div className="flex items-center gap-2">
             <button onClick={onLogout} className="hidden sm:flex px-4 py-2 rounded-lg text-sm font-semibold transition-all items-center gap-1.5 hover:bg-red-50" style={{color: config.secondary_action_color}}>
-              🚪 Çıkış
+              ğŸšª Ã‡Ä±kÄ±ÅŸ
             </button>
             <button onClick={() => setMobileOpen(!mobileOpen)} className="md:hidden p-2 rounded-lg hover:bg-gray-100">
               <Icons.Menu size={22} className="text-gray-600"/>
@@ -214,7 +214,7 @@ function Header({ route, navigate, config, onLogout }) {
               </button>
             ))}
             <button onClick={() => { onLogout(); setMobileOpen(false); }} className="px-3 py-2.5 rounded-lg text-sm font-medium flex items-center gap-2 transition-colors hover:bg-red-50" style={{color: config.secondary_action_color}}>
-              🚪 Çıkış
+              ğŸšª Ã‡Ä±kÄ±ÅŸ
             </button>
           </nav>
         </div>
@@ -243,21 +243,21 @@ function HomePage({ navigate, config }) {
     return () => clearInterval(id);
   }, []);
   const cards = [
-    { id: 'ogrenciler', title: 'Öğrenciler', desc: 'Öğrenci kayıtlarını yönetin', icon: Icons.Users, count: students.length, color: '#3B82F6', bg: '#EFF6FF' },
-    { id: 'gunluk-calisma', title: 'Günlük Çalışma', desc: 'Çalışma kayıtlarını takip edin', icon: Icons.BookOpen, count: studies.length, color: '#10B981', bg: '#ECFDF5' },
-    { id: 'deneme-girisi', title: 'Deneme Girişi', desc: 'Deneme sonuçlarını kaydedin', icon: Icons.FileText, count: examCount, color: '#F59E0B', bg: '#FFFBEB' },
-    { id: 'dashboard', title: 'Dashboard', desc: 'Genel bakış ve özet', icon: Icons.LayoutDashboard, count: null, color: '#EC4899', bg: '#FDF2F8' },
+    { id: 'ogrenciler', title: 'Ã–ÄŸrenciler', desc: 'Ã–ÄŸrenci kayÄ±tlarÄ±nÄ± yÃ¶netin', icon: Icons.Users, count: students.length, color: '#3B82F6', bg: '#EFF6FF' },
+    { id: 'gunluk-calisma', title: 'GÃ¼nlÃ¼k Ã‡alÄ±ÅŸma', desc: 'Ã‡alÄ±ÅŸma kayÄ±tlarÄ±nÄ± takip edin', icon: Icons.BookOpen, count: studies.length, color: '#10B981', bg: '#ECFDF5' },
+    { id: 'deneme-girisi', title: 'Deneme GiriÅŸi', desc: 'Deneme sonuÃ§larÄ±nÄ± kaydedin', icon: Icons.FileText, count: examCount, color: '#F59E0B', bg: '#FFFBEB' },
+    { id: 'dashboard', title: 'Dashboard', desc: 'Genel bakÄ±ÅŸ ve Ã¶zet', icon: Icons.LayoutDashboard, count: null, color: '#EC4899', bg: '#FDF2F8' },
   ];
   return (
     <div className="max-w-5xl mx-auto px-4 py-10 fade-in">
       <div className="rounded-2xl p-5 mb-6 border border-gray-100 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3" style={{ background: config.surface_color }}>
         <div>
-          <div className="text-sm font-semibold" style={{ color: config.secondary_action_color }}>LGS Sayaç 2026</div>
+          <div className="text-sm font-semibold" style={{ color: config.secondary_action_color }}>LGS SayaÃ§ 2026</div>
           <div className="text-lg font-bold" style={{ color: config.text_color }}>14 Haziran 2026</div>
         </div>
         <div className="flex gap-3 text-center">
           {[
-            { label: 'Gün', value: countdown.days },
+            { label: 'GÃ¼n', value: countdown.days },
             { label: 'Saat', value: countdown.hours },
             { label: 'Dak', value: countdown.minutes },
           ].map((c, i) => (
@@ -314,11 +314,11 @@ function StudentsPage({ config, onSelectStudent }) {
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!form.fullName.trim() || !form.sinif || !form.okulNo.trim()) {
-      setToast({ msg: 'Lütfen tüm alanları doldurun', type: 'error' });
+      setToast({ msg: 'LÃ¼tfen tÃ¼m alanlarÄ± doldurun', type: 'error' });
       return;
     }
     if (students.length >= 999 && !editingStudent) {
-      setToast({ msg: 'Maksimum kayıt limitine ulaşıldı (999)', type: 'error' });
+      setToast({ msg: 'Maksimum kayÄ±t limitine ulaÅŸÄ±ldÄ± (999)', type: 'error' });
       return;
     }
 
@@ -341,11 +341,11 @@ function StudentsPage({ config, onSelectStudent }) {
     setLoading(false);
 
     if (result.isOk) {
-      setToast({ msg: editingStudent ? 'Öğrenci güncellendi!' : 'Öğrenci eklendi!', type: 'success' });
+      setToast({ msg: editingStudent ? 'Ã–ÄŸrenci gÃ¼ncellendi!' : 'Ã–ÄŸrenci eklendi!', type: 'success' });
       setShowForm(false);
       resetForm();
     } else {
-      setToast({ msg: 'Hata oluştu', type: 'error' });
+      setToast({ msg: 'Hata oluÅŸtu', type: 'error' });
     }
   };
 
@@ -361,10 +361,10 @@ function StudentsPage({ config, onSelectStudent }) {
 
   const getStudentSummary = (s) => {
     const studentExams = exams.filter(e => e.student_id === s.__backendId);
-    if (studentExams.length === 0) return 'Henüz deneme yok';
+    if (studentExams.length === 0) return 'HenÃ¼z deneme yok';
     const sorted = [...studentExams].sort((a, b) => new Date(b.exam_date || b.created_at) - new Date(a.exam_date || a.created_at));
     const last = sorted[0];
-    return `${studentExams.length} deneme • Son deneme: ${parseFloat(last.exam_total_net || 0).toFixed(1)} net`;
+    return `${studentExams.length} deneme â€¢ Son deneme: ${parseFloat(last.exam_total_net || 0).toFixed(1)} net`;
   };
 
   return (
@@ -373,13 +373,13 @@ function StudentsPage({ config, onSelectStudent }) {
 
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-8">
         <div>
-          <h1 className="text-3xl font-extrabold" style={{color: config.text_color}}>Öğrenciler</h1>
-          <p className="text-sm mt-1" style={{color: config.secondary_action_color}}>{students.length} öğrenci kayıtlı</p>
+          <h1 className="text-3xl font-extrabold" style={{color: config.text_color}}>Ã–ÄŸrenciler</h1>
+          <p className="text-sm mt-1" style={{color: config.secondary_action_color}}>{students.length} Ã¶ÄŸrenci kayÄ±tlÄ±</p>
         </div>
         <button onClick={() => { resetForm(); setShowForm(true); }}
           className="flex items-center gap-2 px-5 py-2.5 rounded-xl text-white text-sm font-semibold transition-all hover:shadow-lg"
           style={{ background: config.primary_action_color }}>
-          <Icons.Plus size={18}/> Öğrenci Ekle
+          <Icons.Plus size={18}/> Ã–ÄŸrenci Ekle
         </button>
       </div>
 
@@ -388,7 +388,7 @@ function StudentsPage({ config, onSelectStudent }) {
           <div className="bg-white rounded-2xl shadow-2xl p-6 max-w-lg w-full mx-4 fade-in">
             <div className="flex items-center justify-between mb-4">
               <h2 className="text-lg font-bold" style={{color: config.text_color}}>
-                {editingStudent ? 'Öğrenciyi Düzenle' : 'Yeni Öğrenci Ekle'}
+                {editingStudent ? 'Ã–ÄŸrenciyi DÃ¼zenle' : 'Yeni Ã–ÄŸrenci Ekle'}
               </h2>
               <button onClick={() => { setShowForm(false); resetForm(); }} className="p-1.5 rounded-lg hover:bg-gray-100"><Icons.X size={18}/></button>
             </div>
@@ -396,25 +396,25 @@ function StudentsPage({ config, onSelectStudent }) {
               <div>
                 <label className="block text-sm font-semibold mb-2" style={{ color: config.text_color }}>Ad Soyad *</label>
                 <input value={form.fullName} onChange={(e) => setForm({...form, fullName: e.target.value})}
-                  className="w-full px-4 py-2.5 rounded-lg border border-gray-200 text-sm font-medium" placeholder="Örn: Ahmet Yılmaz"/>
+                  className="w-full px-4 py-2.5 rounded-lg border border-gray-200 text-sm font-medium" placeholder="Ã–rn: Ahmet YÄ±lmaz"/>
               </div>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-semibold mb-2" style={{ color: config.text_color }}>Sınıf *</label>
+                  <label className="block text-sm font-semibold mb-2" style={{ color: config.text_color }}>SÄ±nÄ±f *</label>
                   <select value={form.sinif} onChange={(e) => setForm({...form, sinif: e.target.value})}
                     className="w-full px-4 py-2.5 rounded-lg border border-gray-200 text-sm font-medium">
                     {['8A','8B','8C','8D','8E','8F'].map(c => <option key={c} value={c}>{c}</option>)}
                   </select>
                 </div>
                 <div>
-                  <label className="block text-sm font-semibold mb-2" style={{ color: config.text_color }}>Okul Numarası *</label>
+                  <label className="block text-sm font-semibold mb-2" style={{ color: config.text_color }}>Okul NumarasÄ± *</label>
                   <input value={form.okulNo} onChange={(e) => setForm({...form, okulNo: e.target.value})}
-                    className="w-full px-4 py-2.5 rounded-lg border border-gray-200 text-sm font-medium" placeholder="Örn: 1254"/>
+                    className="w-full px-4 py-2.5 rounded-lg border border-gray-200 text-sm font-medium" placeholder="Ã–rn: 1254"/>
                 </div>
               </div>
               <div className="flex gap-3 justify-end pt-2">
                 <button type="button" onClick={() => { setShowForm(false); resetForm(); }}
-                  className="px-4 py-2 rounded-lg border border-gray-200 text-sm font-semibold">İptal</button>
+                  className="px-4 py-2 rounded-lg border border-gray-200 text-sm font-semibold">Ä°ptal</button>
                 <button type="submit" disabled={loading}
                   className="px-5 py-2 rounded-lg text-white text-sm font-semibold transition-all hover:shadow-lg"
                   style={{ background: config.primary_action_color }}>
@@ -428,7 +428,7 @@ function StudentsPage({ config, onSelectStudent }) {
 
       {students.length === 0 ? (
         <div className="text-center py-12 rounded-2xl border-2 border-dashed border-gray-300">
-          <p className="text-lg font-medium" style={{ color: config.secondary_action_color }}>Henüz öğrenci yok</p>
+          <p className="text-lg font-medium" style={{ color: config.secondary_action_color }}>HenÃ¼z Ã¶ÄŸrenci yok</p>
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
@@ -441,14 +441,14 @@ function StudentsPage({ config, onSelectStudent }) {
                   {((s.ad_soyad || `${s.student_name || ''} ${s.student_surname || ''}`.trim() || '?')[0] || '?').toUpperCase()}
                 </div>
                 <div className="text-xs px-2 py-1 rounded-full" style={{ background: '#F1F5F9', color: config.secondary_action_color }}>
-                  {s.sinif || 'Sınıf?'}
+                  {s.sinif || 'SÄ±nÄ±f?'}
                 </div>
               </div>
               <h3 className="text-lg font-bold mb-1" style={{color: config.text_color}}>
                 {s.ad_soyad || `${s.student_name || ''} ${s.student_surname || ''}`.trim()}
               </h3>
               <p className="text-sm" style={{color: config.secondary_action_color}}>
-                {s.sinif || 'Sınıf?'} • No: {s.okul_numarasi || s.student_number || '-'}
+                {s.sinif || 'SÄ±nÄ±f?'} â€¢ No: {s.okul_numarasi || s.student_number || '-'}
               </p>
               <p className="text-xs mt-3" style={{color: config.secondary_action_color}}>
                 {getStudentSummary(s)}
@@ -481,37 +481,8 @@ function StudentDetailPage({ config, studentId, onBack }) {
   const [editingExam, setEditingExam] = useState(null);
   const [editExamSubjects, setEditExamSubjects] = useState({});
   const [editExamErrors, setEditExamErrors] = useState({});
-  const weekdays = ['Paz', 'Pzt', 'Sal', 'Çar', 'Per', 'Cum', 'Cmt'];
-  const monthNames = ['Ocak','Şubat','Mart','Nisan','Mayıs','Haziran','Temmuz','Ağustos','Eylül','Ekim','Kasım','Aralık'];
-  const start = new Date(yearStart);
-  const end = new Date(yearEnd);
-  const days = [];
-  for (let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
-    const dateStr = toDateKey(d);
-    days.push({
-      date: new Date(d),
-      dateStr,
-      count: dailyTotalsMap[dateStr] || 0
-    });
-  }
-  const weeks = [];
-  let week = new Array(7).fill(null);
-  days.forEach(day => {
-    const dayOfWeek = day.date.getDay();
-    week[dayOfWeek] = day;
-    if (dayOfWeek === 6) {
-      weeks.push(week);
-      week = new Array(7).fill(null);
-    }
-  });
-  if (week.some(Boolean)) weeks.push(week);
-  const monthPositions = {};
-  weeks.forEach((w, idx) => {
-    const firstDay = w.find(d => d && d.date.getDate() === 1);
-    if (firstDay) {
-      monthPositions[idx] = monthNames[firstDay.date.getMonth()];
-    }
-  });
+  const weekdays = ['Paz', 'Pzt', 'Sal', 'Ã‡ar', 'Per', 'Cum', 'Cmt'];
+  const monthNames = ['Ocak','Åubat','Mart','Nisan','MayÄ±s','Haziran','Temmuz','AÄŸustos','EylÃ¼l','Ekim','KasÄ±m','AralÄ±k'];
   const {
     ResponsiveContainer,
     LineChart,
@@ -531,13 +502,13 @@ function StudentDetailPage({ config, studentId, onBack }) {
     return (
       <div className="max-w-6xl mx-auto px-4 py-8">
         <button onClick={onBack} className="px-4 py-2 rounded-lg border border-gray-200 text-sm font-semibold">Geri</button>
-        <div className="mt-6 text-center text-sm" style={{ color: config.secondary_action_color }}>Öğrenci bulunamadı</div>
+        <div className="mt-6 text-center text-sm" style={{ color: config.secondary_action_color }}>Ã–ÄŸrenci bulunamadÄ±</div>
       </div>
     );
   }
 
   const displayName = student.ad_soyad || `${student.student_name || ''} ${student.student_surname || ''}`.trim();
-  const displayClass = student.sinif || 'Sınıf?';
+  const displayClass = student.sinif || 'SÄ±nÄ±f?';
   const displayNo = student.okul_numarasi || student.student_number || '-';
 
   const studentExams = exams
@@ -560,11 +531,11 @@ function StudentDetailPage({ config, studentId, onBack }) {
 
   const subjects = ['turkce', 'matematik', 'fen', 'inkilap', 'ingilizce', 'din'];
   const subjectLabels = {
-    turkce: 'Türkçe',
+    turkce: 'TÃ¼rkÃ§e',
     matematik: 'Matematik',
     fen: 'Fen',
     inkilap: 'Sosyal',
-    ingilizce: 'İngilizce',
+    ingilizce: 'Ä°ngilizce',
     din: 'Din'
   };
   const subjectSeries = subjects.map(key => {
@@ -625,11 +596,11 @@ function StudentDetailPage({ config, studentId, onBack }) {
     dailyTotalsMap[dateKey] = (dailyTotalsMap[dateKey] || 0) + total;
   });
   const subjectKeys = [
-    { key: 'tur', label: 'Türkçe', color: '#e11d48' },
+    { key: 'tur', label: 'TÃ¼rkÃ§e', color: '#e11d48' },
     { key: 'mat', label: 'Matematik', color: '#2563eb' },
     { key: 'fen', label: 'Fen', color: '#14b8a6' },
     { key: 'ink', label: 'Sosyal', color: '#f59e0b' },
-    { key: 'ing', label: 'İngilizce', color: '#8b5cf6' },
+    { key: 'ing', label: 'Ä°ngilizce', color: '#8b5cf6' },
     { key: 'din', label: 'Din', color: '#84cc16' },
   ];
   const activeTrendSubjects = selectedTrendSubjects === null ? subjectKeys.map(s => s.key) : selectedTrendSubjects;
@@ -660,7 +631,7 @@ function StudentDetailPage({ config, studentId, onBack }) {
     const end = new Date(startOfWeek(today));
     end.setDate(end.getDate() - (i * 7));
     const start = new Date(end);
-    const label = i === 0 ? 'Bu hafta' : i === 1 ? 'Geçen hafta' : `${i} hafta önce`;
+    const label = i === 0 ? 'Bu hafta' : i === 1 ? 'GeÃ§en hafta' : `${i} hafta Ã¶nce`;
     let daysWorked = 0;
     const days = [];
     for (let d = new Date(start); d < new Date(start.getTime() + 7 * 24 * 60 * 60 * 1000); d.setDate(d.getDate() + 1)) {
@@ -670,7 +641,7 @@ function StudentDetailPage({ config, studentId, onBack }) {
       days.push({ date: new Date(d), worked });
     }
     const pct = ((daysWorked / 7) * 100).toFixed(1);
-    const emoji = daysWorked === 7 ? '🔥' : daysWorked >= 5 ? '💪' : daysWorked >= 3 ? '👍' : daysWorked >= 1 ? '⚠️' : '❌';
+    const emoji = daysWorked === 7 ? 'ğŸ”¥' : daysWorked >= 5 ? 'ğŸ’ª' : daysWorked >= 3 ? 'ğŸ‘' : daysWorked >= 1 ? 'âš ï¸' : 'âŒ';
     weeklyStats.push({ label, daysWorked, pct, emoji, days });
   }
 
@@ -717,14 +688,14 @@ function StudentDetailPage({ config, studentId, onBack }) {
       <div className="flex items-center justify-between mb-6">
         <button onClick={onBack} className="px-4 py-2 rounded-lg border border-gray-200 text-sm font-semibold">Geri</button>
         <div className="flex gap-2">
-          <button onClick={handleEditOpen} className="px-4 py-2 rounded-lg border border-gray-200 text-sm font-semibold">Düzenle</button>
+          <button onClick={handleEditOpen} className="px-4 py-2 rounded-lg border border-gray-200 text-sm font-semibold">DÃ¼zenle</button>
           <button onClick={() => setConfirmDel(true)} className="px-4 py-2 rounded-lg bg-red-500 text-white text-sm font-semibold">Sil</button>
         </div>
       </div>
 
       <div className="rounded-2xl p-6 border border-gray-100 mb-6" style={{ background: config.surface_color }}>
         <h1 className="text-2xl font-bold mb-2" style={{ color: config.text_color }}>{displayName}</h1>
-        <p className="text-sm" style={{ color: config.secondary_action_color }}>{displayClass} • No: {displayNo}</p>
+        <p className="text-sm" style={{ color: config.secondary_action_color }}>{displayClass} â€¢ No: {displayNo}</p>
       </div>
 
       <div className="mb-8">
@@ -733,8 +704,8 @@ function StudentDetailPage({ config, studentId, onBack }) {
           {[
             { label: 'Toplam Deneme', value: totalExams },
             { label: 'Ortalama Net', value: avgNet },
-            { label: 'En Yüksek Net', value: maxNet },
-            { label: 'En Düşük Net', value: minNet },
+            { label: 'En YÃ¼ksek Net', value: maxNet },
+            { label: 'En DÃ¼ÅŸÃ¼k Net', value: minNet },
             { label: 'Son Deneme', value: lastNet },
           ].map((card, i) => (
             <div key={i} className="rounded-xl p-4 border border-gray-100" style={{ background: config.surface_color }}>
@@ -745,13 +716,13 @@ function StudentDetailPage({ config, studentId, onBack }) {
         </div>
 
         {totalExams === 0 ? (
-          <div className="text-center py-10 rounded-xl border border-dashed" style={{ color: config.secondary_action_color }}>Henüz deneme verisi girilmemiş</div>
+          <div className="text-center py-10 rounded-xl border border-dashed" style={{ color: config.secondary_action_color }}>HenÃ¼z deneme verisi girilmemiÅŸ</div>
         ) : (
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             <div className="rounded-2xl p-4 border border-gray-100" style={{ background: config.surface_color }}>
-              <h3 className="text-sm font-semibold mb-3" style={{ color: config.text_color }}>Net İlerleme (Son 10 Deneme)</h3>
+              <h3 className="text-sm font-semibold mb-3" style={{ color: config.text_color }}>Net Ä°lerleme (Son 10 Deneme)</h3>
               {netSeries.length === 0 ? (
-                <div className="text-center py-10 text-sm" style={{ color: config.secondary_action_color }}>Henüz veri yok</div>
+                <div className="text-center py-10 text-sm" style={{ color: config.secondary_action_color }}>HenÃ¼z veri yok</div>
               ) : (
                 <svg width="100%" height="260" viewBox="0 0 500 260" preserveAspectRatio="xMidYMid meet">
                   {[0, 1, 2, 3, 4].map(i => (
@@ -794,7 +765,7 @@ function StudentDetailPage({ config, studentId, onBack }) {
             <div className="rounded-2xl p-4 border border-gray-100" style={{ background: config.surface_color }}>
               <h3 className="text-sm font-semibold mb-3" style={{ color: config.text_color }}>Son Denemeler</h3>
               {recentExams.length === 0 ? (
-                <div className="text-center py-10 text-sm" style={{ color: config.secondary_action_color }}>Henüz veri yok</div>
+                <div className="text-center py-10 text-sm" style={{ color: config.secondary_action_color }}>HenÃ¼z veri yok</div>
               ) : (
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   <div className="rounded-xl p-3 border border-gray-100" style={{ background: '#F1F5F9' }}>
@@ -805,15 +776,15 @@ function StudentDetailPage({ config, studentId, onBack }) {
                     </div>
                   </div>
                   <button onClick={() => setShowAllExams(true)} className="rounded-xl p-3 border border-gray-100 text-left hover:shadow-md transition" style={{ background: '#EFF6FF' }}>
-                    <div className="text-xs font-semibold" style={{ color: config.text_color }}>Tüm Denemeler</div>
-                    <div className="text-[10px]" style={{ color: config.secondary_action_color }}>Tıklayarak listele</div>
+                    <div className="text-xs font-semibold" style={{ color: config.text_color }}>TÃ¼m Denemeler</div>
+                    <div className="text-[10px]" style={{ color: config.secondary_action_color }}>TÄ±klayarak listele</div>
                     <div className="mt-2 text-lg font-bold" style={{ color: '#1D4ED8' }}>
                       {studentExams.length}
                     </div>
                   </button>
                   <button onClick={() => setShowAllStudies(true)} className="rounded-xl p-3 border border-gray-100 text-left hover:shadow-md transition" style={{ background: '#ECFDF5' }}>
-                    <div className="text-xs font-semibold" style={{ color: config.text_color }}>Günlük Çalışmalar</div>
-                    <div className="text-[10px]" style={{ color: config.secondary_action_color }}>Tıklayarak listele</div>
+                    <div className="text-xs font-semibold" style={{ color: config.text_color }}>GÃ¼nlÃ¼k Ã‡alÄ±ÅŸmalar</div>
+                    <div className="text-[10px]" style={{ color: config.secondary_action_color }}>TÄ±klayarak listele</div>
                     <div className="mt-2 text-lg font-bold" style={{ color: '#059669' }}>
                       {studentQuick.length}
                     </div>
@@ -840,7 +811,7 @@ function StudentDetailPage({ config, studentId, onBack }) {
       <div className="mb-8">
         <h2 className="text-xl font-bold mb-4" style={{ color: config.text_color }}>Ders Ders Deneme Analizi (Son 6)</h2>
         {subjectSeries.length === 0 ? (
-          <div className="text-center py-10 rounded-xl border border-dashed" style={{ color: config.secondary_action_color }}>Henüz deneme verisi girilmemiş</div>
+          <div className="text-center py-10 rounded-xl border border-dashed" style={{ color: config.secondary_action_color }}>HenÃ¼z deneme verisi girilmemiÅŸ</div>
         ) : (
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             {subjectSeries.map(s => (
@@ -890,14 +861,14 @@ function StudentDetailPage({ config, studentId, onBack }) {
       </div>
 
       <div className="mb-8">
-        <h2 className="text-xl font-bold mb-4" style={{ color: config.text_color }}>Günlük Çalışma Analizi</h2>
+        <h2 className="text-xl font-bold mb-4" style={{ color: config.text_color }}>GÃ¼nlÃ¼k Ã‡alÄ±ÅŸma Analizi</h2>
         <div className="rounded-2xl p-4 border border-gray-100 mb-6" style={{ background: config.surface_color }}>
-          <h3 className="text-sm font-semibold mb-3" style={{ color: config.text_color }}>📊 Haftalık Süreklilik Skoru</h3>
+          <h3 className="text-sm font-semibold mb-3" style={{ color: config.text_color }}>ğŸ“Š HaftalÄ±k SÃ¼reklilik Skoru</h3>
           <div className="space-y-2">
             {weeklyStats.map((w, i) => (
               <button key={i} onClick={() => setShowWeekDetail(w)} className="w-full text-left flex items-center justify-between px-3 py-2 rounded-lg hover:shadow-sm transition" style={{ background: '#F8FAFC' }}>
                 <div className="text-sm" style={{ color: config.text_color }}>
-                  {w.label}: {w.daysWorked}/7 gün çalıştın! {w.emoji}
+                  {w.label}: {w.daysWorked}/7 gÃ¼n Ã§alÄ±ÅŸtÄ±n! {w.emoji}
                 </div>
                 <div className="text-sm font-bold" style={{ color: config.primary_action_color }}>
                   %{w.pct}
@@ -909,20 +880,20 @@ function StudentDetailPage({ config, studentId, onBack }) {
 
         <div className="rounded-2xl p-4 border border-gray-100 mb-4" style={{ background: config.surface_color }}>
           <div className="flex items-start justify-between gap-4">
-            <div className="text-xs font-semibold pt-1" style={{ color: config.secondary_action_color }}>Trend & Haftalık Karşılaştırma</div>
+            <div className="text-xs font-semibold pt-1" style={{ color: config.secondary_action_color }}>Trend & HaftalÄ±k KarÅŸÄ±laÅŸtÄ±rma</div>
             <div className="flex flex-col items-end gap-3">
               <div className="flex items-center gap-2">
                 <button
                   onClick={() => setTrendRange(7)}
                   className={`px-3 py-1 rounded-full text-xs font-semibold border ${trendRange === 7 ? 'bg-blue-600 text-white border-blue-600' : 'border-gray-200'}`}
                 >
-                  Son 7 gün
+                  Son 7 gÃ¼n
                 </button>
                 <button
                   onClick={() => setTrendRange(30)}
                   className={`px-3 py-1 rounded-full text-xs font-semibold border ${trendRange === 30 ? 'bg-blue-600 text-white border-blue-600' : 'border-gray-200'}`}
                 >
-                  Son 30 gün
+                  Son 30 gÃ¼n
                 </button>
               </div>
               <div className="flex flex-wrap gap-2">
@@ -930,7 +901,7 @@ function StudentDetailPage({ config, studentId, onBack }) {
                 onClick={() => setSelectedTrendSubjects(prev => (prev === null ? [] : null))}
                 className="px-3 py-1 rounded-full text-xs font-semibold border border-gray-200"
               >
-                Tümü
+                TÃ¼mÃ¼
               </button>
               {subjectKeys.map(s => {
                 const active = selectedTrendSubjects === null ? true : activeTrendSubjects.includes(s.key);
@@ -956,10 +927,10 @@ function StudentDetailPage({ config, studentId, onBack }) {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           <div className="rounded-2xl p-4 border border-gray-100" style={{ background: config.surface_color }}>
             <div className="flex items-center justify-between mb-3">
-              <h3 className="text-sm font-semibold" style={{ color: config.text_color }}>📈 Soru Çözüm Trendi</h3>
+              <h3 className="text-sm font-semibold" style={{ color: config.text_color }}>ğŸ“ˆ Soru Ã‡Ã¶zÃ¼m Trendi</h3>
             </div>
             {Object.keys(dailyTotalsMap).length === 0 ? (
-              <div className="text-center py-10 text-sm" style={{ color: config.secondary_action_color }}>Henüz veri yok</div>
+              <div className="text-center py-10 text-sm" style={{ color: config.secondary_action_color }}>HenÃ¼z veri yok</div>
             ) : (
               (() => {
                 const totalDays = trendRange;
@@ -1048,9 +1019,9 @@ function StudentDetailPage({ config, studentId, onBack }) {
           </div>
 
           <div className="rounded-2xl p-4 border border-gray-100" style={{ background: config.surface_color }}>
-            <h3 className="text-sm font-semibold mb-3" style={{ color: config.text_color }}>📊 Haftalık Karşılaştırma</h3>
+            <h3 className="text-sm font-semibold mb-3" style={{ color: config.text_color }}>ğŸ“Š HaftalÄ±k KarÅŸÄ±laÅŸtÄ±rma</h3>
             {Object.keys(dailyTotalsMap).length === 0 ? (
-              <div className="text-center py-10 text-sm" style={{ color: config.secondary_action_color }}>Henüz veri yok</div>
+              <div className="text-center py-10 text-sm" style={{ color: config.secondary_action_color }}>HenÃ¼z veri yok</div>
             ) : (
               (() => {
                 const weeks = [];
@@ -1095,19 +1066,19 @@ function StudentDetailPage({ config, studentId, onBack }) {
 
         <div className="rounded-2xl p-4 border border-gray-100 mt-6" style={{ background: config.surface_color }}>
             <div className="flex items-center justify-between mb-4">
-              <div className="text-xs font-semibold" style={{ color: config.secondary_action_color }}>Ders Bazlı Analizler</div>
+              <div className="text-xs font-semibold" style={{ color: config.secondary_action_color }}>Ders BazlÄ± Analizler</div>
               <div className="flex items-center gap-2">
                 <button
                   onClick={() => setLessonRange(7)}
                   className={`px-3 py-1 rounded-full text-xs font-semibold border ${lessonRange === 7 ? 'bg-blue-600 text-white border-blue-600' : 'border-gray-200'}`}
                 >
-                  Son 7 gün
+                  Son 7 gÃ¼n
               </button>
               <button
                 onClick={() => setLessonRange(30)}
                 className={`px-3 py-1 rounded-full text-xs font-semibold border ${lessonRange === 30 ? 'bg-blue-600 text-white border-blue-600' : 'border-gray-200'}`}
               >
-                Son 30 gün
+                Son 30 gÃ¼n
                 </button>
               </div>
             </div>
@@ -1118,7 +1089,7 @@ function StudentDetailPage({ config, studentId, onBack }) {
                 onClick={() => setSelectedLessonSubjects(prev => (prev === null ? [] : null))}
                 className="px-3 py-1 rounded-full text-xs font-semibold border border-gray-200"
               >
-                Tümü
+                TÃ¼mÃ¼
               </button>
               {subjectKeys.map(s => {
                 const active = selectedLessonSubjects === null ? true : activeLessonSubjects.includes(s.key);
@@ -1140,7 +1111,7 @@ function StudentDetailPage({ config, studentId, onBack }) {
           </div>
 
           {Object.keys(dailySubjectMap).length === 0 ? (
-            <div className="text-center py-8 text-sm" style={{ color: config.secondary_action_color }}>Henüz çalışma verisi girilmemiş</div>
+            <div className="text-center py-8 text-sm" style={{ color: config.secondary_action_color }}>HenÃ¼z Ã§alÄ±ÅŸma verisi girilmemiÅŸ</div>
           ) : (
             (() => {
               const rangeDays = lessonRange;
@@ -1166,7 +1137,7 @@ function StudentDetailPage({ config, studentId, onBack }) {
               return (
                 <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
                   <div className="rounded-2xl p-4 border border-gray-100" style={{ background: '#F8FAFC' }}>
-                    <h4 className="text-xs font-semibold mb-3" style={{ color: config.text_color }}>📊 Ders Dağılımı (Yığılmış Bar)</h4>
+                    <h4 className="text-xs font-semibold mb-3" style={{ color: config.text_color }}>ğŸ“Š Ders DaÄŸÄ±lÄ±mÄ± (YÄ±ÄŸÄ±lmÄ±ÅŸ Bar)</h4>
                     <svg width="100%" height="260" viewBox="0 0 560 260" preserveAspectRatio="xMidYMid meet">
                       {[0, 1, 2, 3, 4].map(i => (
                         <line key={`h-${i}`} x1="40" y1={30 + i * 45} x2="540" y2={30 + i * 45} stroke="#E2E8F0" strokeWidth="1" />
@@ -1209,9 +1180,9 @@ function StudentDetailPage({ config, studentId, onBack }) {
 
                   <div className="grid grid-cols-1 gap-6">
                     <div className="rounded-2xl p-4 border border-gray-100" style={{ background: '#F8FAFC' }}>
-                      <h4 className="text-xs font-semibold mb-3" style={{ color: config.text_color }}>🟣 Ders Bazlı Toplam Soru (Donut)</h4>
+                      <h4 className="text-xs font-semibold mb-3" style={{ color: config.text_color }}>ğŸŸ£ Ders BazlÄ± Toplam Soru (Donut)</h4>
                       {totalAll === 0 ? (
-                        <div className="text-center py-10 text-sm" style={{ color: config.secondary_action_color }}>Seçilen aralıkta veri yok</div>
+                        <div className="text-center py-10 text-sm" style={{ color: config.secondary_action_color }}>SeÃ§ilen aralÄ±kta veri yok</div>
                       ) : (
                         <div className="flex items-center gap-6">
                           <svg width="220" height="220" viewBox="0 0 220 220">
@@ -1303,18 +1274,18 @@ function StudentDetailPage({ config, studentId, onBack }) {
         <div className="fixed inset-0 z-50 flex items-center justify-center modal-backdrop" style={{background:'rgba(0,0,0,0.4)'}}>
           <div className="rounded-2xl shadow-2xl p-6 max-w-2xl w-full mx-4 fade-in max-h-[80vh] overflow-y-auto" style={{background: config.surface_color}}>
             <div className="flex items-center justify-between mb-4">
-              <h3 className="text-lg font-bold" style={{ color: config.text_color }}>Tüm Denemeler</h3>
+              <h3 className="text-lg font-bold" style={{ color: config.text_color }}>TÃ¼m Denemeler</h3>
               <button onClick={() => setShowAllExams(false)} className="p-1.5 rounded-lg hover:bg-gray-100"><Icons.X size={18}/></button>
             </div>
             {studentExams.length === 0 ? (
-              <div className="text-center py-8" style={{ color: config.secondary_action_color }}>Henüz deneme verisi girilmemiş</div>
+              <div className="text-center py-8" style={{ color: config.secondary_action_color }}>HenÃ¼z deneme verisi girilmemiÅŸ</div>
             ) : (
               <div className="overflow-x-auto">
                 <table className="w-full text-sm">
                   <thead>
                     <tr className="text-left" style={{ color: config.secondary_action_color }}>
                       <th className="py-2">Tarih</th>
-                      <th>Deneme Adı</th>
+                      <th>Deneme AdÄ±</th>
                       <th>Tip</th>
                       <th>Toplam Net</th>
                       <th></th>
@@ -1328,9 +1299,9 @@ function StudentDetailPage({ config, studentId, onBack }) {
                         <td>{e.deneme_tipi === 'bireysel' ? 'Bireysel' : 'Ortak'}</td>
                         <td className="font-semibold">{parseFloat(e.exam_total_net || 0).toFixed(2)}</td>
                         <td className="flex gap-2">
-                          <button onClick={() => handleOpenEditExam(e)} className="text-blue-600 text-xs font-semibold hover:underline">✏️</button>
-                          <button onClick={() => setDetailModal(e)} className="text-blue-600 text-xs font-semibold hover:underline">👁️</button>
-                          <button onClick={() => handleDeleteExam(e)} disabled={saving} className="text-red-600 text-xs font-semibold hover:underline disabled:opacity-50">🗑️</button>
+                          <button onClick={() => handleOpenEditExam(e)} className="text-blue-600 text-xs font-semibold hover:underline">âœï¸</button>
+                          <button onClick={() => setDetailModal(e)} className="text-blue-600 text-xs font-semibold hover:underline">ğŸ‘ï¸</button>
+                          <button onClick={() => handleDeleteExam(e)} disabled={saving} className="text-red-600 text-xs font-semibold hover:underline disabled:opacity-50">ğŸ—‘ï¸</button>
                         </td>
                       </tr>
                     ))}
@@ -1346,7 +1317,7 @@ function StudentDetailPage({ config, studentId, onBack }) {
         <div className="fixed inset-0 z-50 flex items-center justify-center modal-backdrop" style={{background:'rgba(0,0,0,0.4)'}}>
           <div className="rounded-2xl shadow-2xl p-6 max-w-3xl w-full mx-4 fade-in max-h-[80vh] overflow-y-auto" style={{background: config.surface_color}}>
             <div className="flex items-center justify-between mb-4">
-              <h3 className="text-lg font-bold" style={{ color: config.text_color }}>Tüm Günlük Çalışmalar</h3>
+              <h3 className="text-lg font-bold" style={{ color: config.text_color }}>TÃ¼m GÃ¼nlÃ¼k Ã‡alÄ±ÅŸmalar</h3>
               <button onClick={() => setShowAllStudies(false)} className="p-1.5 rounded-lg hover:bg-gray-100"><Icons.X size={18}/></button>
             </div>
             <div className="flex items-center justify-between mb-3">
@@ -1355,7 +1326,7 @@ function StudentDetailPage({ config, studentId, onBack }) {
                   type="checkbox"
                   checked={selectedStudyIds.length === studentQuick.length && studentQuick.length > 0}
                   onChange={(e) => setSelectedStudyIds(e.target.checked ? studentQuick.map(s => s.__backendId) : [])}
-                /> Tümünü seç
+                /> TÃ¼mÃ¼nÃ¼ seÃ§
               </label>
               <button
                 onClick={async () => {
@@ -1368,11 +1339,11 @@ function StudentDetailPage({ config, studentId, onBack }) {
                 }}
                 className="px-3 py-1.5 rounded-lg text-xs font-semibold border border-red-200 text-red-600 hover:bg-red-50"
               >
-                Seçilileri Sil
+                SeÃ§ilileri Sil
               </button>
             </div>
             {studentQuick.length === 0 ? (
-              <div className="text-center py-8" style={{ color: config.secondary_action_color }}>Henüz çalışma verisi girilmemiş</div>
+              <div className="text-center py-8" style={{ color: config.secondary_action_color }}>HenÃ¼z Ã§alÄ±ÅŸma verisi girilmemiÅŸ</div>
             ) : (
               <div className="overflow-x-auto">
                 <table className="w-full text-sm">
@@ -1380,11 +1351,11 @@ function StudentDetailPage({ config, studentId, onBack }) {
                     <tr className="text-left" style={{ color: config.secondary_action_color }}>
                       <th className="py-2"></th>
                       <th className="py-2">Tarih</th>
-                      <th>Türkçe</th>
+                      <th>TÃ¼rkÃ§e</th>
                       <th>Mat</th>
                       <th>Fen</th>
                       <th>Sosyal</th>
-                      <th>İng</th>
+                      <th>Ä°ng</th>
                       <th>Din</th>
                       <th>Toplam</th>
                       <th></th>
@@ -1422,7 +1393,7 @@ function StudentDetailPage({ config, studentId, onBack }) {
                           <td>{(q.din_d||0)+(q.din_y||0)+(q.din_b||0)}</td>
                           <td className="font-semibold">{total}</td>
                           <td className="space-x-2">
-                            <button onClick={() => setEditingStudy(q)} className="text-blue-600 text-xs font-semibold">Düzenle</button>
+                            <button onClick={() => setEditingStudy(q)} className="text-blue-600 text-xs font-semibold">DÃ¼zenle</button>
                             <button onClick={async () => { await window.dataSdk.delete({ type: 'quick_study', __backendId: q.__backendId }); }} className="text-red-600 text-xs font-semibold">Sil</button>
                           </td>
                         </tr>
@@ -1440,7 +1411,7 @@ function StudentDetailPage({ config, studentId, onBack }) {
         <div className="fixed inset-0 z-50 flex items-center justify-center modal-backdrop" style={{background:'rgba(0,0,0,0.4)'}}>
           <div className="rounded-2xl shadow-2xl p-6 max-w-2xl w-full mx-4 fade-in max-h-[80vh] overflow-y-auto" style={{background: config.surface_color}}>
             <div className="flex items-center justify-between mb-4">
-              <h3 className="text-lg font-bold" style={{ color: config.text_color }}>Deneme Düzenle</h3>
+              <h3 className="text-lg font-bold" style={{ color: config.text_color }}>Deneme DÃ¼zenle</h3>
               <button onClick={() => setEditingExam(null)} className="p-1.5 rounded-lg hover:bg-gray-100"><Icons.X size={18}/></button>
             </div>
             <div className="grid grid-cols-2 gap-4 mb-6">
@@ -1449,7 +1420,7 @@ function StudentDetailPage({ config, studentId, onBack }) {
                   <div className="text-xs font-bold mb-3" style={{ color: s.accent }}>{s.label}</div>
                   <div className="space-y-2">
                     <div>
-                      <label className="text-xs font-semibold" style={{ color: s.accent }}>Doğru</label>
+                      <label className="text-xs font-semibold" style={{ color: s.accent }}>DoÄŸru</label>
                       <input
                         type="text"
                         inputMode="numeric"
@@ -1461,7 +1432,7 @@ function StudentDetailPage({ config, studentId, onBack }) {
                       />
                     </div>
                     <div>
-                      <label className="text-xs font-semibold" style={{ color: s.accent }}>Yanlış</label>
+                      <label className="text-xs font-semibold" style={{ color: s.accent }}>YanlÄ±ÅŸ</label>
                       <input
                         type="text"
                         inputMode="numeric"
@@ -1494,14 +1465,14 @@ function StudentDetailPage({ config, studentId, onBack }) {
                 disabled={saving || Object.keys(editExamErrors).length > 0}
                 className="flex-1 px-4 py-2 rounded-lg bg-green-600 text-white text-sm font-bold hover:bg-green-700 transition disabled:opacity-60"
               >
-                {saving ? 'Kaydediliyor...' : '✓ Kaydet'}
+                {saving ? 'Kaydediliyor...' : 'âœ“ Kaydet'}
               </button>
               <button
                 onClick={() => setEditingExam(null)}
                 disabled={saving}
                 className="flex-1 px-4 py-2 rounded-lg border border-gray-300 text-gray-700 text-sm font-bold hover:bg-gray-50 transition disabled:opacity-60"
               >
-                İptal
+                Ä°ptal
               </button>
             </div>
           </div>
@@ -1512,12 +1483,12 @@ function StudentDetailPage({ config, studentId, onBack }) {
         <div className="fixed inset-0 z-[60] flex items-center justify-center modal-backdrop" style={{background:'rgba(0,0,0,0.4)'}}>
           <div className="rounded-2xl shadow-2xl p-6 max-w-lg w-full mx-4 fade-in" style={{background: config.surface_color}}>
             <div className="flex items-center justify-between mb-4">
-              <h3 className="text-lg font-bold" style={{ color: config.text_color }}>Günlük Çalışma Düzenle</h3>
+              <h3 className="text-lg font-bold" style={{ color: config.text_color }}>GÃ¼nlÃ¼k Ã‡alÄ±ÅŸma DÃ¼zenle</h3>
               <button onClick={() => setEditingStudy(null)} className="p-1.5 rounded-lg hover:bg-gray-100"><Icons.X size={18}/></button>
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm">
               {[
-                ['tur', 'Türkçe'], ['mat', 'Mat'], ['fen', 'Fen'], ['ink', 'Sosyal'], ['ing', 'İng'], ['din', 'Din']
+                ['tur', 'TÃ¼rkÃ§e'], ['mat', 'Mat'], ['fen', 'Fen'], ['ink', 'Sosyal'], ['ing', 'Ä°ng'], ['din', 'Din']
               ].map(([k, label]) => (
                 <div key={k} className="rounded-lg border border-gray-100 p-2">
                   <div className="text-xs font-semibold mb-1" style={{ color: config.secondary_action_color }}>{label}</div>
@@ -1532,7 +1503,7 @@ function StudentDetailPage({ config, studentId, onBack }) {
               ))}
             </div>
             <div className="flex justify-end gap-2 mt-4">
-              <button onClick={() => setEditingStudy(null)} className="px-3 py-2 rounded-lg border border-gray-200 text-sm font-semibold">İptal</button>
+              <button onClick={() => setEditingStudy(null)} className="px-3 py-2 rounded-lg border border-gray-200 text-sm font-semibold">Ä°ptal</button>
               <button onClick={async () => { await window.dataSdk.update({ ...editingStudy, type: 'quick_study' }); setEditingStudy(null); }}
                 className="px-4 py-2 rounded-lg text-white text-sm font-semibold" style={{ background: config.primary_action_color }}>
                 Kaydet
@@ -1556,7 +1527,7 @@ function StudentDetailPage({ config, studentId, onBack }) {
                     {d.date.toLocaleDateString('tr-TR', { day: '2-digit', month: 'long', weekday: 'long' })}
                   </div>
                   <div className="text-sm font-semibold" style={{ color: d.worked ? '#10B981' : '#EF4444' }}>
-                    {d.worked ? '✔️ Çalışıldı' : '✖️ Veri yok'}
+                    {d.worked ? 'âœ”ï¸ Ã‡alÄ±ÅŸÄ±ldÄ±' : 'âœ–ï¸ Veri yok'}
                   </div>
                 </div>
               ))}
@@ -1569,7 +1540,7 @@ function StudentDetailPage({ config, studentId, onBack }) {
         <div className="fixed inset-0 z-50 flex items-center justify-center modal-backdrop" style={{background:'rgba(0,0,0,0.4)'}}>
           <div className="bg-white rounded-2xl shadow-2xl p-6 max-w-lg w-full mx-4 fade-in">
             <div className="flex items-center justify-between mb-4">
-              <h2 className="text-lg font-bold" style={{color: config.text_color}}>Öğrenciyi Düzenle</h2>
+              <h2 className="text-lg font-bold" style={{color: config.text_color}}>Ã–ÄŸrenciyi DÃ¼zenle</h2>
               <button onClick={() => setEditModal(false)} className="p-1.5 rounded-lg hover:bg-gray-100"><Icons.X size={18}/></button>
             </div>
             <form onSubmit={handleUpdate} className="space-y-4">
@@ -1580,21 +1551,21 @@ function StudentDetailPage({ config, studentId, onBack }) {
               </div>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-semibold mb-2" style={{ color: config.text_color }}>Sınıf *</label>
+                  <label className="block text-sm font-semibold mb-2" style={{ color: config.text_color }}>SÄ±nÄ±f *</label>
                   <select value={form.sinif} onChange={(e) => setForm({...form, sinif: e.target.value})}
                     className="w-full px-4 py-2.5 rounded-lg border border-gray-200 text-sm font-medium">
                     {['8A','8B','8C','8D','8E','8F'].map(c => <option key={c} value={c}>{c}</option>)}
                   </select>
                 </div>
                 <div>
-                  <label className="block text-sm font-semibold mb-2" style={{ color: config.text_color }}>Okul Numarası *</label>
+                  <label className="block text-sm font-semibold mb-2" style={{ color: config.text_color }}>Okul NumarasÄ± *</label>
                   <input value={form.okulNo} onChange={(e) => setForm({...form, okulNo: e.target.value})}
                     className="w-full px-4 py-2.5 rounded-lg border border-gray-200 text-sm font-medium"/>
                 </div>
               </div>
               <div className="flex gap-3 justify-end pt-2">
                 <button type="button" onClick={() => setEditModal(false)}
-                  className="px-4 py-2 rounded-lg border border-gray-200 text-sm font-semibold">İptal</button>
+                  className="px-4 py-2 rounded-lg border border-gray-200 text-sm font-semibold">Ä°ptal</button>
                 <button type="submit" disabled={saving}
                   className="px-5 py-2 rounded-lg text-white text-sm font-semibold transition-all hover:shadow-lg"
                   style={{ background: config.primary_action_color }}>
@@ -1607,7 +1578,7 @@ function StudentDetailPage({ config, studentId, onBack }) {
       )}
 
       {confirmDel && (
-        <ConfirmModal message="Bu öğrenciyi silmek istediğinize emin misiniz?" onConfirm={handleDelete} onCancel={() => setConfirmDel(false)}/>
+        <ConfirmModal message="Bu Ã¶ÄŸrenciyi silmek istediÄŸinize emin misiniz?" onConfirm={handleDelete} onCancel={() => setConfirmDel(false)}/>
       )}
     </div>
   );
@@ -1631,12 +1602,12 @@ function StudyPage({ config }) {
   const quickFirstRef = React.useRef(null);
 
   const quickSubjects = [
-    { key: 'tur', label: 'TÜR', accent: '#EF4444', soft: '#FEE2E2' },
+    { key: 'tur', label: 'TÃœR', accent: '#EF4444', soft: '#FEE2E2' },
     { key: 'mat', label: 'MAT', accent: '#3B82F6', soft: '#DBEAFE' },
     { key: 'fen', label: 'FEN', accent: '#10B981', soft: '#DCFCE7' },
-    { key: 'ink', label: 'İNK', accent: '#F59E0B', soft: '#FEF3C7' },
-    { key: 'din', label: 'DİN', accent: '#EC4899', soft: '#FCE7F3' },
-    { key: 'ing', label: 'İNG', accent: '#8B5CF6', soft: '#F3E8FF' },
+    { key: 'ink', label: 'Ä°NK', accent: '#F59E0B', soft: '#FEF3C7' },
+    { key: 'din', label: 'DÄ°N', accent: '#EC4899', soft: '#FCE7F3' },
+    { key: 'ing', label: 'Ä°NG', accent: '#8B5CF6', soft: '#F3E8FF' },
   ];
 
   const quickSubjectsRow1 = quickSubjects.slice(0, 3);
@@ -1672,7 +1643,7 @@ function StudyPage({ config }) {
     try {
       subj = typeof exam.exam_subjects === 'string' ? JSON.parse(exam.exam_subjects) : exam.exam_subjects || {};
     } catch {}
-    // 6 konuya default boş obje ekle
+    // 6 konuya default boÅŸ obje ekle
     const fullSubjects = {
       turkce: { dogru: '', yanlis: '' },
       inkilap: { dogru: '', yanlis: '' },
@@ -1755,7 +1726,7 @@ function StudyPage({ config }) {
     });
     setSaving(false);
     if (result.isOk) {
-      // Başarılı silindi
+      // BaÅŸarÄ±lÄ± silindi
     }
   };
 
@@ -1771,11 +1742,11 @@ function StudyPage({ config }) {
   const handleQuickSubmit = async (e) => {
     e.preventDefault();
     if (!selectedStudentId) {
-      setToast({ msg: 'Lütfen öğrenci seçin', type: 'error' });
+      setToast({ msg: 'LÃ¼tfen Ã¶ÄŸrenci seÃ§in', type: 'error' });
       return;
     }
     if (!quickDate) {
-      setToast({ msg: 'Tarih seçmeden kaydetme yapılamaz', type: 'error' });
+      setToast({ msg: 'Tarih seÃ§meden kaydetme yapÄ±lamaz', type: 'error' });
       return;
     }
 
@@ -1794,7 +1765,7 @@ function StudyPage({ config }) {
     setLoading(false);
 
     if (result.isOk) {
-      setToast({ msg: 'Hızlı giriş kaydedildi! ✅', type: 'success' });
+      setToast({ msg: 'HÄ±zlÄ± giriÅŸ kaydedildi! âœ…', type: 'success' });
       setQuickInputs({
         tur_d: '', tur_y: '', tur_b: '',
         mat_d: '', mat_y: '', mat_b: '',
@@ -1806,7 +1777,7 @@ function StudyPage({ config }) {
       });
       focusQuickFirst();
     } else {
-      setToast({ msg: 'Hata oluştu', type: 'error' });
+      setToast({ msg: 'Hata oluÅŸtu', type: 'error' });
     }
   };
 
@@ -1823,7 +1794,7 @@ function StudyPage({ config }) {
       <div className="mb-10">
         <div className="rounded-2xl p-8 border border-gray-200 bg-white">
           <div className="flex items-center justify-center flex-wrap gap-6 mb-6">
-            <h2 className="text-2xl font-bold" style={{ color: config.text_color }}>Hızlı Giriş</h2>
+            <h2 className="text-2xl font-bold" style={{ color: config.text_color }}>HÄ±zlÄ± GiriÅŸ</h2>
             <div className="flex items-center gap-4">
               <div className="flex items-center gap-2">
                 <label className="text-sm font-semibold" style={{ color: config.text_color }}>Tarih *</label>
@@ -1837,14 +1808,14 @@ function StudyPage({ config }) {
                 />
               </div>
               <div className="flex items-center gap-2">
-                <label className="text-sm font-semibold" style={{ color: config.text_color }}>Öğrenci *</label>
+                <label className="text-sm font-semibold" style={{ color: config.text_color }}>Ã–ÄŸrenci *</label>
                 <select
                   value={selectedStudentId}
                   onChange={(e) => setSelectedStudentId(e.target.value)}
                   className="px-3 py-2 rounded-lg border border-gray-200 text-sm font-medium"
                   style={{ background: config.surface_color, color: config.text_color }}
                 >
-                  <option value="">-- Öğrenci Seçin --</option>
+                  <option value="">-- Ã–ÄŸrenci SeÃ§in --</option>
                   {students.map(s => (
                     <option key={s.__backendId} value={s.__backendId}>
                       {s.ad_soyad || `${s.student_name || ''} ${s.student_surname || ''}`.trim()}
@@ -2049,18 +2020,18 @@ function ExamPage({ config }) {
   const [editDate, setEditDate] = useState('');
 
   const subjectColors = {
-    turkce: { bg: '#FEE2E2', text: '#DC2626', name: 'Türkçe', emoji: '📘' },
-    matematik: { bg: '#DBEAFE', text: '#0284C7', name: 'Matematik', emoji: '🔢' },
-    fen: { bg: '#DCFCE7', text: '#16A34A', name: 'Fen', emoji: '🧪' },
-    inkilap: { bg: '#FEF3C7', text: '#D97706', name: 'İnkılap', emoji: '📜' },
-    ingilizce: { bg: '#F3E8FF', text: '#7C3AED', name: 'İngilizce', emoji: '🌍' },
-    din: { bg: '#FCE7F3', text: '#BE185D', name: 'Din', emoji: '☪️' },
+    turkce: { bg: '#FEE2E2', text: '#DC2626', name: 'TÃ¼rkÃ§e', emoji: 'ğŸ“˜' },
+    matematik: { bg: '#DBEAFE', text: '#0284C7', name: 'Matematik', emoji: 'ğŸ”¢' },
+    fen: { bg: '#DCFCE7', text: '#16A34A', name: 'Fen', emoji: 'ğŸ§ª' },
+    inkilap: { bg: '#FEF3C7', text: '#D97706', name: 'Ä°nkÄ±lap', emoji: 'ğŸ“œ' },
+    ingilizce: { bg: '#F3E8FF', text: '#7C3AED', name: 'Ä°ngilizce', emoji: 'ğŸŒ' },
+    din: { bg: '#FCE7F3', text: '#BE185D', name: 'Din', emoji: 'â˜ªï¸' },
   };
   const quickSubjects = [
-    { key: 'turkce', label: 'TÜR', accent: '#EF4444', soft: '#FEE2E2' },
-    { key: 'inkilap', label: 'İNK', accent: '#F59E0B', soft: '#FEF3C7' },
-    { key: 'din', label: 'DİN', accent: '#EC4899', soft: '#FCE7F3' },
-    { key: 'ingilizce', label: 'İNG', accent: '#8B5CF6', soft: '#F3E8FF' },
+    { key: 'turkce', label: 'TÃœR', accent: '#EF4444', soft: '#FEE2E2' },
+    { key: 'inkilap', label: 'Ä°NK', accent: '#F59E0B', soft: '#FEF3C7' },
+    { key: 'din', label: 'DÄ°N', accent: '#EC4899', soft: '#FCE7F3' },
+    { key: 'ingilizce', label: 'Ä°NG', accent: '#8B5CF6', soft: '#F3E8FF' },
     { key: 'matematik', label: 'MAT', accent: '#3B82F6', soft: '#DBEAFE' },
     { key: 'fen', label: 'FEN', accent: '#10B981', soft: '#DCFCE7' },
   ];
@@ -2090,11 +2061,11 @@ function ExamPage({ config }) {
   const handleDefineExam = async (e) => {
     e.preventDefault();
     if (!newDefineExamName.trim()) {
-      setToast({ msg: 'Deneme adı boş olamaz', type: 'error' });
+      setToast({ msg: 'Deneme adÄ± boÅŸ olamaz', type: 'error' });
       return;
     }
     if (!newDefineExamDate) {
-      setToast({ msg: 'Tarih seçin', type: 'error' });
+      setToast({ msg: 'Tarih seÃ§in', type: 'error' });
       return;
     }
     setIsSaving(true);
@@ -2106,11 +2077,11 @@ function ExamPage({ config }) {
     });
     setIsSaving(false);
     if (result.isOk) {
-      setToast({ msg: 'Deneme tanımlandı! 🎉', type: 'success' });
+      setToast({ msg: 'Deneme tanÄ±mlandÄ±! ğŸ‰', type: 'success' });
       setNewDefineExamName('');
       setNewDefineExamDate(new Date().toISOString().split('T')[0]);
     } else {
-      setToast({ msg: 'Hata oluştu', type: 'error' });
+      setToast({ msg: 'Hata oluÅŸtu', type: 'error' });
     }
   };
 
@@ -2119,7 +2090,7 @@ function ExamPage({ config }) {
     const result = await window.dataSdk.delete({ type: 'defined_exam', __backendId: id });
     setIsSaving(false);
     if (result.isOk) setToast({ msg: 'Deneme silindi', type: 'success' });
-    else setToast({ msg: 'Silme hatası', type: 'error' });
+    else setToast({ msg: 'Silme hatasÄ±', type: 'error' });
   };
 
   const handleOpenEditModal = (exam) => {
@@ -2130,11 +2101,11 @@ function ExamPage({ config }) {
 
   const handleEditDefinedExam = async () => {
     if (!editName.trim()) {
-      setToast({ msg: 'Deneme adı boş olamaz', type: 'error' });
+      setToast({ msg: 'Deneme adÄ± boÅŸ olamaz', type: 'error' });
       return;
     }
     if (!editDate) {
-      setToast({ msg: 'Tarih seçin', type: 'error' });
+      setToast({ msg: 'Tarih seÃ§in', type: 'error' });
       return;
     }
     setIsSaving(true);
@@ -2146,12 +2117,12 @@ function ExamPage({ config }) {
     });
     setIsSaving(false);
     if (result.isOk) {
-      setToast({ msg: 'Deneme güncellendi! 🎉', type: 'success' });
+      setToast({ msg: 'Deneme gÃ¼ncellendi! ğŸ‰', type: 'success' });
       setEditingDefinedExam(null);
       setEditName('');
       setEditDate('');
     } else {
-      setToast({ msg: 'Güncelleme hatası', type: 'error' });
+      setToast({ msg: 'GÃ¼ncelleme hatasÄ±', type: 'error' });
     }
   };
 
@@ -2207,15 +2178,15 @@ function ExamPage({ config }) {
   const handleSave = async (e) => {
     e.preventDefault();
     if (!selectedStudentId) {
-      setToast({ msg: 'Lütfen öğrenci seçin', type: 'error' });
+      setToast({ msg: 'LÃ¼tfen Ã¶ÄŸrenci seÃ§in', type: 'error' });
       return;
     }
     if (examType === 'ortak' && !selectedDefinedExamId) {
-      setToast({ msg: 'Lütfen ortak deneme seçin', type: 'error' });
+      setToast({ msg: 'LÃ¼tfen ortak deneme seÃ§in', type: 'error' });
       return;
     }
     if (examType === 'bireysel' && !examName.trim()) {
-      setToast({ msg: 'Lütfen deneme adı girin', type: 'error' });
+      setToast({ msg: 'LÃ¼tfen deneme adÄ± girin', type: 'error' });
       return;
     }
 
@@ -2243,10 +2214,10 @@ function ExamPage({ config }) {
     setIsSaving(false);
 
     if (result.isOk) {
-      setToast({ msg: 'Deneme kaydedildi! 🎉', type: 'success' });
+      setToast({ msg: 'Deneme kaydedildi! ğŸ‰', type: 'success' });
       handleReset();
     } else {
-      setToast({ msg: 'Hata oluştu', type: 'error' });
+      setToast({ msg: 'Hata oluÅŸtu', type: 'error' });
     }
   };
 
@@ -2270,7 +2241,7 @@ function ExamPage({ config }) {
     const result = await window.dataSdk.delete({ type: 'exam', __backendId: id });
     setIsSaving(false);
     if (result.isOk) setToast({ msg: 'Deneme silindi', type: 'success' });
-    else setToast({ msg: 'Silme hatası', type: 'error' });
+    else setToast({ msg: 'Silme hatasÄ±', type: 'error' });
   };
 
   const studentExams = exams.filter(e => e.student_id === selectedStudentId);
@@ -2314,7 +2285,7 @@ function ExamPage({ config }) {
               <h2 className="text-xl font-bold" style={{color: config.text_color}}>{detailModal.examName}</h2>
               <button onClick={() => setDetailModal(null)} className="p-1.5 rounded-lg hover:bg-gray-100"><Icons.X size={20} className="text-gray-500"/></button>
             </div>
-            <p className="text-sm mb-6" style={{color: config.secondary_action_color}}>📅 {new Date(detailModal.date).toLocaleDateString('tr-TR')}</p>
+            <p className="text-sm mb-6" style={{color: config.secondary_action_color}}>ğŸ“… {new Date(detailModal.date).toLocaleDateString('tr-TR')}</p>
             
             <div className="space-y-3 mb-6">
               {Object.entries(detailModal.subjects).map(([key, data]) => {
@@ -2323,9 +2294,9 @@ function ExamPage({ config }) {
                   <div key={key} className="rounded-lg p-4" style={{background: color.bg}}>
                     <p className="font-semibold mb-2" style={{color: color.text}}>{color.emoji} {color.name}</p>
                     <div className="text-xs space-y-1" style={{color: color.text}}>
-                      <p>✓ Doğru: {data.dogru}</p>
-                      <p>✗ Yanlış: {data.yanlis}</p>
-                      <p>⊘ Boş: {data.bos}</p>
+                      <p>âœ“ DoÄŸru: {data.dogru}</p>
+                      <p>âœ— YanlÄ±ÅŸ: {data.yanlis}</p>
+                      <p>âŠ˜ BoÅŸ: {data.bos}</p>
                       <p className="font-bold text-sm">NET: {data.net}</p>
                     </div>
                   </div>
@@ -2343,18 +2314,18 @@ function ExamPage({ config }) {
         </div>
       )}
 
-      <h1 className="text-3xl font-extrabold mb-8" style={{ color: config.text_color }}>Deneme Sınavı Girişi</h1>
+      <h1 className="text-3xl font-extrabold mb-8" style={{ color: config.text_color }}>Deneme SÄ±navÄ± GiriÅŸi</h1>
       
-      {/* 2 Sütun Layout */}
+      {/* 2 SÃ¼tun Layout */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-12">
-        {/* SOL TARAF: Deneme Tanımlama */}
+        {/* SOL TARAF: Deneme TanÄ±mlama */}
         <div className="lg:col-span-1">
           <div className="rounded-2xl p-6 border-2 border-blue-200" style={{ background: '#F0F9FF' }}>
-            <h2 className="text-lg font-bold mb-4 text-blue-900">📋 Yeni Deneme Tanımla</h2>
+            <h2 className="text-lg font-bold mb-4 text-blue-900">ğŸ“‹ Yeni Deneme TanÄ±mla</h2>
             
             <form onSubmit={handleDefineExam} className="space-y-3 mb-6">
               <div>
-                <label className="block text-xs font-semibold mb-1.5 text-blue-900">Deneme Adı</label>
+                <label className="block text-xs font-semibold mb-1.5 text-blue-900">Deneme AdÄ±</label>
                 <input
                   type="text"
                   value={newDefineExamName}
@@ -2379,14 +2350,14 @@ function ExamPage({ config }) {
                 disabled={isSaving}
                 className="w-full px-4 py-2 rounded-lg bg-blue-600 text-white text-sm font-bold hover:bg-blue-700 transition disabled:opacity-60"
               >
-                {isSaving ? 'Kaydediliyor...' : '✓ Tanımla'}
+                {isSaving ? 'Kaydediliyor...' : 'âœ“ TanÄ±mla'}
               </button>
             </form>
 
             <div className="border-t border-blue-200 pt-4">
-              <h3 className="text-sm font-bold mb-3 text-blue-900">Tanımlanan Denemeler</h3>
+              <h3 className="text-sm font-bold mb-3 text-blue-900">TanÄ±mlanan Denemeler</h3>
               {definedExams.length === 0 ? (
-                <p className="text-xs text-blue-700 text-center py-4">İlk denemeyi tanımlayın</p>
+                <p className="text-xs text-blue-700 text-center py-4">Ä°lk denemeyi tanÄ±mlayÄ±n</p>
               ) : (
                 <div className="space-y-2 max-h-64 overflow-y-auto">
                   {definedExams.map(exam => (
@@ -2400,9 +2371,9 @@ function ExamPage({ config }) {
                           onClick={() => handleOpenEditModal(exam)}
                           className="text-blue-500 hover:text-blue-700 p-1"
                           disabled={isSaving}
-                          title="Düzenle"
+                          title="DÃ¼zenle"
                         >
-                          ✏️
+                          âœï¸
                         </button>
                         <button
                           onClick={() => handleDeleteDefinedExam(exam.__backendId)}
@@ -2410,7 +2381,7 @@ function ExamPage({ config }) {
                           disabled={isSaving}
                           title="Sil"
                         >
-                          🗑️
+                          ğŸ—‘ï¸
                         </button>
                       </div>
                     </div>
@@ -2421,22 +2392,22 @@ function ExamPage({ config }) {
           </div>
         </div>
 
-        {/* SAĞ TARAF: Deneme Girişi Formu */}
+        {/* SAÄ TARAF: Deneme GiriÅŸi Formu */}
         <div className="lg:col-span-2">
           <form onSubmit={handleSave}>
             <div className="rounded-2xl p-6 border border-gray-200 mb-6" style={{ background: config.surface_color }}>
-              <h2 className="text-lg font-bold mb-4" style={{ color: config.text_color }}>📝 Deneme Girişi</h2>
+              <h2 className="text-lg font-bold mb-4" style={{ color: config.text_color }}>ğŸ“ Deneme GiriÅŸi</h2>
               
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
                 <div>
-                  <label className="block text-sm font-semibold mb-2" style={{ color: config.text_color }}>Öğrenci Seçin *</label>
+                  <label className="block text-sm font-semibold mb-2" style={{ color: config.text_color }}>Ã–ÄŸrenci SeÃ§in *</label>
                   <select
                     value={selectedStudentId}
                     onChange={(e) => setSelectedStudentId(e.target.value)}
                     className="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-sm font-medium"
                     style={{ background: config.surface_color, color: config.text_color }}
                   >
-                    <option value="">-- Öğrenci Seçin --</option>
+                    <option value="">-- Ã–ÄŸrenci SeÃ§in --</option>
                     {students.map(s => (
                       <option key={s.__backendId} value={s.__backendId}>
                         {s.ad_soyad || `${s.student_name || ''} ${s.student_surname || ''}`.trim()}
@@ -2476,14 +2447,14 @@ function ExamPage({ config }) {
               {examType === 'ortak' ? (
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-sm font-semibold mb-2" style={{ color: config.text_color }}>Ortak Deneme Seçin *</label>
+                    <label className="block text-sm font-semibold mb-2" style={{ color: config.text_color }}>Ortak Deneme SeÃ§in *</label>
                     <select
                       value={selectedDefinedExamId}
                       onChange={(e) => handleSelectDefinedExam(e.target.value)}
                       className="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-sm font-medium"
                       style={{ background: config.surface_color, color: config.text_color }}
                     >
-                      <option value="">-- Deneme Seçin --</option>
+                      <option value="">-- Deneme SeÃ§in --</option>
                       {definedExams.map(exam => (
                         <option key={exam.__backendId} value={exam.__backendId}>
                           {exam.name}
@@ -2493,24 +2464,24 @@ function ExamPage({ config }) {
                   </div>
                   <div className="flex items-center text-sm" style={{ color: config.secondary_action_color }}>
                     {selectedDefinedExamId ? (
-                      <>Seçilen: <span className="ml-1 font-semibold" style={{ color: config.text_color }}>
+                      <>SeÃ§ilen: <span className="ml-1 font-semibold" style={{ color: config.text_color }}>
                         {definedExams.find(e => e.__backendId === selectedDefinedExamId)?.name}
-                      </span> · {new Date(selectedDate).toLocaleDateString('tr-TR')}</>
+                      </span> Â· {new Date(selectedDate).toLocaleDateString('tr-TR')}</>
                     ) : (
-                      <>Lütfen bir ortak deneme seçin</>
+                      <>LÃ¼tfen bir ortak deneme seÃ§in</>
                     )}
                   </div>
                 </div>
               ) : (
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-sm font-semibold mb-2" style={{ color: config.text_color }}>Deneme Adı *</label>
+                    <label className="block text-sm font-semibold mb-2" style={{ color: config.text_color }}>Deneme AdÄ± *</label>
                     <input
                       type="text"
                       value={examName}
                       onChange={(e) => setExamName(e.target.value)}
                       className="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-sm font-medium"
-                      placeholder="TYT Yayınları 8. Deneme"
+                      placeholder="TYT YayÄ±nlarÄ± 8. Deneme"
                       style={{ background: config.surface_color, color: config.text_color }}
                     />
                   </div>
@@ -2520,7 +2491,7 @@ function ExamPage({ config }) {
 
             {!selectedStudentId ? (
               <div className="text-center py-12 rounded-2xl border-2 border-dashed border-gray-300">
-                <p className="text-lg font-medium" style={{ color: config.secondary_action_color }}>📌 Lütfen öğrenci seçin</p>
+                <p className="text-lg font-medium" style={{ color: config.secondary_action_color }}>ğŸ“Œ LÃ¼tfen Ã¶ÄŸrenci seÃ§in</p>
               </div>
             ) : (
               <>
@@ -2593,11 +2564,11 @@ function ExamPage({ config }) {
 
       {selectedStudentId && (
         <div>
-          <h2 className="text-2xl font-bold mb-6" style={{ color: config.text_color }}>Daha Önce Girilen Denemeler</h2>
+          <h2 className="text-2xl font-bold mb-6" style={{ color: config.text_color }}>Daha Ã–nce Girilen Denemeler</h2>
           
           {studentExams.length === 0 ? (
             <div className="text-center py-12 rounded-2xl border-2 border-dashed border-gray-300">
-              <p className="text-base font-medium" style={{ color: config.secondary_action_color }}>Henüz deneme girilmemiş 📝</p>
+              <p className="text-base font-medium" style={{ color: config.secondary_action_color }}>HenÃ¼z deneme girilmemiÅŸ ğŸ“</p>
             </div>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
@@ -2607,7 +2578,7 @@ function ExamPage({ config }) {
                 return (
                   <div key={exam.__backendId} className="rounded-2xl border border-gray-100 p-6 card-hover" style={{ background: config.surface_color }}>
                     <h3 className="text-xl font-bold mb-2" style={{ color: config.text_color }}>{exam.exam_name}</h3>
-                    <p className="text-sm mb-4" style={{ color: config.secondary_action_color }}>📅 {new Date(displayDate).toLocaleDateString('tr-TR')}</p>
+                    <p className="text-sm mb-4" style={{ color: config.secondary_action_color }}>ğŸ“… {new Date(displayDate).toLocaleDateString('tr-TR')}</p>
                     
                     <div className="rounded-lg p-4 bg-emerald-50 text-center mb-5">
                       <p className="text-xs font-semibold mb-1" style={{ color: '#059669' }}>TOPLAM NET</p>
@@ -2616,7 +2587,7 @@ function ExamPage({ config }) {
 
                     <div className="flex gap-2">
                       <button onClick={() => openExamDetail(exam)} className="flex-1 px-3 py-2.5 rounded-lg text-white text-sm font-semibold transition-all" style={{background: config.primary_action_color}}>Detaylar</button>
-                      <button onClick={() => handleDelete(exam.__backendId)} className="px-3 py-2.5 rounded-lg border border-red-200 text-red-600 hover:bg-red-50 font-semibold text-sm transition-colors">🗑️</button>
+                      <button onClick={() => handleDelete(exam.__backendId)} className="px-3 py-2.5 rounded-lg border border-red-200 text-red-600 hover:bg-red-50 font-semibold text-sm transition-colors">ğŸ—‘ï¸</button>
                     </div>
                   </div>
                 );
@@ -2630,16 +2601,16 @@ function ExamPage({ config }) {
       {editingDefinedExam && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
           <div className="bg-white rounded-lg shadow-lg max-w-sm w-full p-6">
-            <h2 className="text-lg font-bold text-gray-900 mb-4">Deneme Düzenle</h2>
+            <h2 className="text-lg font-bold text-gray-900 mb-4">Deneme DÃ¼zenle</h2>
             <div className="space-y-4 mb-6">
               <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-1.5">Deneme Adı</label>
+                <label className="block text-sm font-semibold text-gray-700 mb-1.5">Deneme AdÄ±</label>
                 <input
                   type="text"
                   value={editName}
                   onChange={(e) => setEditName(e.target.value)}
                   className="w-full px-3 py-2 rounded-lg border border-gray-300 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  placeholder="Deneme adı"
+                  placeholder="Deneme adÄ±"
                 />
               </div>
               <div>
@@ -2665,7 +2636,7 @@ function ExamPage({ config }) {
                 disabled={isSaving}
                 className="flex-1 px-4 py-2 rounded-lg border border-gray-300 text-gray-700 text-sm font-bold hover:bg-gray-50 transition disabled:opacity-60"
               >
-                İptal
+                Ä°ptal
               </button>
             </div>
           </div>
@@ -2700,11 +2671,11 @@ function SchoolNetTrendChart({ config }) {
 
   useEffect(() => {
     const buildTrendFromLocal = () => {
-      const activeDefinedExamIds = new Set((definedExams || []).map((d) => Number(d.__backendId)));
       const ortakExams = (exams || []).filter((e) => {
         if (e.deneme_tipi !== 'ortak') return false;
-        if (!e.defined_exam_id) return true;
-        return activeDefinedExamIds.has(Number(e.defined_exam_id));
+        const examName = (e.exam_name || '').trim().toLowerCase();
+        if (examName === 'mebi') return false;
+        return true;
       });
       const grouped = {};
       ortakExams.forEach((e) => {
@@ -2831,13 +2802,13 @@ function DashboardPage({ config, onSelectStudent, onNavigate }) {
   const loading = !allData || allData.length === 0;
 
   const ortakExams = useMemo(() => {
-    const activeDefinedExamIds = new Set((definedExams || []).map((d) => Number(d.__backendId)));
     return (exams || []).filter((e) => {
       if (e.deneme_tipi !== 'ortak') return false;
-      if (!e.defined_exam_id) return true;
-      return activeDefinedExamIds.has(Number(e.defined_exam_id));
+      const examName = (e.exam_name || '').trim().toLowerCase();
+      if (examName === 'mebi') return false;
+      return true;
     });
-  }, [exams, definedExams]);
+  }, [exams]);
 
   const groupedExams = useMemo(() => {
     const map = {};
@@ -2893,7 +2864,7 @@ function DashboardPage({ config, onSelectStudent, onNavigate }) {
         const prevNet = parseFloat(prev.exam_total_net || 0);
         return {
           studentId: sid,
-          name: (studentMap[sid]?.ad_soyad || '').trim() || (studentMap[sid]?.student_name || 'Öğrenci'),
+          name: (studentMap[sid]?.ad_soyad || '').trim() || (studentMap[sid]?.student_name || 'Ã–ÄŸrenci'),
           lastNet,
           prevNet,
           diff: lastNet - prevNet
@@ -2936,7 +2907,7 @@ function DashboardPage({ config, onSelectStudent, onNavigate }) {
       }
     });
     if (!minSubj) return null;
-    const labelMap = { turkce: 'Türkçe', matematik: 'Matematik', fen: 'Fen', inkilap: 'Sosyal', ingilizce: 'İngilizce' };
+    const labelMap = { turkce: 'TÃ¼rkÃ§e', matematik: 'Matematik', fen: 'Fen', inkilap: 'Sosyal', ingilizce: 'Ä°ngilizce' };
     return { name: labelMap[minSubj], avg: minAvg };
   }, [ortakExams, studentMap]);
 
@@ -3001,7 +2972,7 @@ function DashboardPage({ config, onSelectStudent, onNavigate }) {
       const days = last ? diffDays(now, last) : 999;
       return {
         id: String(s.__backendId),
-        name: (s.ad_soyad || `${s.student_name || ''} ${s.student_surname || ''}`.trim() || 'Öğrenci'),
+        name: (s.ad_soyad || `${s.student_name || ''} ${s.student_surname || ''}`.trim() || 'Ã–ÄŸrenci'),
         days
       };
     }).filter(s => s.days >= 7);
@@ -3033,7 +3004,7 @@ function DashboardPage({ config, onSelectStudent, onNavigate }) {
         const student = (students || []).find(s => String(s.__backendId) === String(id));
         list.push({
           id,
-          name: (student?.ad_soyad || `${student?.student_name || ''} ${student?.student_surname || ''}`.trim() || 'Öğrenci'),
+          name: (student?.ad_soyad || `${student?.student_name || ''} ${student?.student_surname || ''}`.trim() || 'Ã–ÄŸrenci'),
           drop
         });
       }
@@ -3044,7 +3015,7 @@ function DashboardPage({ config, onSelectStudent, onNavigate }) {
   const studentNameById = useMemo(() => {
     const map = {};
     (students || []).forEach(s => {
-      map[String(s.__backendId)] = (s.ad_soyad || `${s.student_name || ''} ${s.student_surname || ''}`.trim() || 'Öğrenci');
+      map[String(s.__backendId)] = (s.ad_soyad || `${s.student_name || ''} ${s.student_surname || ''}`.trim() || 'Ã–ÄŸrenci');
     });
     return map;
   }, [students]);
@@ -3054,11 +3025,11 @@ function DashboardPage({ config, onSelectStudent, onNavigate }) {
     const diffMin = Math.floor(diffMs / (60 * 1000));
     const diffHr = Math.floor(diffMs / (60 * 60 * 1000));
     const diffDay = Math.floor(diffMs / dayMs);
-    if (diffMin <= 1) return 'Az önce';
-    if (diffMin < 60) return `${diffMin} dk önce`;
-    if (diffHr < 24) return `${diffHr} saat önce`;
-    if (diffDay === 1) return 'Dün';
-    return `${diffDay} gün önce`;
+    if (diffMin <= 1) return 'Az Ã¶nce';
+    if (diffMin < 60) return `${diffMin} dk Ã¶nce`;
+    if (diffHr < 24) return `${diffHr} saat Ã¶nce`;
+    if (diffDay === 1) return 'DÃ¼n';
+    return `${diffDay} gÃ¼n Ã¶nce`;
   };
 
   const recentActivities = useMemo(() => {
@@ -3066,11 +3037,11 @@ function DashboardPage({ config, onSelectStudent, onNavigate }) {
     (exams || []).forEach(e => {
       const d = new Date(e.created_at || e.exam_date || '');
       const sid = String(e.student_id || e.student_backend_id || '');
-      const name = studentNameById[sid] || 'Bilinmeyen öğrenci';
+      const name = studentNameById[sid] || 'Bilinmeyen Ã¶ÄŸrenci';
       items.push({
         type: 'exam',
         date: d,
-        text: `${name} - Deneme girişi (${e.exam_name || 'Deneme'})`,
+        text: `${name} - Deneme giriÅŸi (${e.exam_name || 'Deneme'})`,
         ago: formatAgo(d)
       });
     });
@@ -3082,11 +3053,11 @@ function DashboardPage({ config, onSelectStudent, onNavigate }) {
         (q.ink_d||0)+(q.ink_y||0)+(q.ink_b||0)+
         (q.ing_d||0)+(q.ing_y||0)+(q.ing_b||0)+
         (q.din_d||0)+(q.din_y||0)+(q.din_b||0);
-      const name = studentNameById[String(q.student_id || '')] || 'Bilinmeyen öğrenci';
+      const name = studentNameById[String(q.student_id || '')] || 'Bilinmeyen Ã¶ÄŸrenci';
       items.push({
         type: 'study',
         date: d,
-        text: `${name} - Günlük çalışma (${total} soru)`,
+        text: `${name} - GÃ¼nlÃ¼k Ã§alÄ±ÅŸma (${total} soru)`,
         ago: formatAgo(d)
       });
     });
@@ -3182,7 +3153,7 @@ function DashboardPage({ config, onSelectStudent, onNavigate }) {
         const net = parseFloat(r.exam_total_net || 0);
         const student = studentMap[sid];
         const name = (student?.ad_soyad || '').trim() || (student?.student_name || '') + ' ' + (student?.student_surname || '');
-        const trimmedName = name.trim() || 'Bilinmeyen Öğrenci';
+        const trimmedName = name.trim() || 'Bilinmeyen Ã–ÄŸrenci';
         const parts = trimmedName.split(' ');
         const shortName = parts.length > 1 ? `${parts[0]} ${parts[1][0]}.` : parts[0];
         const details = {
@@ -3208,12 +3179,12 @@ function DashboardPage({ config, onSelectStudent, onNavigate }) {
     if (!ortakExams || ortakExams.length === 0) return null;
     const hasStudentData = Object.keys(studentMap).length > 0;
     const subjects = [
-      { key: 'turkce', label: 'Türkçe' },
+      { key: 'turkce', label: 'TÃ¼rkÃ§e' },
       { key: 'matematik', label: 'Matematik' },
       { key: 'fen', label: 'Fen Bilimleri' },
-      { key: 'ingilizce', label: 'İngilizce' },
-      { key: 'inkilap', label: 'İnkılap Tarihi' },
-      { key: 'din', label: 'Din Kültürü' },
+      { key: 'ingilizce', label: 'Ä°ngilizce' },
+      { key: 'inkilap', label: 'Ä°nkÄ±lap Tarihi' },
+      { key: 'din', label: 'Din KÃ¼ltÃ¼rÃ¼' },
     ];
     const totals = {};
     const counts = {};
@@ -3287,7 +3258,7 @@ function DashboardPage({ config, onSelectStudent, onNavigate }) {
         ctx.stroke();
         ctx.setLineDash([]);
 
-        const label = `Sınıf Ort: ${avg.toFixed(1)}`;
+        const label = `SÄ±nÄ±f Ort: ${avg.toFixed(1)}`;
         ctx.fillStyle = '#fff';
         ctx.strokeStyle = '#ef4444';
         ctx.lineWidth = 1;
@@ -3316,7 +3287,7 @@ function DashboardPage({ config, onSelectStudent, onNavigate }) {
         const y = scales.y.getPixelForValue(nets[index]) - 18;
         ctx.save();
         ctx.font = '16px Plus Jakarta Sans';
-        ctx.fillText('⭐', x - 8, y);
+        ctx.fillText('â­', x - 8, y);
         ctx.restore();
       }
     };
@@ -3374,11 +3345,11 @@ function DashboardPage({ config, onSelectStudent, onNavigate }) {
                 const idx = items[0].dataIndex;
                 const d = chartData.rows[idx].details;
                 return [
-                  `Türkçe: ${d.turkce.toFixed(1)}`,
+                  `TÃ¼rkÃ§e: ${d.turkce.toFixed(1)}`,
                   `Matematik: ${d.matematik.toFixed(1)}`,
                   `Fen: ${d.fen.toFixed(1)}`,
                   `Sosyal: ${d.inkilap.toFixed(1)}`,
-                  `İngilizce: ${d.ingilizce.toFixed(1)}`,
+                  `Ä°ngilizce: ${d.ingilizce.toFixed(1)}`,
                 ];
               }
             }
@@ -3503,13 +3474,13 @@ function DashboardPage({ config, onSelectStudent, onNavigate }) {
     <div className="max-w-7xl mx-auto px-4 py-8 fade-in">
       <div className="mb-8 grid grid-cols-1 lg:grid-cols-2 gap-6 items-center">
         <div>
-          <h1 className="text-3xl sm:text-4xl font-extrabold" style={{ color: config.text_color }}>Genel Bakış</h1>
-          <p className="text-sm sm:text-base mt-2" style={{ color: config.secondary_action_color }}>Öğrenci performans özeti ve trend analizi</p>
+          <h1 className="text-3xl sm:text-4xl font-extrabold" style={{ color: config.text_color }}>Genel BakÄ±ÅŸ</h1>
+          <p className="text-sm sm:text-base mt-2" style={{ color: config.secondary_action_color }}>Ã–ÄŸrenci performans Ã¶zeti ve trend analizi</p>
         </div>
         <div className="rounded-2xl p-10 border border-gray-100 shadow-sm w-full text-center justify-self-center max-w-md" style={{ background: 'linear-gradient(135deg, #EFF6FF 0%, #F5F3FF 100%)' }}>
           <div className="text-lg font-semibold" style={{ color: '#3B82F6' }}>LGS 2026</div>
           <div className="text-xl font-bold" style={{ color: '#0F172A' }}>14 Haziran 2026</div>
-          <div className="text-lg mt-2" style={{ color: '#64748B' }}>{lgsDaysLeft} gün kaldı</div>
+          <div className="text-lg mt-2" style={{ color: '#64748B' }}>{lgsDaysLeft} gÃ¼n kaldÄ±</div>
         </div>
       </div>
 
@@ -3545,36 +3516,36 @@ function DashboardPage({ config, onSelectStudent, onNavigate }) {
       <div className="mt-8 grid grid-cols-1 lg:grid-cols-2 gap-4">
         <div className="rounded-2xl p-6 shadow-lg" style={{ background: config.surface_color }}>
           <div className="mb-4">
-            <h3 className="text-lg font-bold" style={{ color: config.text_color }}>🚨 Dikkat Gerekli Öğrenciler</h3>
-            <div className="text-sm" style={{ color: config.secondary_action_color }}>Son denemelerde performans düşüşü</div>
+            <h3 className="text-lg font-bold" style={{ color: config.text_color }}>ğŸš¨ Dikkat Gerekli Ã–ÄŸrenciler</h3>
+            <div className="text-sm" style={{ color: config.secondary_action_color }}>Son denemelerde performans dÃ¼ÅŸÃ¼ÅŸÃ¼</div>
           </div>
 
           {(weeklyNoStudy.length === 0 && declineStudents.length === 0) ? (
             <div className="rounded-xl p-4 text-sm" style={{ background: '#e8f8f5', color: '#0f766e' }}>
-              ✅ Harika! Tüm öğrenciler aktif ve başarılı
+              âœ… Harika! TÃ¼m Ã¶ÄŸrenciler aktif ve baÅŸarÄ±lÄ±
             </div>
           ) : (
             <div className="space-y-4">
               <div className="rounded-xl p-4" style={{ background: '#fff9e6' }}>
                 <div className="text-xs font-semibold mb-2" style={{ color: '#8a6d3b' }}>
-                  ⚠️ Bu Hafta Çalışma Getirmeyen ({weeklyNoStudy.length} öğrenci)
+                  âš ï¸ Bu Hafta Ã‡alÄ±ÅŸma Getirmeyen ({weeklyNoStudy.length} Ã¶ÄŸrenci)
                 </div>
                 <div className="space-y-2">
                   {weeklyNoStudy.slice(0, 5).map(s => (
                     <div key={s.id} onClick={() => onSelectStudent && onSelectStudent(s.id)} className="flex items-center justify-between text-sm cursor-pointer hover:bg-white/60 px-2 py-1 rounded">
                       <span>{s.name}</span>
-                      <span style={{ color: '#6b7280' }}>{s.days} gündür çalışma yok</span>
+                      <span style={{ color: '#6b7280' }}>{s.days} gÃ¼ndÃ¼r Ã§alÄ±ÅŸma yok</span>
                     </div>
                   ))}
                   {weeklyNoStudy.length > 5 && (
-                    <div className="text-xs" style={{ color: '#6b7280' }}>+{weeklyNoStudy.length - 5} öğrenci daha</div>
+                    <div className="text-xs" style={{ color: '#6b7280' }}>+{weeklyNoStudy.length - 5} Ã¶ÄŸrenci daha</div>
                   )}
                 </div>
               </div>
 
               <div className="rounded-xl p-4" style={{ background: '#ffe6e6' }}>
                 <div className="text-xs font-semibold mb-2" style={{ color: '#b91c1c' }}>
-                  📉 Son 2-3 Denemede Net Düşüşü ({declineStudents.length} öğrenci)
+                  ğŸ“‰ Son 2-3 Denemede Net DÃ¼ÅŸÃ¼ÅŸÃ¼ ({declineStudents.length} Ã¶ÄŸrenci)
                 </div>
                 <div className="space-y-2">
                   {declineStudents.slice(0, 5).map(s => (
@@ -3584,7 +3555,7 @@ function DashboardPage({ config, onSelectStudent, onNavigate }) {
                     </div>
                   ))}
                   {declineStudents.length > 5 && (
-                    <div className="text-xs" style={{ color: '#6b7280' }}>+{declineStudents.length - 5} öğrenci daha</div>
+                    <div className="text-xs" style={{ color: '#6b7280' }}>+{declineStudents.length - 5} Ã¶ÄŸrenci daha</div>
                   )}
                 </div>
               </div>
@@ -3594,22 +3565,22 @@ function DashboardPage({ config, onSelectStudent, onNavigate }) {
 
         <div className="rounded-2xl p-6 shadow-lg" style={{ background: config.surface_color }}>
           <div className="mb-4">
-            <h3 className="text-lg font-bold" style={{ color: config.text_color }}>📝 Son Aktiviteler</h3>
-            <div className="text-sm" style={{ color: config.secondary_action_color }}>Son veri girişleri</div>
+            <h3 className="text-lg font-bold" style={{ color: config.text_color }}>ğŸ“ Son Aktiviteler</h3>
+            <div className="text-sm" style={{ color: config.secondary_action_color }}>Son veri giriÅŸleri</div>
           </div>
           <div className="relative pl-6">
             <div className="absolute left-2 top-0 bottom-0 w-px" style={{ background: '#e2e8f0' }}></div>
             <div className="space-y-4">
               {recentActivities.length === 0 ? (
-                <div className="text-sm" style={{ color: config.secondary_action_color }}>Henüz aktivite yok</div>
+                <div className="text-sm" style={{ color: config.secondary_action_color }}>HenÃ¼z aktivite yok</div>
               ) : recentActivities.map((a, i) => {
-                const timeText = a.ago || 'Az önce';
+                const timeText = a.ago || 'Az Ã¶nce';
                 return (
                   <div key={i} className="relative">
                     <div className="absolute -left-[18px] top-1.5 w-3 h-3 rounded-full" style={{ background: a.type === 'exam' ? '#3B82F6' : '#10B981' }}></div>
                     <div className="text-xs" style={{ color: '#94a3b8' }}>{timeText}</div>
                     <div className="text-sm" style={{ color: config.text_color }}>
-                      {a.type === 'exam' ? '📊 ' : '✍️ '}{a.text}
+                      {a.type === 'exam' ? 'ğŸ“Š ' : 'âœï¸ '}{a.text}
                     </div>
                   </div>
                 );
@@ -3623,11 +3594,11 @@ function DashboardPage({ config, onSelectStudent, onNavigate }) {
         <div className="fixed inset-0 z-50 flex items-center justify-center modal-backdrop" style={{background:'rgba(0,0,0,0.4)'}}>
           <div className="rounded-2xl shadow-2xl p-6 max-w-lg w-full mx-4 fade-in" style={{background: config.surface_color}}>
             <div className="flex items-center justify-between mb-4">
-              <h3 className="text-lg font-bold" style={{ color: config.text_color }}>Riskli Öğrenciler</h3>
+              <h3 className="text-lg font-bold" style={{ color: config.text_color }}>Riskli Ã–ÄŸrenciler</h3>
               <button onClick={() => setShowRiskModal(false)} className="p-1.5 rounded-lg hover:bg-gray-100"><Icons.X size={18}/></button>
             </div>
             {riskStudents.length === 0 ? (
-              <div className="text-sm" style={{ color: config.secondary_action_color }}>Riskli öğrenci bulunamadı</div>
+              <div className="text-sm" style={{ color: config.secondary_action_color }}>Riskli Ã¶ÄŸrenci bulunamadÄ±</div>
             ) : (
               <div className="space-y-2">
                 {riskStudents.map(s => (
@@ -3646,11 +3617,11 @@ function DashboardPage({ config, onSelectStudent, onNavigate }) {
         <div className="fixed inset-0 z-50 flex items-center justify-center modal-backdrop" style={{background:'rgba(0,0,0,0.4)'}}>
           <div className="rounded-2xl shadow-2xl p-6 max-w-lg w-full mx-4 fade-in" style={{background: config.surface_color}}>
             <div className="flex items-center justify-between mb-4">
-              <h3 className="text-lg font-bold" style={{ color: config.text_color }}>Büyük Düşüş Yaşayanlar</h3>
+              <h3 className="text-lg font-bold" style={{ color: config.text_color }}>BÃ¼yÃ¼k DÃ¼ÅŸÃ¼ÅŸ YaÅŸayanlar</h3>
               <button onClick={() => setShowDropModal(false)} className="p-1.5 rounded-lg hover:bg-gray-100"><Icons.X size={18}/></button>
             </div>
             {bigDropStudents.length === 0 ? (
-              <div className="text-sm" style={{ color: config.secondary_action_color }}>Büyük düşüş yaşayan öğrenci yok</div>
+              <div className="text-sm" style={{ color: config.secondary_action_color }}>BÃ¼yÃ¼k dÃ¼ÅŸÃ¼ÅŸ yaÅŸayan Ã¶ÄŸrenci yok</div>
             ) : (
               <div className="space-y-2">
                 {bigDropStudents.map(s => (
@@ -3712,7 +3683,7 @@ function App() {
         {renderPage()}
       </main>
       <footer className="text-center py-4 border-t border-gray-100" style={{background: config.surface_color}}>
-        <p className="text-xs" style={{color: config.secondary_action_color}}>© 2024 {config.app_title}</p>
+        <p className="text-xs" style={{color: config.secondary_action_color}}>Â© 2024 {config.app_title}</p>
       </footer>
     </div>
   );
@@ -3728,7 +3699,7 @@ function LoginPage({ onLogin, config }) {
       localStorage.setItem('appAuthenticated', 'true');
       onLogin();
     } else {
-      setErr('Hatalı şifre');
+      setErr('HatalÄ± ÅŸifre');
     }
   };
 
@@ -3738,10 +3709,10 @@ function LoginPage({ onLogin, config }) {
         <h2 className="text-xl font-bold mb-2" style={{ color: config.text_color }}>{config.welcome_title}</h2>
         <p className="text-sm mb-4" style={{ color: config.secondary_action_color }}>{config.welcome_subtitle}</p>
         <form onSubmit={handleSubmit} className="space-y-3">
-          <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="Şifre" className="w-full px-4 py-3 rounded-lg border" style={{ borderColor: '#E2E8F0', color: config.text_color }} />
+          <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="Åifre" className="w-full px-4 py-3 rounded-lg border" style={{ borderColor: '#E2E8F0', color: config.text_color }} />
           {err ? <div className="text-sm text-red-500">{err}</div> : null}
           <div className="flex justify-end">
-            <button type="submit" className="px-4 py-2 rounded-lg text-white" style={{ background: config.primary_action_color }}>Giriş</button>
+            <button type="submit" className="px-4 py-2 rounded-lg text-white" style={{ background: config.primary_action_color }}>GiriÅŸ</button>
           </div>
         </form>
       </div>
