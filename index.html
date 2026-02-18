@@ -3080,6 +3080,7 @@ function DashboardPage({ config, onSelectStudent, onNavigate }) {
 
   const radarData = useMemo(() => {
     if (!ortakExams || ortakExams.length === 0) return null;
+    const hasStudentData = Object.keys(studentMap).length > 0;
     const subjects = [
       { key: 'turkce', label: 'Türkçe' },
       { key: 'matematik', label: 'Matematik' },
