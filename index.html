@@ -1527,7 +1527,7 @@ function StudentDetailPage({ config, studentId, onBack }) {
                         <td>{e.deneme_tipi === 'bireysel' ? 'Bireysel' : 'Ortak'}</td>
                         <td className="font-semibold">{parseFloat(e.exam_total_net || 0).toFixed(2)}</td>
                         <td className="flex gap-2">
-                          <button onClick={() => handleOpenEditExam(e)} className="text-blue-600 text-xs font-semibold hover:underline">Duzenle</button>
+                          <button onClick={() => { setShowAllExams(false); handleOpenEditExam(e); }} className="text-blue-600 text-xs font-semibold hover:underline">Düzenle</button>
                           <button onClick={() => setDetailModal(e)} className="text-blue-600 text-xs font-semibold hover:underline">Detay</button>
                           <button onClick={() => handleDeleteExam(e)} disabled={saving} className="text-red-600 text-xs font-semibold hover:underline disabled:opacity-50">Sil</button>
                         </td>
@@ -1643,10 +1643,10 @@ function StudentDetailPage({ config, studentId, onBack }) {
       )}
 
       {editingExam && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center modal-backdrop" style={{background:'rgba(0,0,0,0.4)'}}>
+        <div className="fixed inset-0 z-[70] flex items-center justify-center modal-backdrop" style={{background:'rgba(0,0,0,0.4)'}}>
           <div className="rounded-2xl shadow-2xl p-6 max-w-2xl w-full mx-4 fade-in max-h-[80vh] overflow-y-auto" style={{background: config.surface_color}}>
             <div className="flex items-center justify-between mb-4">
-              <h3 className="text-lg font-bold" style={{ color: config.text_color }}>Deneme Duzenle</h3>
+              <h3 className="text-lg font-bold" style={{ color: config.text_color }}>Deneme Düzenle</h3>
               <button onClick={() => setEditingExam(null)} className="p-1.5 rounded-lg hover:bg-gray-100"><Icons.X size={18}/></button>
             </div>
             <div className="grid grid-cols-2 gap-4 mb-6">
