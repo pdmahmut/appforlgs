@@ -784,6 +784,7 @@ function StudentDetailPage({ config, studentId, onBack }) {
       exam_date: editingExam.exam_date,
       exam_subjects: JSON.stringify(editExamSubjects),
       exam_total_net: getEditedExamTotalNet(),
+      defined_exam_id: editingExam.defined_exam_id ? Number(editingExam.defined_exam_id) : null,
       deneme_tipi: editingExam.deneme_tipi,
       student_id: resolvedStudentId,
       student_backend_id: resolvedStudentBackendId
