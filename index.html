@@ -731,16 +731,20 @@ function StudentDetailPage({ config, studentId, onBack }) {
     try {
       subj = typeof exam.exam_subjects === 'string' ? JSON.parse(exam.exam_subjects) : (exam.exam_subjects || {});
     } catch {}
-    setEditingExam(exam);
-    setEditExamSubjects({
-      turkce: { dogru: '', yanlis: '' },
-      matematik: { dogru: '', yanlis: '' },
-      fen: { dogru: '', yanlis: '' },
-      inkilap: { dogru: '', yanlis: '' },
-      ingilizce: { dogru: '', yanlis: '' },
-      din: { dogru: '', yanlis: '' },
-      ...subj
+    const normalizedSubjects = {
+      turkce: { dogru: String(subj?.turkce?.dogru ?? ''), yanlis: String(subj?.turkce?.yanlis ?? ''), bos: String(subj?.turkce?.bos ?? '') },
+      matematik: { dogru: String(subj?.matematik?.dogru ?? ''), yanlis: String(subj?.matematik?.yanlis ?? ''), bos: String(subj?.matematik?.bos ?? '') },
+      fen: { dogru: String(subj?.fen?.dogru ?? ''), yanlis: String(subj?.fen?.yanlis ?? ''), bos: String(subj?.fen?.bos ?? '') },
+      inkilap: { dogru: String(subj?.inkilap?.dogru ?? ''), yanlis: String(subj?.inkilap?.yanlis ?? ''), bos: String(subj?.inkilap?.bos ?? '') },
+      ingilizce: { dogru: String(subj?.ingilizce?.dogru ?? ''), yanlis: String(subj?.ingilizce?.yanlis ?? ''), bos: String(subj?.ingilizce?.bos ?? '') },
+      din: { dogru: String(subj?.din?.dogru ?? ''), yanlis: String(subj?.din?.yanlis ?? ''), bos: String(subj?.din?.bos ?? '') },
+    };
+    setEditingExam({
+      ...exam,
+      student_id: exam.student_id || exam.student_backend_id || studentId,
+      student_backend_id: exam.student_backend_id || exam.student_id || studentId
     });
+    setEditExamSubjects(normalizedSubjects);
     setEditExamErrors({});
   };
 
@@ -771,6 +775,8 @@ function StudentDetailPage({ config, studentId, onBack }) {
   const saveEditedExam = async () => {
     if (!editingExam || Object.keys(editExamErrors).length > 0) return;
     setSaving(true);
+    const resolvedStudentId = editingExam.student_id || editingExam.student_backend_id || studentId;
+    const resolvedStudentBackendId = editingExam.student_backend_id || editingExam.student_id || studentId;
     const result = await window.dataSdk.update({
       type: 'exam',
       __backendId: editingExam.__backendId,
@@ -779,13 +785,17 @@ function StudentDetailPage({ config, studentId, onBack }) {
       exam_subjects: JSON.stringify(editExamSubjects),
       exam_total_net: getEditedExamTotalNet(),
       deneme_tipi: editingExam.deneme_tipi,
-      student_backend_id: editingExam.student_backend_id
+      student_id: resolvedStudentId,
+      student_backend_id: resolvedStudentBackendId
     });
     setSaving(false);
     if (result.isOk) {
       setEditingExam(null);
       setEditExamSubjects({});
       setEditExamErrors({});
+      if (window.dataSdk && typeof window.dataSdk.initialize === 'function') {
+        await window.dataSdk.initialize().catch(() => {});
+      }
     }
   };
 
