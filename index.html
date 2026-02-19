@@ -692,6 +692,115 @@ function StudentDetailPage({ config, studentId, onBack }) {
     ingilizce: 'Ingilizce',
     din: 'Din'
   };
+
+  const toNum = (v) => {
+    if (v === '' || v == null) return 0;
+    const n = parseInt(v, 10);
+    return Number.isFinite(n) ? n : 0;
+  };
+
+  const normalizeIntInput = (value) => {
+    const digits = String(value).replace(/[^\d]/g, '');
+    if (digits === '') return '';
+    return digits.replace(/^0+(?=\d)/, '');
+  };
+
+  const calculateNet = (dogru, yanlis) => {
+    return (toNum(dogru) - (toNum(yanlis) / 3)).toFixed(2);
+  };
+
+  const subjectMaxLimits = {
+    turkce: 20,
+    matematik: 20,
+    fen: 20,
+    ingilizce: 10,
+    inkilap: 10,
+    din: 10,
+  };
+
+  const handleOpenEditExam = (exam) => {
+    let subj = {};
+    try {
+      subj = typeof exam.exam_subjects === 'string' ? JSON.parse(exam.exam_subjects) : exam.exam_subjects || {};
+    } catch {}
+    const fullSubjects = {
+      turkce: { dogru: '', yanlis: '' },
+      inkilap: { dogru: '', yanlis: '' },
+      din: { dogru: '', yanlis: '' },
+      ingilizce: { dogru: '', yanlis: '' },
+      matematik: { dogru: '', yanlis: '' },
+      fen: { dogru: '', yanlis: '' },
+      ...subj
+    };
+    setEditingExam(exam);
+    setEditExamSubjects(fullSubjects);
+    setEditExamErrors({});
+  };
+
+  const handleEditExamSubjectChange = (key, field, value) => {
+    const num = normalizeIntInput(value).slice(0, 3);
+    const updatedSubj = { ...editExamSubjects[key], [field]: num };
+    const total = toNum(updatedSubj.dogru) + toNum(updatedSubj.yanlis);
+    const maxLimit = subjectMaxLimits[key];
+
+    setEditExamSubjects(prev => ({
+      ...prev,
+      [key]: updatedSubj
+    }));
+
+    if (total > maxLimit) {
+      setEditExamErrors(prev => ({
+        ...prev,
+        [key]: `Maksimum ${maxLimit} soru girilebilir`
+      }));
+    } else {
+      setEditExamErrors(prev => {
+        const newErrors = { ...prev };
+        delete newErrors[key];
+        return newErrors;
+      });
+    }
+  };
+
+  const calculateEditExamNet = () => {
+    return Object.values(editExamSubjects)
+      .reduce((sum, s) => sum + parseFloat(calculateNet(s.dogru, s.yanlis)), 0)
+      .toFixed(2);
+  };
+
+  const handleSaveEditExam = async () => {
+    if (!editingExam || Object.keys(editExamErrors).length > 0) return;
+    setSaving(true);
+    const result = await window.dataSdk.update({
+      type: 'exam',
+      __backendId: editingExam.__backendId,
+      exam_name: editingExam.exam_name,
+      exam_date: editingExam.exam_date,
+      exam_subjects: JSON.stringify(editExamSubjects),
+      exam_total_net: calculateEditExamNet(),
+      deneme_tipi: editingExam.deneme_tipi,
+      student_backend_id: editingExam.student_backend_id
+    });
+    setSaving(false);
+    if (result.isOk) {
+      setEditingExam(null);
+      setEditExamSubjects({});
+      setEditExamErrors({});
+    }
+  };
+
+  const handleDeleteExam = async (exam) => {
+    setSaving(true);
+    const result = await window.dataSdk.delete({
+      type: 'exam',
+      __backendId: exam.__backendId
+    });
+    setSaving(false);
+    if (result.isOk && detailModal && detailModal.__backendId === exam.__backendId) {
+      setDetailModal(null);
+    }
+  };
+
   const subjectSeries = subjects.map(key => {
     const series = recentExams.slice(-6).map(e => {
       const subj = parseSubjects(e);
