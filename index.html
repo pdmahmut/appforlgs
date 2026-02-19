@@ -692,14 +692,6 @@ function StudentDetailPage({ config, studentId, onBack }) {
     ingilizce: 'Ingilizce',
     din: 'Din'
   };
-  const quickSubjects = [
-    { key: 'turkce', label: 'Turkce', accent: '#EF4444', soft: '#FEE2E2' },
-    { key: 'matematik', label: 'Matematik', accent: '#3B82F6', soft: '#DBEAFE' },
-    { key: 'fen', label: 'Fen', accent: '#10B981', soft: '#DCFCE7' },
-    { key: 'inkilap', label: 'Sosyal', accent: '#F59E0B', soft: '#FEF3C7' },
-    { key: 'ingilizce', label: 'Ingilizce', accent: '#8B5CF6', soft: '#F3E8FF' },
-    { key: 'din', label: 'Din', accent: '#EC4899', soft: '#FCE7F3' },
-  ];
 
   const toNum = (v) => {
     if (v === '' || v == null) return 0;
