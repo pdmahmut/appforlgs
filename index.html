@@ -2631,16 +2631,19 @@ function ExamPage({ config }) {
 
     if (result.isOk) {
       setToast({ msg: 'Deneme kaydedildi!', type: 'success' });
-      handleReset();
+      handleReset({ preserveExamContext: true });
     } else {
       setToast({ msg: 'Hata olustu', type: 'error' });
     }
   };
 
-  const handleReset = () => {
-    setExamName('');
-    setSelectedDefinedExamId('');
-    setSelectedDate(new Date().toISOString().split('T')[0]);
+  const handleReset = ({ preserveExamContext = false } = {}) => {
+    if (!preserveExamContext) {
+      setExamName('');
+      setSelectedDefinedExamId('');
+      setSelectedDate(new Date().toISOString().split('T')[0]);
+      setExamType('ortak');
+    }
     setSubjects({
       turkce: { dogru: '', yanlis: '' },
       inkilap: { dogru: '', yanlis: '' },
