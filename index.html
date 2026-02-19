@@ -3153,10 +3153,24 @@ function SchoolNetTrendChart({ config }) {
     };
 
     const buildTrendFromLocal = () => {
+      const hasExamResult = (e) => {
+        const total = Number(e?.exam_total_net);
+        if (Number.isFinite(total) && total > 0) return true;
+        const subj = parseSubjects(e?.exam_subjects);
+        return Object.values(subj || {}).some((s) => {
+          const d = Number(s?.dogru || 0);
+          const y = Number(s?.yanlis || 0);
+          const b = Number(s?.bos || 0);
+          return (d + y + b) > 0;
+        });
+      };
+
       const ortakExams = (exams || []).filter((e) => {
         if (e.deneme_tipi !== 'ortak') return false;
         const examName = String(e.exam_name || '').trim().toLowerCase();
         if (examName.startsWith('mebi')) return false;
+        if (!e.student_backend_id && !e.student_id) return false;
+        if (!hasExamResult(e)) return false;
         return true;
       });
 
@@ -3399,11 +3413,26 @@ function DashboardPage({ config, onSelectStudent, onNavigate }) {
   const radarInstanceRef = useRef(null);
   const loading = !allData || allData.length === 0;
 
+  const hasExamResultRow = (e) => {
+    const total = Number(e?.exam_total_net);
+    if (Number.isFinite(total) && total > 0) return true;
+    let subj = {};
+    try { subj = typeof e?.exam_subjects === 'string' ? JSON.parse(e.exam_subjects) : (e?.exam_subjects || {}); } catch {}
+    return Object.values(subj || {}).some((s) => {
+      const d = Number(s?.dogru || 0);
+      const y = Number(s?.yanlis || 0);
+      const b = Number(s?.bos || 0);
+      return (d + y + b) > 0;
+    });
+  };
+
   const ortakExams = useMemo(() => {
     return (exams || []).filter((e) => {
       if (e.deneme_tipi !== 'ortak') return false;
       const examName = String(e.exam_name || '').trim().toLowerCase();
       if (examName.startsWith('mebi')) return false;
+      if (!e.student_backend_id && !e.student_id) return false;
+      if (!hasExamResultRow(e)) return false;
       return true;
     });
   }, [exams]);
