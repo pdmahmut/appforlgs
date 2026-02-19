@@ -1527,9 +1527,9 @@ function StudentDetailPage({ config, studentId, onBack }) {
                         <td>{e.deneme_tipi === 'bireysel' ? 'Bireysel' : 'Ortak'}</td>
                         <td className="font-semibold">{parseFloat(e.exam_total_net || 0).toFixed(2)}</td>
                         <td className="flex gap-2">
-                          <button onClick={() => handleOpenEditExam(e)} className="text-blue-600 text-xs font-semibold hover:underline">ai </button>
-                          <button onClick={() => setDetailModal(e)} className="text-blue-600 text-xs font-semibold hover:underline">Detay </button>
-                          <button onClick={() => handleDeleteExam(e)} disabled={saving} className="text-red-600 text-xs font-semibold hover:underline disabled:opacity-50">Detay </button>
+                          <button onClick={() => handleOpenEditExam(e)} className="text-blue-600 text-xs font-semibold hover:underline">Duzenle</button>
+                          <button onClick={() => setDetailModal(e)} className="text-blue-600 text-xs font-semibold hover:underline">Detay</button>
+                          <button onClick={() => handleDeleteExam(e)} disabled={saving} className="text-red-600 text-xs font-semibold hover:underline disabled:opacity-50">Sil</button>
                         </td>
                       </tr>
                     ))}
