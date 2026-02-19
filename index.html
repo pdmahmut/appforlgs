@@ -692,6 +692,109 @@ function StudentDetailPage({ config, studentId, onBack }) {
     ingilizce: 'Ingilizce',
     din: 'Din'
   };
+  const examSubjectsForEdit = [
+    { key: 'turkce', label: 'Turkce', accent: '#EF4444', soft: '#FEE2E2' },
+    { key: 'matematik', label: 'Matematik', accent: '#3B82F6', soft: '#DBEAFE' },
+    { key: 'fen', label: 'Fen', accent: '#10B981', soft: '#DCFCE7' },
+    { key: 'inkilap', label: 'Sosyal', accent: '#F59E0B', soft: '#FEF3C7' },
+    { key: 'ingilizce', label: 'Ingilizce', accent: '#8B5CF6', soft: '#F3E8FF' },
+    { key: 'din', label: 'Din', accent: '#EC4899', soft: '#FCE7F3' },
+  ];
+
+  const examFieldToInt = (v) => {
+    if (v === '' || v == null) return 0;
+    const n = parseInt(v, 10);
+    return Number.isFinite(n) ? n : 0;
+  };
+
+  const normalizeExamField = (value) => {
+    const digits = String(value).replace(/[^\d]/g, '');
+    if (digits === '') return '';
+    return digits.replace(/^0+(?=\d)/, '');
+  };
+
+  const calculateExamNet = (dogru, yanlis) => {
+    return (examFieldToInt(dogru) - (examFieldToInt(yanlis) / 3)).toFixed(2);
+  };
+
+  const examMaxLimits = {
+    turkce: 20,
+    matematik: 20,
+    fen: 20,
+    ingilizce: 10,
+    inkilap: 10,
+    din: 10,
+  };
+
+  const openExamEditModal = (exam) => {
+    let subj = {};
+    try {
+      subj = typeof exam.exam_subjects === 'string' ? JSON.parse(exam.exam_subjects) : (exam.exam_subjects || {});
+    } catch {}
+    setEditingExam(exam);
+    setEditExamSubjects({
+      turkce: { dogru: '', yanlis: '' },
+      matematik: { dogru: '', yanlis: '' },
+      fen: { dogru: '', yanlis: '' },
+      inkilap: { dogru: '', yanlis: '' },
+      ingilizce: { dogru: '', yanlis: '' },
+      din: { dogru: '', yanlis: '' },
+      ...subj
+    });
+    setEditExamErrors({});
+  };
+
+  const onExamEditFieldChange = (key, field, value) => {
+    const num = normalizeExamField(value).slice(0, 3);
+    const updatedSubj = { ...editExamSubjects[key], [field]: num };
+    const total = examFieldToInt(updatedSubj.dogru) + examFieldToInt(updatedSubj.yanlis);
+    const maxLimit = examMaxLimits[key] || 20;
+
+    setEditExamSubjects(prev => ({ ...prev, [key]: updatedSubj }));
+    if (total > maxLimit) {
+      setEditExamErrors(prev => ({ ...prev, [key]: `Maksimum ${maxLimit} soru girilebilir` }));
+    } else {
+      setEditExamErrors(prev => {
+        const next = { ...prev };
+        delete next[key];
+        return next;
+      });
+    }
+  };
+
+  const getEditedExamTotalNet = () => {
+    return Object.values(editExamSubjects || {})
+      .reduce((sum, s) => sum + parseFloat(calculateExamNet(s?.dogru, s?.yanlis)), 0)
+      .toFixed(2);
+  };
+
+  const saveEditedExam = async () => {
+    if (!editingExam || Object.keys(editExamErrors).length > 0) return;
+    setSaving(true);
+    const result = await window.dataSdk.update({
+      type: 'exam',
+      __backendId: editingExam.__backendId,
+      exam_name: editingExam.exam_name,
+      exam_date: editingExam.exam_date,
+      exam_subjects: JSON.stringify(editExamSubjects),
+      exam_total_net: getEditedExamTotalNet(),
+      deneme_tipi: editingExam.deneme_tipi,
+      student_backend_id: editingExam.student_backend_id
+    });
+    setSaving(false);
+    if (result.isOk) {
+      setEditingExam(null);
+      setEditExamSubjects({});
+      setEditExamErrors({});
+    }
+  };
+
+  const deleteExamRecord = async (exam) => {
+    setSaving(true);
+    const result = await window.dataSdk.delete({ type: 'exam', __backendId: exam.__backendId });
+    setSaving(false);
+    if (result.isOk && detailModal?.__backendId === exam.__backendId) setDetailModal(null);
+  };
   const subjectSeries = subjects.map(key => {
     const series = recentExams.slice(-6).map(e => {
       const subj = parseSubjects(e);
@@ -1527,9 +1630,9 @@ function StudentDetailPage({ config, studentId, onBack }) {
                         <td>{e.deneme_tipi === 'bireysel' ? 'Bireysel' : 'Ortak'}</td>
                         <td className="font-semibold">{parseFloat(e.exam_total_net || 0).toFixed(2)}</td>
                         <td className="flex gap-2">
-                          <button onClick={() => { setShowAllExams(false); handleOpenEditExam(e); }} className="text-blue-600 text-xs font-semibold hover:underline">Düzenle</button>
+                          <button onClick={() => { setShowAllExams(false); openExamEditModal(e); }} className="text-blue-600 text-xs font-semibold hover:underline">Düzenle</button>
                           <button onClick={() => setDetailModal(e)} className="text-blue-600 text-xs font-semibold hover:underline">Detay</button>
-                          <button onClick={() => handleDeleteExam(e)} disabled={saving} className="text-red-600 text-xs font-semibold hover:underline disabled:opacity-50">Sil</button>
+                          <button onClick={() => deleteExamRecord(e)} disabled={saving} className="text-red-600 text-xs font-semibold hover:underline disabled:opacity-50">Sil</button>
                         </td>
                       </tr>
                     ))}
@@ -1650,7 +1753,7 @@ function StudentDetailPage({ config, studentId, onBack }) {
               <button onClick={() => setEditingExam(null)} className="p-1.5 rounded-lg hover:bg-gray-100"><Icons.X size={18}/></button>
             </div>
             <div className="grid grid-cols-2 gap-4 mb-6">
-              {quickSubjects.map(s => (
+              {examSubjectsForEdit.map(s => (
                 <div key={s.key} className="rounded-xl p-4" style={{ background: s.soft }}>
                   <div className="text-xs font-bold mb-3" style={{ color: s.accent }}>{s.label}</div>
                   <div className="space-y-2">
@@ -1661,7 +1764,7 @@ function StudentDetailPage({ config, studentId, onBack }) {
                         inputMode="numeric"
                         maxLength={3}
                         value={editExamSubjects[s.key]?.dogru || ''}
-                        onChange={(e) => handleEditExamSubjectChange(s.key, 'dogru', e.target.value)}
+                        onChange={(e) => onExamEditFieldChange(s.key, 'dogru', e.target.value)}
                         className="w-full px-2 py-1.5 rounded border text-sm font-semibold text-center"
                         style={{ background: 'white', borderColor: editExamErrors[s.key] ? '#EF4444' : s.soft }}
                       />
@@ -1673,7 +1776,7 @@ function StudentDetailPage({ config, studentId, onBack }) {
                         inputMode="numeric"
                         maxLength={3}
                         value={editExamSubjects[s.key]?.yanlis || ''}
-                        onChange={(e) => handleEditExamSubjectChange(s.key, 'yanlis', e.target.value)}
+                        onChange={(e) => onExamEditFieldChange(s.key, 'yanlis', e.target.value)}
                         className="w-full px-2 py-1.5 rounded border text-sm font-semibold text-center"
                         style={{ background: 'white', borderColor: editExamErrors[s.key] ? '#EF4444' : s.soft }}
                       />
@@ -1684,7 +1787,7 @@ function StudentDetailPage({ config, studentId, onBack }) {
                       </div>
                     )}
                     <div className="rounded py-1.5 text-center text-xs font-bold" style={{ background: s.soft, color: s.accent }}>
-                      Net: {calculateNet(editExamSubjects[s.key]?.dogru, editExamSubjects[s.key]?.yanlis)}
+                      Net: {calculateExamNet(editExamSubjects[s.key]?.dogru, editExamSubjects[s.key]?.yanlis)}
                     </div>
                   </div>
                 </div>
@@ -1692,11 +1795,11 @@ function StudentDetailPage({ config, studentId, onBack }) {
             </div>
             <div className="rounded-xl p-4 mb-6 text-center" style={{ background: '#ECFDF5', border: '1px solid #BBF7D0' }}>
               <span className="text-sm font-semibold" style={{ color: '#059669' }}>Toplam Net: </span>
-              <span className="text-lg font-bold" style={{ color: '#047857' }}>{calculateEditExamNet()}</span>
+              <span className="text-lg font-bold" style={{ color: '#047857' }}>{getEditedExamTotalNet()}</span>
             </div>
             <div className="flex gap-3">
               <button
-                onClick={handleSaveEditExam}
+                onClick={saveEditedExam}
                 disabled={saving || Object.keys(editExamErrors).length > 0}
                 className="flex-1 px-4 py-2 rounded-lg bg-green-600 text-white text-sm font-bold hover:bg-green-700 transition disabled:opacity-60"
               >
